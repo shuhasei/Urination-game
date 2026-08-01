@@ -1,70 +1,1243 @@
 <!doctype html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>TOILET ARC - STAGE 20 REVERSE</title>
-<style>
-:root{--green:#59e52d;--dark:#101417;--paper:#edf3f5}*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#080a0c;color:#fff;font-family:Arial,"Noto Sans JP",sans-serif}body{display:grid;place-items:center;padding:12px}.app{width:min(1050px,100%)}.bar{display:flex;justify-content:space-between;align-items:center;margin:0 0 8px;font-weight:900}.actions{display:flex;gap:8px}button{border:2px solid #111;border-radius:9px;background:#f2f3f4;color:#111;padding:8px 12px;font:inherit;font-weight:800;cursor:pointer;box-shadow:0 3px #111}button:active{transform:translateY(2px);box-shadow:0 1px #111}.wrap{position:relative;overflow:hidden;border:4px solid #191c1f;background:#bfd0d9;box-shadow:0 14px 36px #0008}canvas{display:block;width:100%;height:auto;touch-action:none}.screen{position:absolute;inset:0;display:grid;place-items:center;padding:20px;background:linear-gradient(155deg,#8fa9b7f5,#526672fa)}.screen[hidden]{display:none}.card{width:min(570px,95%);padding:26px;border:4px solid #101417;border-radius:18px;background:#eef4f6f5;color:#101417;text-align:center;box-shadow:10px 11px #0005}.kicker{font-size:.78rem;font-weight:900;letter-spacing:.2em;color:#43545d}.title{margin:5px 0 2px;font-size:clamp(2.8rem,9vw,6rem);line-height:.82;letter-spacing:-.07em;transform:rotate(-2deg);text-shadow:4px 5px #fff,7px 8px #182127}.sub{font-weight:800;color:#465760;margin:12px 0 22px}.play{min-width:190px;border-radius:999px;background:var(--green);font-size:1.4rem;padding:13px 22px;box-shadow:0 6px #247d15}.row{display:flex;justify-content:center;flex-wrap:wrap;gap:9px;margin-top:14px}.help{margin:18px auto 0;text-align:left;line-height:1.65;color:#34444d;font-size:.9rem}.stage-card{width:min(780px,96%);max-height:88%;overflow:auto;padding:20px;border:4px solid #111;background:#f0f5f7f8;color:#111;box-shadow:10px 11px #0005}.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}.stage{min-height:58px;padding:5px;background:#fff}.stage.locked{background:#cbd2d6;color:#707980;cursor:not-allowed}.stage.current{background:var(--green)}.result h2{font-size:2rem;margin:0}.score{font-weight:900;margin:14px}.note{text-align:center;color:#b8c0c6;font-size:.82rem;margin:9px 0 0}@media(max-width:650px){body{padding:4px}.grid{grid-template-columns:repeat(4,1fr)}.actions button{font-size:.8rem;padding:7px}.help{font-size:.79rem}}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>うんこテトリス DX</title>
+  <style>
+    :root {
+      --bg1: #2a1642;
+      --bg2: #120b20;
+      --panel: rgba(255,255,255,.09);
+      --panel2: rgba(17,10,28,.82);
+      --text: #fff8e9;
+      --muted: #d8c9e8;
+      --accent: #ffd54a;
+      --accent2: #ff8c3a;
+      --good: #76e26f;
+      --danger: #ff6474;
+      --border: rgba(255,255,255,.22);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 18% 12%, rgba(165,78,255,.28), transparent 30%),
+        radial-gradient(circle at 86% 18%, rgba(255,147,65,.18), transparent 28%),
+        linear-gradient(150deg, var(--bg1), var(--bg2));
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      padding: 16px;
+    }
+
+    button, select {
+      font: inherit;
+    }
+
+    .app {
+      width: min(1120px, 100%);
+    }
+
+    .header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.8rem, 5vw, 3.2rem);
+      line-height: 1;
+      letter-spacing: -.05em;
+      text-shadow: 0 4px 0 #542d17, 0 8px 20px rgba(0,0,0,.4);
+    }
+
+    .subtitle {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+
+    .sound-button {
+      flex: none;
+      min-width: 88px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(200px, 1fr) minmax(300px, 420px) minmax(200px, 1fr);
+      gap: 14px;
+      align-items: start;
+    }
+
+    .panel {
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: var(--panel);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 30px rgba(0,0,0,.24);
+    }
+
+    .panel h2 {
+      margin: 0 0 10px;
+      font-size: 1rem;
+      letter-spacing: .04em;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 9px;
+    }
+
+    .stat {
+      padding: 10px;
+      border-radius: 13px;
+      background: var(--panel2);
+      border: 1px solid rgba(255,255,255,.1);
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: .74rem;
+    }
+
+    .stat-value {
+      margin-top: 2px;
+      font-size: 1.35rem;
+      font-weight: 900;
+    }
+
+    .mini-canvas {
+      display: block;
+      width: 100%;
+      max-width: 180px;
+      margin: 0 auto;
+      background: rgba(0,0,0,.2);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 13px;
+    }
+
+    .piece-name {
+      margin: 7px 0 0;
+      text-align: center;
+      min-height: 1.4em;
+      color: var(--accent);
+      font-weight: 900;
+    }
+
+    .board-shell {
+      position: relative;
+      padding: 10px;
+      border: 2px solid rgba(255,255,255,.25);
+      border-radius: 22px;
+      background: rgba(7,4,12,.72);
+      box-shadow:
+        inset 0 0 30px rgba(255,255,255,.04),
+        0 20px 50px rgba(0,0,0,.4);
+    }
+
+    #gameCanvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 13px;
+      background: #100919;
+      touch-action: none;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 10px;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      border-radius: 13px;
+      background: rgba(8,4,13,.78);
+      backdrop-filter: blur(5px);
+      text-align: center;
+    }
+
+    .overlay[hidden] { display: none; }
+
+    .overlay-card {
+      width: min(320px, 100%);
+      padding: 22px;
+      border-radius: 20px;
+      background: rgba(48,25,69,.95);
+      border: 1px solid rgba(255,255,255,.22);
+      box-shadow: 0 14px 36px rgba(0,0,0,.35);
+    }
+
+    .overlay-card h2 {
+      margin: 0 0 9px;
+      font-size: 2rem;
+    }
+
+    .overlay-card p {
+      margin: 0 0 16px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .primary, .secondary, .control-button {
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: 13px;
+      color: var(--text);
+      cursor: pointer;
+      font-weight: 900;
+      box-shadow: 0 4px 0 rgba(0,0,0,.35);
+    }
+
+    .primary {
+      min-width: 160px;
+      padding: 12px 18px;
+      color: #2a1600;
+      background: linear-gradient(#ffe773, #ffc43c);
+    }
+
+    .secondary {
+      padding: 10px 13px;
+      background: rgba(255,255,255,.1);
+    }
+
+    button:active {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 rgba(0,0,0,.35);
+    }
+
+    button:focus-visible, select:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .button-row > * {
+      flex: 1;
+    }
+
+    .settings {
+      display: grid;
+      gap: 10px;
+    }
+
+    label {
+      display: grid;
+      gap: 5px;
+      color: var(--muted);
+      font-size: .82rem;
+    }
+
+    select {
+      width: 100%;
+      padding: 9px 10px;
+      color: var(--text);
+      background: #21132f;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+    }
+
+    .help {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: .8rem;
+      line-height: 1.65;
+    }
+
+    .shape-count {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 9px;
+      margin-top: 10px;
+      border-radius: 999px;
+      color: #2a1600;
+      background: var(--accent);
+      font-size: .75rem;
+      font-weight: 900;
+    }
+
+    .mobile-controls {
+      display: none;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 7px;
+      margin-top: 12px;
+    }
+
+    .control-button {
+      min-height: 50px;
+      padding: 8px 4px;
+      background: rgba(255,255,255,.11);
+      font-size: 1.15rem;
+      touch-action: manipulation;
+    }
+
+    .drop-button {
+      background: linear-gradient(#ff9f50, #e85e28);
+    }
+
+    .footer {
+      margin: 12px 0 0;
+      text-align: center;
+      color: var(--muted);
+      font-size: .76rem;
+    }
+
+    @media (max-width: 850px) {
+      body { padding: 8px; }
+      .layout {
+        grid-template-columns: 1fr minmax(280px, 430px);
+      }
+      .right-panel {
+        grid-column: 1 / -1;
+      }
+      .right-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .mobile-controls { display: grid; }
+    }
+
+    @media (max-width: 620px) {
+      .header { align-items: center; }
+      .subtitle { display: none; }
+      .layout { grid-template-columns: 1fr; }
+      .left-panel { order: 2; }
+      .board-area { order: 1; }
+      .right-panel { order: 3; }
+      .left-panel {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .left-panel > .stats,
+      .left-panel > .hold-box {
+        min-width: 0;
+      }
+      .right-grid { grid-template-columns: 1fr; }
+      .mobile-controls { grid-template-columns: repeat(5, 1fr); }
+      .control-button { min-height: 48px; }
+    }
+  </style>
 </head>
 <body>
-<main class="app">
-<div class="bar"><div>TOILET ARC：STAGE 20 REVERSE</div><div class="actions"><button id="sound">音：ON</button><button id="home">タイトル</button></div></div>
-<div class="wrap">
-<canvas id="game" width="960" height="720" aria-label="ステージ20から天地が反転する便器狙いゲーム"></canvas>
-<section id="title" class="screen"><div class="card"><div class="kicker">HAND-DRAWN PHYSICS GAME</div><h1 class="title">TOILET<br>ARC</h1><div class="sub">ステージ1〜19は通常。ステージ20から天地が反転します。</div><button id="play" class="play">PLAY</button><div class="row"><button id="select">ステージ選択</button><button id="how">遊び方</button></div><div id="help" class="help" hidden><b>1. 人物の上半身をドラッグ</b>して姿勢を調整。<br><b>2. 大きな矢印をドラッグ</b>して方向と勢いを決定。<br><b>3. 右上のGO!</b>で点状の流れを発射します。<br><b>ステージ20以降</b>は人物・便器・背景・重力が上下反転します。</div></div></section>
-<section id="stages" class="screen" hidden><div class="stage-card"><h2>STAGE SELECT</h2><div id="stageGrid" class="grid"></div><div class="row"><button id="back">戻る</button></div></div></section>
-<section id="result" class="screen" hidden><div class="card result"><h2 id="resultTitle">CLEAR!</h2><p id="resultText"></p><div id="resultScore" class="score"></div><div class="row"><button id="retry">もう一度</button><button id="next" class="play">次へ</button></div></div></section>
-</div>
-<p class="note">ステージ1〜19：通常重力／ステージ20〜24：天地逆転　・　SpaceでGO</p>
-</main>
-<script>
-(()=>{"use strict";
-const c=document.getElementById("game"),x=c.getContext("2d"),W=c.width,H=c.height,floor=585;
-const screens={title:document.getElementById("title"),stages:document.getElementById("stages"),result:document.getElementById("result")};
-const names=["Patience","Soft Start","Long Reach","High Arc","Low Pressure","Heavy Fall","Wide Spray","Steady Hands","Back Step","Tiny Target","Fast Drop","Calm Aim","Far Corner","High Pressure","Gentle Curve","Cold Morning","Narrow Bowl","Deep Focus","Late Night","Last Chance","Moon Gravity","Strong Spirit","Perfect Form","Final Arc"];
-const levels=Array.from({length:24},(_,i)=>{const g=Math.floor(i/4);return{name:names[i],concentration:1+(i*2+g)%5,disposition:1+(i*3+1)%5,pressure:1+(i*4+2)%5,toiletX:670+((i%4)-1.5)*32+g*5,scale:Math.max(.72,1.04-g*.035),playerX:230-(i%3)*8,goal:12+g,hue:198+(i%5)*8,floorDark:i%3,lives:i<8?2:3}});
-let idx=0,unlocked=Math.max(1,Math.min(levels.length,Number(localStorage.getItem("toiletArcUnlocked")||1))),level=levels[0],mode="menu",tilt=-25,angle=42,force=118,drag=null,drops=[],pending=0,timer=0,hits=0,misses=0,lives=2,delay=0,face="worried",soundOn=true,last=performance.now();
-const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-function isReverse(){return idx>=19}
-function show(which){Object.entries(screens).forEach(([k,v])=>v.hidden=k!==which)}
-function start(i){idx=clamp(i,0,levels.length-1);level=levels[idx];mode="aim";lives=level.lives;tilt=-25;angle=42;force=118;reset();show("none");face="worried"}
-function reset(){drops=[];pending=0;timer=0;hits=0;misses=0;delay=0;if(mode!=="menu")mode="aim"}
-function buildGrid(){const g=document.getElementById("stageGrid");g.innerHTML="";levels.forEach((lv,i)=>{const b=document.createElement("button");b.className="stage"+(i>=unlocked?" locked":"")+(i===idx?" current":"");b.disabled=i>=unlocked;b.innerHTML=`<b>${i+1}</b><br><small>${i<unlocked?(lv.name+(i>=19?" ↕":"")):"LOCK"}</small>`;b.onclick=()=>start(i);g.appendChild(b)})}
-function player(){const hip={x:level.playerX+25,y:floor-82},r=tilt*Math.PI/180,shoulder={x:hip.x+Math.sin(r)*91,y:hip.y-Math.cos(r)*91},head={x:shoulder.x+Math.sin(r)*43,y:shoulder.y-Math.cos(r)*43},front={x:Math.cos(r),y:Math.sin(r)},origin={x:hip.x+front.x*25+5,y:hip.y+front.y*25-7};return{hip,shoulder,head,origin,r}}
-function toilet(){const s=level.scale;return{x:level.toiletX,y:floor,s,bx:level.toiletX,by:floor-105*s,rx:55*s,ry:13*s}}
-function arrow(){const p=player(),r=angle*Math.PI/180,start={x:p.origin.x+18,y:p.origin.y-25};return{start,end:{x:start.x+Math.cos(r)*force,y:start.y-Math.sin(r)*force},r}}
-function screenPoint(e){const r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height}}
-function point(e){const p=screenPoint(e);return isReverse()?{x:p.x,y:H-p.y}:p}
-const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
-function seg(p,a,b){const dx=b.x-a.x,dy=b.y-a.y,l=dx*dx+dy*dy||1,t=clamp(((p.x-a.x)*dx+(p.y-a.y)*dy)/l,0,1);return Math.hypot(p.x-a.x-dx*t,p.y-a.y-dy*t)}
-function down(e){if(mode!=="aim")return;const sp=screenPoint(e);if(dist(sp,{x:850,y:100})<=70){launch();return}const p=point(e),pg=player(),ag=arrow();if(dist(p,ag.end)<48||seg(p,ag.start,ag.end)<22)drag="arrow";else if(seg(p,pg.hip,pg.shoulder)<48||dist(p,pg.head)<48)drag="body";if(drag){c.setPointerCapture?.(e.pointerId);e.preventDefault()}}
-function move(e){if(!drag||mode!=="aim")return;const p=point(e);if(drag==="body"){const h=player().hip;tilt=clamp(Math.atan2(p.x-h.x,h.y-p.y)*180/Math.PI,-58,38)}else{const s=arrow().start,dx=p.x-s.x,dy=p.y-s.y;angle=clamp(Math.atan2(-dy,dx)*180/Math.PI,-12,83);force=clamp(Math.hypot(dx,dy),70,172)}e.preventDefault()}
-function up(e){drag=null;try{c.releasePointerCapture?.(e.pointerId)}catch{}}
-function launch(){if(mode!=="aim")return;mode="shoot";hits=misses=0;drops=[];pending=34;timer=0;delay=0;face="focus";beep(540,.08)}
-function spawn(i){const p=player(),spread=(Math.random()-.5)*level.pressure*1.7,r=(angle+spread)*Math.PI/180,s=force*.047*(.88+level.disposition*.065)*(.94+Math.random()*.12);drops.push({x:p.origin.x+Math.cos(r)*(i%3)*3,y:p.origin.y-Math.sin(r)*(i%3)*3,vx:Math.cos(r)*s,vy:-Math.sin(r)*s,r:4+Math.random()*1.5,alive:true,age:0})}
-function update(dt){if(mode!=="shoot")return;const f=Math.min(2.2,dt/16.6667);timer-=f;if(pending>0&&timer<=0){spawn(34-pending);pending--;timer=3.1}const g=(.018+level.concentration*.0065)*f,t=toilet();for(const d of drops){if(!d.alive)continue;d.vy+=g;d.x+=d.vx*f;d.y+=d.vy*f;d.age+=f;const nx=(d.x-t.bx)/t.rx,ny=(d.y-t.by)/(t.ry+7);if(nx*nx+ny*ny<=1&&d.vy>0){d.alive=false;hits++;if(hits%5===0)beep(740,.025)}else if(d.y>=floor-2||d.x>W+25||d.x<-25||d.y<-40||d.age>390){d.alive=false;misses++}}const alive=drops.reduce((n,d)=>n+(d.alive?1:0),0);if(pending===0&&alive===0){delay+=f;if(delay>24)evaluate()}}
-function evaluate(){if(hits>=level.goal){face="happy";mode="result";if(idx+2>unlocked){unlocked=Math.min(levels.length,idx+2);localStorage.setItem("toiletArcUnlocked",String(unlocked))}resultTitle.textContent="CLEAR!";resultText.textContent=isReverse()?"逆重力の軌道で、きれいに便器へ入りました。":"きれいに便器へ入りました。";resultScore.textContent=`命中 ${hits} / 34　・　必要 ${level.goal}`;next.hidden=false;show("result");sequence([620,780,940])}else{lives--;face="sad";mode="result";resultTitle.textContent=lives>0?"MISS...":"OUT OF LIVES";resultText.textContent=lives>0?"角度か勢いを少し変えてみよう。":"このステージを最初からやり直します。";resultScore.textContent=`命中 ${hits} / 34　・　必要 ${level.goal}`;next.hidden=true;show("result");beep(180,.18)}}
-function beep(freq,dur){if(!soundOn)return;try{const A=window.AudioContext||window.webkitAudioContext,ac=beep.ac||(beep.ac=new A),o=ac.createOscillator(),g=ac.createGain();o.frequency.value=freq;g.gain.setValueAtTime(.055,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+dur);o.connect(g).connect(ac.destination);o.start();o.stop(ac.currentTime+dur)}catch{}}
-function sequence(a){a.forEach((n,i)=>setTimeout(()=>beep(n,.09),i*110))}
-function room(){const grad=x.createLinearGradient(0,0,0,floor);grad.addColorStop(0,`hsl(${level.hue},28%,78%)`);grad.addColorStop(1,`hsl(${level.hue},25%,69%)`);x.fillStyle=grad;x.fillRect(0,0,W,floor);x.globalAlpha=.08;for(let i=0;i<160;i++){x.fillStyle=i%2?"#fff":"#17242c";x.fillRect((i*83)%W,(i*47)%floor,2,2)}x.globalAlpha=1;const fg=x.createLinearGradient(0,floor,0,H);fg.addColorStop(0,level.floorDark===1?"#d0d0ce":"#dededb");fg.addColorStop(1,level.floorDark===2?"#a7aaab":"#b8bbbc");x.fillStyle=fg;x.fillRect(0,floor,W,H-floor);x.strokeStyle="#5558";x.lineWidth=3;for(let y=floor;y<=H;y+=56){x.beginPath();x.moveTo(0,y);x.lineTo(W,y);x.stroke()}const vx=W*.52;for(let xx=-260;xx<W+300;xx+=105){x.beginPath();x.moveTo(xx,H);x.lineTo(vx+(xx-vx)*.35,floor);x.stroke()}x.strokeStyle="#fff9";x.lineWidth=4;x.beginPath();x.moveTo(0,floor);x.lineTo(W,floor);x.stroke()}
-function stats(){x.fillStyle="#101316";x.font="31px Arial";x.textAlign="left";x.fillText(`Concentration: ${level.concentration}`,35,62);x.fillText(`Disposition: ${level.disposition}`,35,103);x.fillText(`Pressure: ${level.pressure}`,35,144);if(isReverse()){x.save();x.fillStyle="#101316";x.font="bold 22px Arial";x.textAlign="center";x.fillText("REVERSE GRAVITY - STAGE "+(idx+1),W/2,48);x.restore()}}
-function character(){const p=player(),f1={x:level.playerX+6,y:floor-6},f2={x:level.playerX+58,y:floor-4},sx=Math.cos(p.r),sy=Math.sin(p.r);x.save();x.strokeStyle="#0d0f10";x.fillStyle="#f5f5f3";x.lineWidth=8;x.lineCap="round";x.lineJoin="round";x.beginPath();x.moveTo(p.hip.x-8,p.hip.y);x.lineTo(f1.x+9,f1.y-42);x.lineTo(f1.x+9,f1.y);x.lineTo(f1.x+35,f1.y);x.stroke();x.beginPath();x.moveTo(p.hip.x+9,p.hip.y);x.lineTo(f2.x-11,f2.y-43);x.lineTo(f2.x-11,f2.y);x.lineTo(f2.x+16,f2.y);x.stroke();x.beginPath();x.moveTo(p.hip.x-sx*14,p.hip.y-sy*14);x.lineTo(p.shoulder.x-sx*23,p.shoulder.y-sy*23);x.lineTo(p.shoulder.x+sx*18,p.shoulder.y+sy*18);x.lineTo(p.hip.x+sx*17,p.hip.y+sy*17);x.closePath();x.fill();x.stroke();x.beginPath();x.moveTo(p.shoulder.x+sx*8,p.shoulder.y+sy*8);x.lineTo(p.hip.x+30,p.hip.y-8);x.lineTo(p.origin.x+8,p.origin.y+4);x.stroke();x.beginPath();x.arc(p.head.x,p.head.y,30,0,Math.PI*2);x.fill();x.stroke();drawFace(p.head.x,p.head.y,p.r);if(mode==="aim"){x.globalAlpha=.14;x.fillStyle="#54e129";x.beginPath();x.arc(p.shoulder.x,p.shoulder.y,48,0,Math.PI*2);x.fill();x.globalAlpha=1}x.restore()}
-function drawFace(px,py,r){x.save();x.translate(px,py);x.rotate(r);x.strokeStyle=x.fillStyle="#0b0d0e";x.lineWidth=5;x.lineCap="round";x.beginPath();x.moveTo(-14,-9);x.lineTo(-6,-13);x.moveTo(7,-13);x.lineTo(15,-8);x.stroke();x.beginPath();x.arc(-9,-2,3.5,0,Math.PI*2);x.arc(9,-2,3.5,0,Math.PI*2);x.fill();x.beginPath();if(face==="happy")x.arc(0,6,12,0,Math.PI);else if(face==="sad")x.arc(0,18,11,Math.PI,Math.PI*2);else if(face==="focus"){x.moveTo(-9,12);x.lineTo(9,12)}else x.arc(0,14,10,Math.PI,Math.PI*2);x.stroke();x.restore()}
-function rr(px,py,w,h,r){x.moveTo(px+r,py);x.arcTo(px+w,py,px+w,py+h,r);x.arcTo(px+w,py+h,px,py+h,r);x.arcTo(px,py+h,px,py,r);x.arcTo(px,py,px+w,py,r);x.closePath()}
-function drawToilet(){const t=toilet(),s=t.s;x.save();x.translate(t.x,t.y);x.scale(s,s);x.strokeStyle="#0c0f11";x.fillStyle="#f8f8f5";x.lineWidth=7/s;x.lineJoin="round";x.beginPath();rr(42,-184,73,101,9);x.fill();x.stroke();x.fillStyle="#d6dadb";x.beginPath();x.arc(91,-160,7,0,Math.PI*2);x.fill();x.stroke();x.fillStyle="#f8f8f5";x.beginPath();x.ellipse(0,-105,70,21,0,0,Math.PI*2);x.fill();x.stroke();x.fillStyle="#aab8c0";x.beginPath();x.ellipse(0,-105,53,11,0,0,Math.PI*2);x.fill();x.stroke();x.fillStyle="#f8f8f5";x.beginPath();x.moveTo(-47,-94);x.quadraticCurveTo(-40,-33,-23,-17);x.lineTo(-36,-3);x.lineTo(30,-3);x.quadraticCurveTo(52,-28,47,-93);x.closePath();x.fill();x.stroke();x.beginPath();x.moveTo(49,-97);x.quadraticCurveTo(82,-96,86,-126);x.stroke();x.restore()}
-function aim(){if(mode!=="aim")return;const a=arrow(),head=24;x.save();x.strokeStyle="#8196a2";x.fillStyle="#ebf6facd";x.lineWidth=10;x.lineCap="round";x.lineJoin="round";x.beginPath();x.moveTo(a.start.x,a.start.y);x.lineTo(a.end.x,a.end.y);x.stroke();x.beginPath();x.moveTo(a.end.x,a.end.y);x.lineTo(a.end.x-Math.cos(a.r-.62)*head,a.end.y+Math.sin(a.r-.62)*head);x.lineTo(a.end.x-Math.cos(a.r)*13,a.end.y+Math.sin(a.r)*13);x.lineTo(a.end.x-Math.cos(a.r+.62)*head,a.end.y+Math.sin(a.r+.62)*head);x.closePath();x.fill();x.stroke();x.globalAlpha=.16;x.fillStyle="#55e225";x.beginPath();x.arc(a.end.x,a.end.y,42,0,Math.PI*2);x.fill();x.restore()}
-function drawDrops(){x.save();x.fillStyle="#e7c735";x.strokeStyle="#9d7d04";x.lineWidth=1.2;for(const d of drops){if(!d.alive)continue;x.beginPath();x.arc(d.x,d.y,d.r,0,Math.PI*2);x.fill();x.stroke()}x.restore()}
-function go(){x.save();x.translate(850,100);x.fillStyle=mode==="aim"?"#57e52c":"#7f9480";x.strokeStyle="#0d1011";x.lineWidth=8;x.beginPath();x.arc(0,0,64,0,Math.PI*2);x.fill();x.stroke();x.strokeStyle="#ffffff73";x.lineWidth=4;x.beginPath();x.arc(-5,-7,49,.55,4.4);x.stroke();x.fillStyle="#101312";x.font="bold 45px Arial";x.textAlign="center";x.textBaseline="middle";x.fillText("GO!",1,2);x.restore()}
-function bottom(){x.fillStyle="#101316";x.font="29px Arial";x.textAlign="left";x.fillText(`Lives: ${lives}`,34,624);x.fillStyle="#050709d1";x.fillRect(22,642,W-44,60);x.strokeStyle="#ffffff29";x.lineWidth=2;x.strokeRect(22,642,W-44,60);x.fillStyle="#d8d8d8";x.font="bold 34px Arial";x.fillText(level.name,39,684);if(mode==="shoot"){x.textAlign="right";x.font="bold 26px Arial";x.fillText(`${hits} / ${level.goal}`,W-42,682);x.fillStyle="#55df2c";x.fillRect(W-260,651,210*Math.min(1,(hits+misses)/34),8)}}
-function draw(){if(isReverse()){x.save();x.translate(0,H);x.scale(1,-1);room();character();drawToilet();aim();drawDrops();x.restore();stats();go();bottom()}else{room();stats();character();drawToilet();aim();drawDrops();go();bottom()}}
-function frame(now){const dt=now-last;last=now;update(dt);draw();requestAnimationFrame(frame)}
-play.onclick=()=>start(Math.min(idx,unlocked-1));select.onclick=()=>{buildGrid();show("stages")};back.onclick=()=>show("title");how.onclick=()=>help.hidden=!help.hidden;retry.onclick=()=>{if(lives<=0)lives=level.lives;reset();face="worried";show("none")};next.onclick=()=>start(idx<levels.length-1?idx+1:0);home.onclick=()=>{mode="menu";show("title")};sound.onclick=()=>{soundOn=!soundOn;sound.textContent=`音：${soundOn?"ON":"OFF"}`;if(soundOn)beep(500,.05)};
-c.addEventListener("pointerdown",down);c.addEventListener("pointermove",move);c.addEventListener("pointerup",up);c.addEventListener("pointercancel",up);
-window.addEventListener("keydown",e=>{if(!screens.title.hidden||!screens.stages.hidden||!screens.result.hidden||mode!=="aim")return;let ok=true;switch(e.key){case"a":case"A":tilt=clamp(tilt-2,-58,38);break;case"d":case"D":tilt=clamp(tilt+2,-58,38);break;case"ArrowUp":angle=clamp(angle+(isReverse()?-2:2),-12,83);break;case"ArrowDown":angle=clamp(angle+(isReverse()?2:-2),-12,83);break;case"ArrowRight":force=clamp(force+4,70,172);break;case"ArrowLeft":force=clamp(force-4,70,172);break;case" ":case"Enter":launch();break;default:ok=false}if(ok)e.preventDefault()});
-buildGrid();show("title");requestAnimationFrame(frame);
-})();
-</script>
+  <main class="app">
+    <header class="header">
+      <div>
+        <h1>💩 うんこテトリス DX</h1>
+        <p class="subtitle">24種類のうんこ図形を積み上げて、横一列を消そう。</p>
+      </div>
+      <button id="soundButton" class="secondary sound-button" type="button">音 ON</button>
+    </header>
+
+    <section class="layout">
+      <aside class="panel left-panel">
+        <div>
+          <h2>ゲーム情報</h2>
+          <div class="stats">
+            <div class="stat">
+              <div class="stat-label">スコア</div>
+              <div id="score" class="stat-value">0</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">ライン</div>
+              <div id="lines" class="stat-value">0</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">レベル</div>
+              <div id="level" class="stat-value">1</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">連続消し</div>
+              <div id="combo" class="stat-value">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hold-box">
+          <h2>ホールド</h2>
+          <canvas id="holdCanvas" class="mini-canvas" width="180" height="130"></canvas>
+          <div id="holdName" class="piece-name">なし</div>
+        </div>
+      </aside>
+
+      <section class="board-area">
+        <div class="board-shell">
+          <canvas id="gameCanvas" width="360" height="720"></canvas>
+
+          <div id="startOverlay" class="overlay">
+            <div class="overlay-card">
+              <h2>💩 READY?</h2>
+              <p>
+                24種類のうんこ図形が登場します。<br>
+                長いものや大きなものほど高得点です。
+              </p>
+              <button id="startButton" class="primary" type="button">ゲーム開始</button>
+            </div>
+          </div>
+
+          <div id="pauseOverlay" class="overlay" hidden>
+            <div class="overlay-card">
+              <h2>一時停止</h2>
+              <p>うんこも休憩中です。</p>
+              <button id="resumeButton" class="primary" type="button">再開</button>
+            </div>
+          </div>
+
+          <div id="gameOverOverlay" class="overlay" hidden>
+            <div class="overlay-card">
+              <h2>GAME OVER</h2>
+              <p id="gameOverText">便器がいっぱいになりました。</p>
+              <button id="restartButton" class="primary" type="button">もう一度</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mobile-controls" aria-label="タッチ操作">
+          <button id="moveLeft" class="control-button" type="button" aria-label="左へ移動">←</button>
+          <button id="rotateLeft" class="control-button" type="button" aria-label="左回転">↶</button>
+          <button id="softDrop" class="control-button" type="button" aria-label="下へ移動">↓</button>
+          <button id="rotateRight" class="control-button" type="button" aria-label="右回転">↷</button>
+          <button id="moveRight" class="control-button" type="button" aria-label="右へ移動">→</button>
+          <button id="holdButton" class="control-button" type="button">HOLD</button>
+          <button id="hardDrop" class="control-button drop-button" type="button">落下</button>
+          <button id="pauseButtonMobile" class="control-button" type="button">停止</button>
+        </div>
+      </section>
+
+      <aside class="panel right-panel">
+        <div class="right-grid">
+          <div>
+            <h2>次のうんこ</h2>
+            <canvas id="nextCanvas" class="mini-canvas" width="180" height="260"></canvas>
+            <div id="nextName" class="piece-name"></div>
+          </div>
+
+          <div>
+            <h2>設定・操作</h2>
+            <div class="settings">
+              <label>
+                図形モード
+                <select id="shapeMode">
+                  <option value="all">全部入り・24種類</option>
+                  <option value="classic">基本形・7種類</option>
+                  <option value="wild">変わり種中心</option>
+                </select>
+              </label>
+
+              <label>
+                落下速度
+                <select id="speedMode">
+                  <option value="normal">ふつう</option>
+                  <option value="slow">ゆっくり</option>
+                  <option value="fast">速い</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="button-row">
+              <button id="pauseButton" class="secondary" type="button">一時停止</button>
+              <button id="resetButton" class="secondary" type="button">やり直す</button>
+            </div>
+
+            <div class="shape-count">💩 図形24種類</div>
+
+            <p class="help">
+              ← →：移動<br>
+              ↓：ゆっくり落下<br>
+              ↑／X：右回転<br>
+              Z：左回転<br>
+              Space：一気に落下<br>
+              C：ホールド<br>
+              P：一時停止
+            </p>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <p class="footer">ブラウザだけで動作します。進行状況は端末内に保存されません。</p>
+  </main>
+
+  <script>
+  (() => {
+    "use strict";
+
+    const COLS = 10;
+    const ROWS = 20;
+    const CELL = 36;
+
+    const gameCanvas = document.getElementById("gameCanvas");
+    const ctx = gameCanvas.getContext("2d");
+    const holdCanvas = document.getElementById("holdCanvas");
+    const holdCtx = holdCanvas.getContext("2d");
+    const nextCanvas = document.getElementById("nextCanvas");
+    const nextCtx = nextCanvas.getContext("2d");
+
+    const scoreEl = document.getElementById("score");
+    const linesEl = document.getElementById("lines");
+    const levelEl = document.getElementById("level");
+    const comboEl = document.getElementById("combo");
+    const holdNameEl = document.getElementById("holdName");
+    const nextNameEl = document.getElementById("nextName");
+
+    const startOverlay = document.getElementById("startOverlay");
+    const pauseOverlay = document.getElementById("pauseOverlay");
+    const gameOverOverlay = document.getElementById("gameOverOverlay");
+    const gameOverText = document.getElementById("gameOverText");
+
+    const COLORS = [
+      "#7b3f17", "#944f1e", "#5f3116", "#a86024",
+      "#6b4026", "#8b5a2b", "#4e2d1a", "#b0692b"
+    ];
+
+    const FACE_COLORS = ["#fff8de", "#ffe47a", "#ffca48"];
+
+    // 24種類：基本テトロミノ7種＋三角形・五角形・変形パーツ17種
+    const SHAPES = [
+      { id:"I", name:"なが〜いうんこ", group:"classic", color:0, cells:[[1,1,1,1]] },
+      { id:"O", name:"四角いうんこ", group:"classic", color:1, cells:[[1,1],[1,1]] },
+      { id:"T", name:"王冠うんこ", group:"classic", color:2, cells:[[1,1,1],[0,1,0]] },
+      { id:"S", name:"くねくね右", group:"classic", color:3, cells:[[0,1,1],[1,1,0]] },
+      { id:"Z", name:"くねくね左", group:"classic", color:4, cells:[[1,1,0],[0,1,1]] },
+      { id:"J", name:"左かぎうんこ", group:"classic", color:5, cells:[[1,0,0],[1,1,1]] },
+      { id:"L", name:"右かぎうんこ", group:"classic", color:6, cells:[[0,0,1],[1,1,1]] },
+
+      { id:"DOT", name:"ひとつぶうんこ", group:"wild", color:7, cells:[[1]] },
+      { id:"DOMINO", name:"ふたごうんこ", group:"wild", color:0, cells:[[1,1]] },
+      { id:"TRI", name:"さんぼんうんこ", group:"wild", color:1, cells:[[1,1,1]] },
+      { id:"CORNER3", name:"ミニかぎうんこ", group:"wild", color:2, cells:[[1,0],[1,1]] },
+      { id:"PLUS", name:"十字うんこ", group:"wild", color:3, cells:[[0,1,0],[1,1,1],[0,1,0]] },
+      { id:"P", name:"かたまりうんこ", group:"wild", color:4, cells:[[1,1],[1,1],[1,0]] },
+      { id:"U", name:"便座うんこ", group:"wild", color:5, cells:[[1,0,1],[1,1,1]] },
+      { id:"V", name:"ブーメランうんこ", group:"wild", color:6, cells:[[1,0,0],[1,0,0],[1,1,1]] },
+      { id:"W", name:"階段うんこ", group:"wild", color:7, cells:[[1,0,0],[1,1,0],[0,1,1]] },
+      { id:"X", name:"スーパー十字", group:"wild", color:0, cells:[[0,1,0],[1,1,1],[0,1,0]] },
+      { id:"F", name:"ふしぎうんこ", group:"wild", color:1, cells:[[0,1,1],[1,1,0],[0,1,0]] },
+      { id:"N", name:"長くねうんこ", group:"wild", color:2, cells:[[0,1],[0,1],[1,1],[1,0]] },
+      { id:"Y", name:"しっぽうんこ", group:"wild", color:3, cells:[[0,1],[1,1],[0,1],[0,1]] },
+      { id:"BIGL", name:"特大かぎうんこ", group:"wild", color:4, cells:[[1,0,0],[1,0,0],[1,0,0],[1,1,1]] },
+      { id:"STAIR", name:"大階段うんこ", group:"wild", color:5, cells:[[1,1,0,0],[0,1,1,0],[0,0,1,1]] },
+      { id:"CROWN", name:"王さまうんこ", group:"wild", color:6, cells:[[1,0,1],[1,1,1],[0,1,0]] },
+      { id:"MEGA", name:"メガうんこ", group:"wild", color:7, cells:[[1,1,1],[1,1,1]] }
+    ];
+
+    let board = createBoard();
+    let current = null;
+    let queue = [];
+    let holdPiece = null;
+    let holdUsed = false;
+
+    let score = 0;
+    let lines = 0;
+    let level = 1;
+    let combo = 0;
+
+    let running = false;
+    let paused = false;
+    let gameOver = false;
+    let soundOn = true;
+
+    let lastTime = 0;
+    let dropAccumulator = 0;
+    let animationFrame = 0;
+
+    function createBoard() {
+      return Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+    }
+
+    function cloneMatrix(matrix) {
+      return matrix.map(row => row.slice());
+    }
+
+    function availableShapes() {
+      const mode = document.getElementById("shapeMode").value;
+      if (mode === "classic") return SHAPES.filter(s => s.group === "classic");
+      if (mode === "wild") return SHAPES.filter(s => s.group === "wild");
+      return SHAPES;
+    }
+
+    function makeBag() {
+      const bag = availableShapes().slice();
+      for (let i = bag.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [bag[i], bag[j]] = [bag[j], bag[i]];
+      }
+      return bag;
+    }
+
+    function refillQueue() {
+      while (queue.length < 8) {
+        queue.push(...makeBag());
+      }
+    }
+
+    function createPiece(shape) {
+      const matrix = cloneMatrix(shape.cells);
+      return {
+        shape,
+        matrix,
+        x: Math.floor(COLS / 2) - Math.ceil(matrix[0].length / 2),
+        y: -topPadding(matrix)
+      };
+    }
+
+    function topPadding(matrix) {
+      let count = 0;
+      for (const row of matrix) {
+        if (row.some(Boolean)) break;
+        count++;
+      }
+      return count;
+    }
+
+    function spawnPiece() {
+      refillQueue();
+      current = createPiece(queue.shift());
+      holdUsed = false;
+
+      if (collides(current, 0, 0, current.matrix)) {
+        endGame();
+      }
+
+      updateSidePanels();
+    }
+
+    function collides(piece, offsetX = 0, offsetY = 0, matrix = piece.matrix) {
+      for (let y = 0; y < matrix.length; y++) {
+        for (let x = 0; x < matrix[y].length; x++) {
+          if (!matrix[y][x]) continue;
+
+          const bx = piece.x + x + offsetX;
+          const by = piece.y + y + offsetY;
+
+          if (bx < 0 || bx >= COLS || by >= ROWS) return true;
+          if (by >= 0 && board[by][bx]) return true;
+        }
+      }
+      return false;
+    }
+
+    function mergePiece() {
+      current.matrix.forEach((row, y) => {
+        row.forEach((value, x) => {
+          if (!value) return;
+          const by = current.y + y;
+          const bx = current.x + x;
+          if (by >= 0 && by < ROWS && bx >= 0 && bx < COLS) {
+            board[by][bx] = {
+              color: current.shape.color,
+              face: Math.floor(Math.random() * 3)
+            };
+          }
+        });
+      });
+
+      const cleared = clearLines();
+
+      if (cleared > 0) {
+        combo += 1;
+        const base = [0, 100, 300, 550, 900, 1300][Math.min(cleared, 5)];
+        score += base * level + Math.max(0, combo - 1) * 50 * level;
+        lines += cleared;
+        level = Math.floor(lines / 8) + 1;
+        beepSequence(cleared);
+      } else {
+        combo = 0;
+        beep(115, .04);
+      }
+
+      updateStats();
+      spawnPiece();
+    }
+
+    function clearLines() {
+      let count = 0;
+
+      for (let y = ROWS - 1; y >= 0; y--) {
+        if (board[y].every(Boolean)) {
+          board.splice(y, 1);
+          board.unshift(Array(COLS).fill(null));
+          count++;
+          y++;
+        }
+      }
+
+      return count;
+    }
+
+    function move(dx) {
+      if (!canControl()) return;
+      if (!collides(current, dx, 0)) {
+        current.x += dx;
+        beep(180, .018);
+      }
+    }
+
+    function softDrop() {
+      if (!canControl()) return;
+
+      if (!collides(current, 0, 1)) {
+        current.y += 1;
+        score += 1;
+        updateStats();
+      } else {
+        mergePiece();
+      }
+
+      dropAccumulator = 0;
+    }
+
+    function hardDrop() {
+      if (!canControl()) return;
+
+      let distance = 0;
+      while (!collides(current, 0, 1)) {
+        current.y++;
+        distance++;
+      }
+
+      score += distance * 2;
+      updateStats();
+      beep(340, .05);
+      mergePiece();
+    }
+
+    function rotate(direction) {
+      if (!canControl()) return;
+
+      const rotated = rotateMatrix(current.matrix, direction);
+      const kicks = [0, -1, 1, -2, 2];
+
+      for (const kick of kicks) {
+        if (!collides(current, kick, 0, rotated)) {
+          current.matrix = rotated;
+          current.x += kick;
+          beep(260, .025);
+          return;
+        }
+      }
+    }
+
+    function rotateMatrix(matrix, direction) {
+      const h = matrix.length;
+      const w = matrix[0].length;
+
+      if (direction > 0) {
+        return Array.from({ length: w }, (_, y) =>
+          Array.from({ length: h }, (_, x) => matrix[h - 1 - x][y])
+        );
+      }
+
+      return Array.from({ length: w }, (_, y) =>
+        Array.from({ length: h }, (_, x) => matrix[x][w - 1 - y])
+      );
+    }
+
+    function hold() {
+      if (!canControl() || holdUsed) return;
+
+      const oldShape = current.shape;
+
+      if (holdPiece) {
+        current = createPiece(holdPiece);
+        holdPiece = oldShape;
+
+        if (collides(current)) {
+          endGame();
+          return;
+        }
+      } else {
+        holdPiece = oldShape;
+        refillQueue();
+        current = createPiece(queue.shift());
+      }
+
+      holdUsed = true;
+      updateSidePanels();
+      beep(420, .045);
+    }
+
+    function ghostY() {
+      if (!current) return 0;
+      let offset = 0;
+      while (!collides(current, 0, offset + 1)) offset++;
+      return current.y + offset;
+    }
+
+    function dropInterval() {
+      const speedMode = document.getElementById("speedMode").value;
+      const multiplier = speedMode === "slow" ? 1.35 : speedMode === "fast" ? .7 : 1;
+      return Math.max(80, (760 - (level - 1) * 55) * multiplier);
+    }
+
+    function update(time) {
+      if (!running || paused || gameOver) return;
+
+      const delta = Math.min(100, time - lastTime);
+      lastTime = time;
+      dropAccumulator += delta;
+
+      if (dropAccumulator >= dropInterval()) {
+        if (!collides(current, 0, 1)) {
+          current.y++;
+        } else {
+          mergePiece();
+        }
+        dropAccumulator = 0;
+      }
+    }
+
+    function draw() {
+      drawBoardBackground();
+
+      board.forEach((row, y) => {
+        row.forEach((cell, x) => {
+          if (cell) drawPoopCell(ctx, x * CELL, y * CELL, CELL, cell.color, cell.face, 1);
+        });
+      });
+
+      if (current) {
+        drawMatrix(
+          ctx,
+          current.matrix,
+          current.x,
+          ghostY(),
+          current.shape.color,
+          1,
+          true
+        );
+
+        drawMatrix(
+          ctx,
+          current.matrix,
+          current.x,
+          current.y,
+          current.shape.color,
+          1,
+          false
+        );
+      }
+    }
+
+    function drawBoardBackground() {
+      ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+
+      const gradient = ctx.createLinearGradient(0, 0, 0, gameCanvas.height);
+      gradient.addColorStop(0, "#1a0e27");
+      gradient.addColorStop(1, "#0c0712");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+
+      ctx.strokeStyle = "rgba(255,255,255,.055)";
+      ctx.lineWidth = 1;
+
+      for (let x = 0; x <= COLS; x++) {
+        ctx.beginPath();
+        ctx.moveTo(x * CELL + .5, 0);
+        ctx.lineTo(x * CELL + .5, ROWS * CELL);
+        ctx.stroke();
+      }
+
+      for (let y = 0; y <= ROWS; y++) {
+        ctx.beginPath();
+        ctx.moveTo(0, y * CELL + .5);
+        ctx.lineTo(COLS * CELL, y * CELL + .5);
+        ctx.stroke();
+      }
+    }
+
+    function drawMatrix(targetCtx, matrix, gridX, gridY, colorIndex, scale, ghost) {
+      matrix.forEach((row, y) => {
+        row.forEach((value, x) => {
+          if (!value) return;
+
+          const py = (gridY + y) * CELL * scale;
+          if (py < -CELL * scale) return;
+
+          drawPoopCell(
+            targetCtx,
+            (gridX + x) * CELL * scale,
+            py,
+            CELL * scale,
+            colorIndex,
+            (x + y) % 3,
+            ghost ? .2 : 1
+          );
+        });
+      });
+    }
+
+    function drawPoopCell(targetCtx, px, py, size, colorIndex, faceIndex, alpha) {
+      const pad = size * .07;
+      const x = px + pad;
+      const y = py + pad;
+      const s = size - pad * 2;
+
+      targetCtx.save();
+      targetCtx.globalAlpha = alpha;
+
+      const base = COLORS[colorIndex % COLORS.length];
+      const grad = targetCtx.createRadialGradient(
+        x + s * .34, y + s * .23, s * .04,
+        x + s * .5, y + s * .54, s * .65
+      );
+      grad.addColorStop(0, lighten(base, 28));
+      grad.addColorStop(.42, base);
+      grad.addColorStop(1, darken(base, 24));
+
+      targetCtx.fillStyle = grad;
+      targetCtx.strokeStyle = darken(base, 38);
+      targetCtx.lineWidth = Math.max(1.5, size * .045);
+      targetCtx.lineJoin = "round";
+
+      // 1マスの中に、小さな巻きうんこのシルエットを描く
+      targetCtx.beginPath();
+      targetCtx.moveTo(x + s * .18, y + s * .82);
+      targetCtx.bezierCurveTo(x + s * .06, y + s * .69, x + s * .16, y + s * .52, x + s * .32, y + s * .5);
+      targetCtx.bezierCurveTo(x + s * .22, y + s * .37, x + s * .32, y + s * .25, x + s * .47, y + s * .27);
+      targetCtx.bezierCurveTo(x + s * .42, y + s * .15, x + s * .53, y + s * .07, x + s * .63, y + s * .17);
+      targetCtx.bezierCurveTo(x + s * .77, y + s * .2, x + s * .83, y + s * .33, x + s * .75, y + s * .43);
+      targetCtx.bezierCurveTo(x + s * .95, y + s * .49, x + s * .97, y + s * .72, x + s * .82, y + s * .82);
+      targetCtx.closePath();
+      targetCtx.fill();
+      targetCtx.stroke();
+
+      if (!alpha || alpha < .5) {
+        targetCtx.restore();
+        return;
+      }
+
+      // 光沢
+      targetCtx.strokeStyle = "rgba(255,255,255,.25)";
+      targetCtx.lineWidth = Math.max(1, size * .025);
+      targetCtx.beginPath();
+      targetCtx.arc(x + s * .45, y + s * .3, s * .17, Math.PI * 1.15, Math.PI * 1.75);
+      targetCtx.stroke();
+
+      // 顔
+      const eyeY = y + s * .54;
+      const eyeGap = s * .15;
+      const centerX = x + s * .52;
+      targetCtx.fillStyle = "#17100d";
+      targetCtx.beginPath();
+      targetCtx.arc(centerX - eyeGap, eyeY, s * .042, 0, Math.PI * 2);
+      targetCtx.arc(centerX + eyeGap, eyeY, s * .042, 0, Math.PI * 2);
+      targetCtx.fill();
+
+      targetCtx.strokeStyle = FACE_COLORS[faceIndex % FACE_COLORS.length];
+      targetCtx.lineWidth = Math.max(1.4, size * .038);
+      targetCtx.lineCap = "round";
+      targetCtx.beginPath();
+
+      if (faceIndex % 3 === 0) {
+        targetCtx.arc(centerX, y + s * .64, s * .12, 0, Math.PI);
+      } else if (faceIndex % 3 === 1) {
+        targetCtx.moveTo(centerX - s * .1, y + s * .69);
+        targetCtx.lineTo(centerX + s * .1, y + s * .69);
+      } else {
+        targetCtx.arc(centerX, y + s * .76, s * .1, Math.PI, Math.PI * 2);
+      }
+
+      targetCtx.stroke();
+      targetCtx.restore();
+    }
+
+    function lighten(hex, amount) {
+      return adjustColor(hex, amount);
+    }
+
+    function darken(hex, amount) {
+      return adjustColor(hex, -amount);
+    }
+
+    function adjustColor(hex, amount) {
+      const value = hex.replace("#", "");
+      const num = parseInt(value, 16);
+      const r = Math.max(0, Math.min(255, (num >> 16) + amount));
+      const g = Math.max(0, Math.min(255, ((num >> 8) & 255) + amount));
+      const b = Math.max(0, Math.min(255, (num & 255) + amount));
+      return `rgb(${r},${g},${b})`;
+    }
+
+    function updateSidePanels() {
+      drawPreviewCanvas(holdCtx, holdCanvas, holdPiece ? [holdPiece] : []);
+      holdNameEl.textContent = holdPiece ? holdPiece.name : "なし";
+
+      refillQueue();
+      const previews = queue.slice(0, 3);
+      drawPreviewCanvas(nextCtx, nextCanvas, previews);
+      nextNameEl.textContent = previews[0]?.name || "";
+    }
+
+    function drawPreviewCanvas(targetCtx, canvas, shapes) {
+      targetCtx.clearRect(0, 0, canvas.width, canvas.height);
+      targetCtx.fillStyle = "rgba(0,0,0,.2)";
+      targetCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const slotHeight = canvas.height / Math.max(1, shapes.length);
+
+      shapes.forEach((shape, index) => {
+        const matrix = shape.cells;
+        const maxDim = Math.max(matrix.length, matrix[0].length);
+        const cellSize = Math.min(30, slotHeight * .65 / maxDim, canvas.width * .68 / maxDim);
+        const width = matrix[0].length * cellSize;
+        const height = matrix.length * cellSize;
+        const offsetX = (canvas.width - width) / 2;
+        const offsetY = index * slotHeight + (slotHeight - height) / 2;
+
+        matrix.forEach((row, y) => {
+          row.forEach((value, x) => {
+            if (!value) return;
+            drawPoopCell(
+              targetCtx,
+              offsetX + x * cellSize,
+              offsetY + y * cellSize,
+              cellSize,
+              shape.color,
+              (x + y) % 3,
+              1
+            );
+          });
+        });
+      });
+    }
+
+    function updateStats() {
+      scoreEl.textContent = score.toLocaleString();
+      linesEl.textContent = lines;
+      levelEl.textContent = level;
+      comboEl.textContent = combo;
+    }
+
+    function resetGame() {
+      board = createBoard();
+      queue = [];
+      holdPiece = null;
+      holdUsed = false;
+      score = 0;
+      lines = 0;
+      level = 1;
+      combo = 0;
+      dropAccumulator = 0;
+      gameOver = false;
+      paused = false;
+      running = true;
+
+      startOverlay.hidden = true;
+      pauseOverlay.hidden = true;
+      gameOverOverlay.hidden = true;
+
+      updateStats();
+      spawnPiece();
+      lastTime = performance.now();
+      beepSequence(3);
+    }
+
+    function endGame() {
+      gameOver = true;
+      running = false;
+      gameOverText.textContent =
+        `スコア ${score.toLocaleString()}・${lines}ライン。便器がいっぱいです。`;
+      gameOverOverlay.hidden = false;
+      beep(85, .4);
+    }
+
+    function togglePause() {
+      if (!running || gameOver) return;
+      paused = !paused;
+      pauseOverlay.hidden = !paused;
+      lastTime = performance.now();
+      beep(paused ? 180 : 360, .05);
+    }
+
+    function canControl() {
+      return running && !paused && !gameOver && current;
+    }
+
+    function loop(time) {
+      update(time);
+      draw();
+      animationFrame = requestAnimationFrame(loop);
+    }
+
+    function beep(frequency, duration) {
+      if (!soundOn) return;
+
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        const audio = beep.audio || (beep.audio = new AudioContextClass());
+        const oscillator = audio.createOscillator();
+        const gain = audio.createGain();
+
+        oscillator.type = "square";
+        oscillator.frequency.value = frequency;
+        gain.gain.setValueAtTime(.035, audio.currentTime);
+        gain.gain.exponentialRampToValueAtTime(.001, audio.currentTime + duration);
+
+        oscillator.connect(gain).connect(audio.destination);
+        oscillator.start();
+        oscillator.stop(audio.currentTime + duration);
+      } catch (_) {}
+    }
+
+    function beepSequence(count) {
+      const notes = count >= 4 ? [440, 620, 820, 1040] : [300, 420, 560];
+      notes.slice(0, Math.max(1, count)).forEach((note, index) => {
+        setTimeout(() => beep(note, .07), index * 80);
+      });
+    }
+
+    function bindRepeatButton(id, action) {
+      const button = document.getElementById(id);
+      let timer = null;
+      let interval = null;
+
+      const stop = () => {
+        clearTimeout(timer);
+        clearInterval(interval);
+        timer = null;
+        interval = null;
+      };
+
+      button.addEventListener("pointerdown", event => {
+        event.preventDefault();
+        action();
+        timer = setTimeout(() => {
+          interval = setInterval(action, 85);
+        }, 280);
+      });
+
+      ["pointerup", "pointercancel", "pointerleave"].forEach(type => {
+        button.addEventListener(type, stop);
+      });
+    }
+
+    document.getElementById("startButton").addEventListener("click", resetGame);
+    document.getElementById("restartButton").addEventListener("click", resetGame);
+    document.getElementById("resumeButton").addEventListener("click", togglePause);
+    document.getElementById("pauseButton").addEventListener("click", togglePause);
+    document.getElementById("pauseButtonMobile").addEventListener("click", togglePause);
+    document.getElementById("resetButton").addEventListener("click", resetGame);
+
+    document.getElementById("soundButton").addEventListener("click", event => {
+      soundOn = !soundOn;
+      event.currentTarget.textContent = `音 ${soundOn ? "ON" : "OFF"}`;
+      if (soundOn) beep(420, .05);
+    });
+
+    document.getElementById("shapeMode").addEventListener("change", () => {
+      if (running) resetGame();
+      else {
+        queue = [];
+        refillQueue();
+        updateSidePanels();
+      }
+    });
+
+    bindRepeatButton("moveLeft", () => move(-1));
+    bindRepeatButton("moveRight", () => move(1));
+    bindRepeatButton("softDrop", softDrop);
+
+    document.getElementById("rotateLeft").addEventListener("click", () => rotate(-1));
+    document.getElementById("rotateRight").addEventListener("click", () => rotate(1));
+    document.getElementById("hardDrop").addEventListener("click", hardDrop);
+    document.getElementById("holdButton").addEventListener("click", hold);
+
+    window.addEventListener("keydown", event => {
+      const controlledKeys = [
+        "ArrowLeft", "ArrowRight", "ArrowDown", "ArrowUp",
+        " ", "z", "Z", "x", "X", "c", "C", "p", "P"
+      ];
+
+      if (controlledKeys.includes(event.key)) event.preventDefault();
+
+      if (event.repeat && ["ArrowUp", "z", "Z", "x", "X", "c", "C", "p", "P", " "].includes(event.key)) {
+        return;
+      }
+
+      switch (event.key) {
+        case "ArrowLeft": move(-1); break;
+        case "ArrowRight": move(1); break;
+        case "ArrowDown": softDrop(); break;
+        case "ArrowUp":
+        case "x":
+        case "X":
+          rotate(1);
+          break;
+        case "z":
+        case "Z":
+          rotate(-1);
+          break;
+        case " ":
+          hardDrop();
+          break;
+        case "c":
+        case "C":
+          hold();
+          break;
+        case "p":
+        case "P":
+          togglePause();
+          break;
+      }
+    }, { passive: false });
+
+    // 横スワイプ・下スワイプ・タップ回転
+    let touchStart = null;
+
+    gameCanvas.addEventListener("pointerdown", event => {
+      if (event.pointerType === "mouse") return;
+      touchStart = {
+        x: event.clientX,
+        y: event.clientY,
+        time: performance.now()
+      };
+      gameCanvas.setPointerCapture?.(event.pointerId);
+    });
+
+    gameCanvas.addEventListener("pointerup", event => {
+      if (!touchStart || event.pointerType === "mouse") return;
+
+      const dx = event.clientX - touchStart.x;
+      const dy = event.clientY - touchStart.y;
+      const distance = Math.hypot(dx, dy);
+      const elapsed = performance.now() - touchStart.time;
+
+      if (distance < 18 && elapsed < 320) {
+        rotate(1);
+      } else if (Math.abs(dx) > Math.abs(dy)) {
+        move(dx > 0 ? 1 : -1);
+      } else if (dy > 45) {
+        hardDrop();
+      }
+
+      touchStart = null;
+    });
+
+    refillQueue();
+    updateSidePanels();
+    updateStats();
+    animationFrame = requestAnimationFrame(loop);
+  })();
+  </script>
 </body>
 </html>
