@@ -1,0 +1,737 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>トイレにシュート！</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #eef2f7;
+      --panel: #ffffff;
+      --text: #172033;
+      --muted: #667085;
+      --border: #cfd6e2;
+      --accent: #3867d6;
+      --accent-text: #ffffff;
+      --stream: #f2c94c;
+      --ground: #dce8dc;
+      --success: #1b8a5a;
+      --danger: #b54747;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 20px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    .app {
+      width: min(900px, 100%);
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.5rem, 4vw, 2.2rem);
+    }
+
+    .lead {
+      margin: 0 0 16px;
+      color: var(--muted);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .stat {
+      padding: 12px;
+      text-align: center;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+
+    .stat-label {
+      font-size: .82rem;
+      color: var(--muted);
+    }
+
+    .stat-value {
+      margin-top: 2px;
+      font-size: 1.45rem;
+      font-weight: 800;
+    }
+
+    .game-frame {
+      overflow: hidden;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      touch-action: none;
+    }
+
+    .message {
+      margin: 12px 0;
+      padding: 12px;
+      text-align: center;
+      font-weight: 700;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 12px;
+    }
+
+    .panel {
+      padding: 14px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+
+    .range-row {
+      margin-bottom: 14px;
+    }
+
+    .range-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .range-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+
+    .badge {
+      min-width: 58px;
+      padding: 4px 10px;
+      text-align: center;
+      color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 12%, transparent);
+      border-radius: 999px;
+      font-weight: 800;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .pad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    button {
+      min-height: 48px;
+      padding: 10px 12px;
+      font: inherit;
+      font-weight: 800;
+      color: var(--text);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    button:hover { filter: brightness(.97); }
+    button:active { transform: translateY(1px); }
+
+    button:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--accent) 40%, transparent);
+      outline-offset: 2px;
+    }
+
+    .launch {
+      color: var(--accent-text);
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .wide {
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .help {
+      margin: 10px 0 0;
+      font-size: .88rem;
+      line-height: 1.55;
+      color: var(--muted);
+    }
+
+    @media (max-width: 700px) {
+      body { padding: 10px; }
+      .controls { grid-template-columns: 1fr; }
+      .stats { gap: 6px; }
+      .stat { padding: 9px 6px; }
+      .stat-value { font-size: 1.2rem; }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111827;
+        --panel: #1f2937;
+        --text: #f3f4f6;
+        --muted: #b8c1ce;
+        --border: #465164;
+        --ground: #26382f;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <h1>トイレにシュート！</h1>
+    <p class="lead">股間から発射される軌道を調整して、便器の中を狙おう。</p>
+
+    <section class="stats" aria-label="ゲーム状況">
+      <div class="stat">
+        <div class="stat-label">スコア</div>
+        <div id="score" class="stat-value">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">チャレンジ</div>
+        <div id="attempts" class="stat-value">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">連続成功</div>
+        <div id="streak" class="stat-value">0</div>
+      </div>
+    </section>
+
+    <div class="game-frame">
+      <canvas id="gameCanvas" width="760" height="430" aria-label="トイレを狙うゲーム画面"></canvas>
+    </div>
+
+    <div id="message" class="message" aria-live="polite">
+      ↑↓で方向、←→で強さを調整しよう！
+    </div>
+
+    <section class="controls">
+      <div class="panel">
+        <div class="range-row">
+          <div class="range-head">
+            <label for="angleRange">方向</label>
+            <span id="angleLabel" class="badge">45°</span>
+          </div>
+          <input id="angleRange" type="range" min="10" max="75" value="45">
+        </div>
+
+        <div class="range-row">
+          <div class="range-head">
+            <label for="powerRange">強さ</label>
+            <span id="powerLabel" class="badge">14</span>
+          </div>
+          <input id="powerRange" type="range" min="7" max="22" value="14">
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="pad">
+          <span></span>
+          <button id="upButton" type="button" aria-label="方向を上げる">↑</button>
+          <span></span>
+
+          <button id="leftButton" type="button" aria-label="強さを弱くする">←</button>
+          <button id="launchButton" class="launch" type="button">発射！</button>
+          <button id="rightButton" type="button" aria-label="強さを強くする">→</button>
+
+          <span></span>
+          <button id="downButton" type="button" aria-label="方向を下げる">↓</button>
+          <span></span>
+        </div>
+
+        <button id="newTargetButton" class="wide" type="button">トイレの位置を変える</button>
+        <p class="help">キーボード操作：矢印キーで調整、スペースキーで発射。</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+
+      const angleRange = document.getElementById("angleRange");
+      const powerRange = document.getElementById("powerRange");
+      const angleLabel = document.getElementById("angleLabel");
+      const powerLabel = document.getElementById("powerLabel");
+      const message = document.getElementById("message");
+      const scoreEl = document.getElementById("score");
+      const attemptsEl = document.getElementById("attempts");
+      const streakEl = document.getElementById("streak");
+      const launchButton = document.getElementById("launchButton");
+
+      const W = canvas.width;
+      const H = canvas.height;
+      const groundY = 372;
+
+      // 股間の少し前を発射位置にしています。
+      const origin = { x: 113, y: 291 };
+
+      let score = 0;
+      let attempts = 0;
+      let streak = 0;
+      let targetX = 555;
+      let active = false;
+      let shot = null;
+      let trail = [];
+      let splashes = [];
+      let resultLocked = false;
+
+      function cssVar(name, fallback) {
+        const value = getComputedStyle(document.documentElement)
+          .getPropertyValue(name)
+          .trim();
+        return value || fallback;
+      }
+
+      function colors() {
+        return {
+          panel: cssVar("--panel", "#ffffff"),
+          text: cssVar("--text", "#172033"),
+          muted: cssVar("--muted", "#667085"),
+          border: cssVar("--border", "#cfd6e2"),
+          accent: cssVar("--accent", "#3867d6"),
+          stream: cssVar("--stream", "#f2c94c"),
+          ground: cssVar("--ground", "#dce8dc")
+        };
+      }
+
+      function updateLabels() {
+        angleLabel.textContent = angleRange.value + "°";
+        powerLabel.textContent = powerRange.value;
+      }
+
+      function updateStats() {
+        scoreEl.textContent = score;
+        attemptsEl.textContent = attempts;
+        streakEl.textContent = streak;
+      }
+
+      function setMessage(text) {
+        message.textContent = text;
+      }
+
+      function randomizeTarget() {
+        if (active) return;
+        targetX = 485 + Math.random() * 145;
+        trail = [];
+        splashes = [];
+        shot = null;
+        setMessage("新しいトイレです。狙いを定めよう！");
+      }
+
+      function adjustAngle(delta) {
+        if (active) return;
+        angleRange.value = Math.max(
+          Number(angleRange.min),
+          Math.min(Number(angleRange.max), Number(angleRange.value) + delta)
+        );
+        updateLabels();
+      }
+
+      function adjustPower(delta) {
+        if (active) return;
+        powerRange.value = Math.max(
+          Number(powerRange.min),
+          Math.min(Number(powerRange.max), Number(powerRange.value) + delta)
+        );
+        updateLabels();
+      }
+
+      function launch() {
+        if (active) return;
+
+        attempts += 1;
+        updateStats();
+        resultLocked = false;
+        active = true;
+        launchButton.disabled = true;
+        trail = [];
+        splashes = [];
+
+        const angle = Number(angleRange.value) * Math.PI / 180;
+        const power = Number(powerRange.value);
+
+        shot = {
+          x: origin.x,
+          y: origin.y,
+          vx: Math.cos(angle) * power,
+          vy: -Math.sin(angle) * power,
+          life: 0
+        };
+
+        setMessage("発射中……便器の中に入るかな？");
+      }
+
+      function finish(success) {
+        if (resultLocked) return;
+
+        resultLocked = true;
+        active = false;
+        launchButton.disabled = false;
+
+        if (success) {
+          streak += 1;
+          score += 100 + Math.min(streak * 20, 100);
+          setMessage("成功！ 便器の中に入りました！ 🎉");
+          createSplash(targetX + 59, 293, true);
+
+          window.setTimeout(() => {
+            targetX = 485 + Math.random() * 145;
+            trail = [];
+            splashes = [];
+            shot = null;
+            setMessage("次のトイレを狙おう！");
+          }, 1000);
+        } else {
+          streak = 0;
+          setMessage("おしい！ 方向か強さを調整して再挑戦！");
+          createSplash(
+            shot ? shot.x : origin.x,
+            Math.min(groundY - 3, shot ? shot.y : groundY),
+            false
+          );
+        }
+
+        updateStats();
+      }
+
+      function createSplash(x, y, success) {
+        const count = success ? 16 : 9;
+
+        for (let i = 0; i < count; i += 1) {
+          splashes.push({
+            x,
+            y,
+            vx: (Math.random() - 0.5) * 5,
+            vy: -Math.random() * 5 - 1,
+            life: 35 + Math.random() * 20
+          });
+        }
+      }
+
+      function updatePhysics() {
+        if (active && shot) {
+          shot.vy += 0.42;
+          shot.x += shot.vx;
+          shot.y += shot.vy;
+          shot.life += 1;
+
+          trail.push({ x: shot.x, y: shot.y });
+          if (trail.length > 45) trail.shift();
+
+          const bowlLeft = targetX + 16;
+          const bowlRight = targetX + 105;
+          const bowlTop = 279;
+          const bowlBottom = 313;
+
+          const enteredBowl =
+            shot.x >= bowlLeft &&
+            shot.x <= bowlRight &&
+            shot.y >= bowlTop &&
+            shot.y <= bowlBottom &&
+            shot.vy > 0;
+
+          if (enteredBowl) {
+            finish(true);
+          } else if (
+            shot.y >= groundY ||
+            shot.x > W + 30 ||
+            shot.y > H + 30 ||
+            shot.life > 190
+          ) {
+            finish(false);
+          }
+        }
+
+        for (const p of splashes) {
+          p.vy += 0.18;
+          p.x += p.vx;
+          p.y += p.vy;
+          p.life -= 1;
+        }
+
+        splashes = splashes.filter(p => p.life > 0);
+      }
+
+      function drawBackground(c) {
+        ctx.fillStyle = c.panel;
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.fillStyle = c.ground;
+        ctx.fillRect(0, groundY, W, H - groundY);
+
+        ctx.strokeStyle = c.border;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, groundY);
+        ctx.lineTo(W, groundY);
+        ctx.stroke();
+
+        ctx.globalAlpha = 0.14;
+        ctx.fillStyle = c.accent;
+        ctx.beginPath();
+        ctx.arc(665, 72, 48, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+
+      function drawPlayer(c) {
+        ctx.save();
+        ctx.strokeStyle = c.text;
+        ctx.fillStyle = c.panel;
+        ctx.lineWidth = 6;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+
+        // 頭
+        ctx.beginPath();
+        ctx.arc(70, 205, 23, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // 背中・胴体
+        ctx.beginPath();
+        ctx.moveTo(73, 230);
+        ctx.quadraticCurveTo(82, 253, 89, 286);
+        ctx.stroke();
+
+        // 腕
+        ctx.beginPath();
+        ctx.moveTo(78, 246);
+        ctx.lineTo(111, 269);
+        ctx.stroke();
+
+        // 骨盤
+        ctx.beginPath();
+        ctx.moveTo(84, 286);
+        ctx.lineTo(101, 289);
+        ctx.stroke();
+
+        // 脚
+        ctx.beginPath();
+        ctx.moveTo(88, 291);
+        ctx.lineTo(65, 365);
+        ctx.moveTo(98, 292);
+        ctx.lineTo(123, 365);
+        ctx.stroke();
+
+        // 発射位置が分かる小さな目印
+        ctx.fillStyle = c.accent;
+        ctx.beginPath();
+        ctx.arc(origin.x, origin.y, 5.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = c.text;
+        ctx.font = "15px system-ui, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("プレイヤー", 88, 405);
+        ctx.restore();
+      }
+
+      function drawToilet(c) {
+        ctx.save();
+        ctx.strokeStyle = c.text;
+        ctx.fillStyle = c.panel;
+        ctx.lineWidth = 3;
+
+        // タンク
+        ctx.beginPath();
+        roundRect(ctx, targetX + 63, 217, 62, 77, 10);
+        ctx.fill();
+        ctx.stroke();
+
+        // 便座
+        ctx.beginPath();
+        ctx.ellipse(targetX + 60, 294, 60, 18, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // 便器の穴
+        ctx.fillStyle = c.ground;
+        ctx.beginPath();
+        ctx.ellipse(targetX + 60, 291, 43, 10, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // 本体
+        ctx.fillStyle = c.panel;
+        ctx.beginPath();
+        ctx.moveTo(targetX + 23, 304);
+        ctx.quadraticCurveTo(targetX + 30, 355, targetX + 51, 365);
+        ctx.lineTo(targetX + 101, 365);
+        ctx.quadraticCurveTo(targetX + 100, 338, targetX + 93, 307);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = c.text;
+        ctx.font = "15px system-ui, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("トイレ", targetX + 65, 405);
+        ctx.restore();
+      }
+
+      function roundRect(context, x, y, width, height, radius) {
+        const r = Math.min(radius, width / 2, height / 2);
+        context.moveTo(x + r, y);
+        context.arcTo(x + width, y, x + width, y + height, r);
+        context.arcTo(x + width, y + height, x, y + height, r);
+        context.arcTo(x, y + height, x, y, r);
+        context.arcTo(x, y, x + width, y, r);
+        context.closePath();
+      }
+
+      function drawAim(c) {
+        if (active) return;
+
+        const angle = Number(angleRange.value) * Math.PI / 180;
+        const length = 42 + Number(powerRange.value) * 3.3;
+        const endX = origin.x + Math.cos(angle) * length;
+        const endY = origin.y - Math.sin(angle) * length;
+
+        ctx.save();
+        ctx.strokeStyle = c.accent;
+        ctx.fillStyle = c.accent;
+        ctx.lineWidth = 4;
+        ctx.setLineDash([8, 6]);
+
+        ctx.beginPath();
+        ctx.moveTo(origin.x, origin.y);
+        ctx.lineTo(endX, endY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        const arrowAngle = Math.atan2(endY - origin.y, endX - origin.x);
+
+        ctx.beginPath();
+        ctx.moveTo(endX, endY);
+        ctx.lineTo(
+          endX - 14 * Math.cos(arrowAngle - 0.5),
+          endY - 14 * Math.sin(arrowAngle - 0.5)
+        );
+        ctx.lineTo(
+          endX - 14 * Math.cos(arrowAngle + 0.5),
+          endY - 14 * Math.sin(arrowAngle + 0.5)
+        );
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function drawStream(c) {
+        if (trail.length > 1) {
+          ctx.save();
+          ctx.strokeStyle = c.stream;
+          ctx.lineWidth = 7;
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+          ctx.beginPath();
+
+          trail.forEach((point, index) => {
+            if (index === 0) {
+              ctx.moveTo(point.x, point.y);
+            } else {
+              ctx.lineTo(point.x, point.y);
+            }
+          });
+
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        if (active && shot) {
+          ctx.fillStyle = c.stream;
+          ctx.beginPath();
+          ctx.arc(shot.x, shot.y, 6, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.fillStyle = c.stream;
+
+        for (const p of splashes) {
+          ctx.globalAlpha = Math.max(0, Math.min(1, p.life / 40));
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.globalAlpha = 1;
+      }
+
+      function draw() {
+        const c = colors();
+        drawBackground(c);
+        drawPlayer(c);
+        drawToilet(c);
+        drawAim(c);
+        drawStream(c);
+      }
+
+      function loop() {
+        updatePhysics();
+        draw();
+        requestAnimationFrame(loop);
+      }
+
+      document.getElementById("upButton").addEventListener("click", () => adjustAngle(2));
+      document.getElementById("downButton").addEventListener("click", () => adjustAngle(-2));
+      document.getElementById("leftButton").addEventListener("click", () => adjustPower(-1));
+      document.getElementById("rightButton").addEventListener("click", () => adjustPower(1));
+      document.getElementById("newTargetButton").addEventListener("click", randomizeTarget);
+      launchButton.addEventListener("click", launch);
+
+      angleRange.addEventListener("input", () => {
+        if (!active) updateLabels();
+      });
+
+      powerRange.addEventListener("input", () => {
+        if (!active) updateLabels();
+      });
+
+      window.addEventListener("keydown", event => {
+        if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(event.key)) {
+          event.preventDefault();
+        }
+
+        if (event.key === "ArrowUp") adjustAngle(2);
+        if (event.key === "ArrowDown") adjustAngle(-2);
+        if (event.key === "ArrowLeft") adjustPower(-1);
+        if (event.key === "ArrowRight") adjustPower(1);
+        if (event.key === " ") launch();
+      });
+
+      updateLabels();
+      updateStats();
+      loop();
+    })();
+  </script>
+</body>
+</html>
