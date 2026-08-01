@@ -3,103 +3,164 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>トイレにシュート！</title>
+  <title>トイレ・ドットシュート</title>
   <style>
     :root {
       color-scheme: light dark;
-      --bg: #eef2f7;
+      --bg: #edf2f7;
       --panel: #ffffff;
+      --panel-2: #f7f9fc;
       --text: #172033;
-      --muted: #667085;
-      --border: #cfd6e2;
-      --accent: #3867d6;
+      --muted: #697386;
+      --border: #cdd5df;
+      --accent: #3d67d8;
+      --accent-2: #274aa4;
       --accent-text: #ffffff;
-      --stream: #f2c94c;
+      --pee: #e8b91f;
+      --success: #16835c;
+      --danger: #b74242;
       --ground: #dce8dc;
-      --success: #1b8a5a;
-      --danger: #b54747;
+      --wall: #8995a8;
+      --shadow: 0 12px 34px rgba(21, 31, 50, .12);
     }
 
     * { box-sizing: border-box; }
 
+    html { min-width: 320px; }
+
     body {
       margin: 0;
       min-height: 100vh;
-      padding: 20px;
+      padding: 18px;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color: var(--text);
-      background: var(--bg);
+      background:
+        radial-gradient(circle at 10% 0%, rgba(61, 103, 216, .10), transparent 34rem),
+        var(--bg);
+    }
+
+    button, input, select { font: inherit; }
+
+    button {
+      color: var(--text);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    button:hover:not(:disabled) { filter: brightness(.975); }
+    button:active:not(:disabled) { transform: translateY(1px); }
+    button:disabled { cursor: not-allowed; opacity: .46; }
+    button:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--accent) 40%, transparent);
+      outline-offset: 2px;
     }
 
     .app {
-      width: min(900px, 100%);
+      width: min(1050px, 100%);
       margin: 0 auto;
     }
 
-    h1 {
-      margin: 0 0 8px;
-      font-size: clamp(1.5rem, 4vw, 2.2rem);
+    .topbar {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 14px;
     }
 
-    .lead {
-      margin: 0 0 16px;
+    h1 {
+      margin: 0;
+      font-size: clamp(1.6rem, 4vw, 2.5rem);
+      letter-spacing: .01em;
+    }
+
+    .subtitle {
+      margin: 5px 0 0;
       color: var(--muted);
+    }
+
+    .top-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .small-button {
+      min-height: 42px;
+      padding: 8px 13px;
+      font-weight: 750;
     }
 
     .stats {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-bottom: 12px;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 10px;
     }
 
     .stat {
-      padding: 12px;
+      min-width: 0;
+      padding: 10px;
       text-align: center;
       background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: 14px;
+      border-radius: 13px;
+      box-shadow: 0 4px 14px rgba(21, 31, 50, .04);
     }
 
     .stat-label {
-      font-size: .82rem;
+      overflow: hidden;
       color: var(--muted);
+      font-size: .78rem;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .stat-value {
       margin-top: 2px;
-      font-size: 1.45rem;
-      font-weight: 800;
+      overflow: hidden;
+      font-size: clamp(1rem, 2.6vw, 1.35rem);
+      font-weight: 850;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
-    .game-frame {
+    .game-shell {
       overflow: hidden;
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: 18px;
+      box-shadow: var(--shadow);
     }
 
     canvas {
       display: block;
       width: 100%;
       height: auto;
+      background: var(--panel-2);
       touch-action: none;
     }
 
     .message {
-      margin: 12px 0;
-      padding: 12px;
+      min-height: 48px;
+      margin: 11px 0;
+      padding: 12px 14px;
       text-align: center;
-      font-weight: 700;
+      font-weight: 800;
       background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 13px;
     }
+
+    .message.success { color: var(--success); }
+    .message.fail { color: var(--danger); }
 
     .controls {
       display: grid;
-      grid-template-columns: 1.15fr .85fr;
-      gap: 12px;
+      grid-template-columns: minmax(0, 1.15fr) minmax(260px, .85fr);
+      gap: 11px;
     }
 
     .panel {
@@ -109,30 +170,25 @@
       border-radius: 16px;
     }
 
-    .range-row {
-      margin-bottom: 14px;
-    }
+    .control-row + .control-row { margin-top: 14px; }
 
-    .range-row:last-child {
-      margin-bottom: 0;
-    }
-
-    .range-head {
+    .control-head {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      margin-bottom: 6px;
+      margin-bottom: 7px;
+      font-weight: 750;
     }
 
     .badge {
-      min-width: 58px;
+      min-width: 62px;
       padding: 4px 10px;
       text-align: center;
       color: var(--accent);
       background: color-mix(in srgb, var(--accent) 12%, transparent);
       border-radius: 999px;
-      font-weight: 800;
+      font-weight: 850;
     }
 
     input[type="range"] {
@@ -143,27 +199,14 @@
     .pad {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
+      gap: 7px;
     }
 
-    button {
-      min-height: 48px;
-      padding: 10px 12px;
-      font: inherit;
-      font-weight: 800;
-      color: var(--text);
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      cursor: pointer;
-    }
-
-    button:hover { filter: brightness(.97); }
-    button:active { transform: translateY(1px); }
-
-    button:focus-visible {
-      outline: 3px solid color-mix(in srgb, var(--accent) 40%, transparent);
-      outline-offset: 2px;
+    .pad button {
+      min-height: 47px;
+      padding: 8px;
+      font-size: 1.12rem;
+      font-weight: 850;
     }
 
     .launch {
@@ -172,378 +215,758 @@
       border-color: var(--accent);
     }
 
-    .wide {
-      width: 100%;
-      margin-top: 10px;
+    .launch:hover:not(:disabled) { background: var(--accent-2); }
+
+    .action-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+      margin-top: 9px;
+    }
+
+    .action-row button {
+      min-height: 43px;
+      padding: 8px;
+      font-weight: 750;
     }
 
     .help {
       margin: 10px 0 0;
-      font-size: .88rem;
-      line-height: 1.55;
+      color: var(--muted);
+      font-size: .85rem;
+      line-height: 1.5;
+    }
+
+    dialog {
+      width: min(840px, calc(100% - 24px));
+      max-height: calc(100vh - 32px);
+      padding: 0;
+      color: var(--text);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    dialog::backdrop { background: rgba(13, 20, 34, .58); }
+
+    .dialog-inner { padding: 18px; }
+
+    .dialog-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .dialog-header h2 { margin: 0; }
+
+    .close-button {
+      width: 42px;
+      height: 42px;
+      font-size: 1.2rem;
+      font-weight: 850;
+    }
+
+    .stage-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 9px;
+      max-height: 62vh;
+      overflow: auto;
+      padding: 2px;
+    }
+
+    .stage-card {
+      min-height: 96px;
+      padding: 10px;
+      text-align: left;
+    }
+
+    .stage-card.current {
+      border: 2px solid var(--accent);
+      background: color-mix(in srgb, var(--accent) 8%, var(--panel));
+    }
+
+    .stage-card.locked { opacity: .55; }
+
+    .stage-number {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      font-size: .78rem;
       color: var(--muted);
     }
 
-    @media (max-width: 700px) {
-      body { padding: 10px; }
+    .stage-name {
+      display: block;
+      margin-top: 7px;
+      font-weight: 850;
+    }
+
+    .stage-stars {
+      display: block;
+      margin-top: 8px;
+      letter-spacing: .06em;
+      color: var(--pee);
+    }
+
+    .result-card {
+      text-align: center;
+    }
+
+    .result-card h2 {
+      margin: 2px 0 5px;
+      font-size: 1.7rem;
+    }
+
+    .big-stars {
+      margin: 6px 0 12px;
+      color: var(--pee);
+      font-size: 2.15rem;
+      letter-spacing: .13em;
+    }
+
+    .result-info {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .result-info > div {
+      padding: 10px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    .result-actions {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .result-actions button {
+      min-height: 47px;
+      padding: 9px;
+      font-weight: 850;
+    }
+
+    .primary {
+      color: var(--accent-text);
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    @media (max-width: 760px) {
+      body { padding: 9px; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .stats { grid-template-columns: repeat(3, 1fr); }
+      .stat:nth-child(4), .stat:nth-child(5) { grid-column: span 1; }
       .controls { grid-template-columns: 1fr; }
-      .stats { gap: 6px; }
-      .stat { padding: 9px 6px; }
-      .stat-value { font-size: 1.2rem; }
+      .stage-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 470px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .stat:last-child { grid-column: span 2; }
+      .stage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .result-info { grid-template-columns: 1fr; }
     }
 
     @media (prefers-color-scheme: dark) {
       :root {
         --bg: #111827;
-        --panel: #1f2937;
-        --text: #f3f4f6;
-        --muted: #b8c1ce;
-        --border: #465164;
+        --panel: #1d2736;
+        --panel-2: #17202d;
+        --text: #f4f7fb;
+        --muted: #b3bdca;
+        --border: #465267;
         --ground: #26382f;
+        --wall: #788498;
+        --shadow: 0 12px 34px rgba(0, 0, 0, .32);
       }
     }
   </style>
 </head>
 <body>
   <main class="app">
-    <h1>トイレにシュート！</h1>
-    <p class="lead">股間から発射される軌道を調整して、便器の中を狙おう。</p>
+    <header class="topbar">
+      <div>
+        <h1>トイレ・ドットシュート</h1>
+        <p class="subtitle">点々のおしっこを、障害物を越えて便器へ届けよう。</p>
+      </div>
+      <div class="top-actions">
+        <button id="stageMenuButton" class="small-button" type="button">ステージ選択</button>
+        <button id="soundButton" class="small-button" type="button" aria-pressed="true">効果音：ON</button>
+      </div>
+    </header>
 
-    <section class="stats" aria-label="ゲーム状況">
-      <div class="stat">
-        <div class="stat-label">スコア</div>
-        <div id="score" class="stat-value">0</div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">チャレンジ</div>
-        <div id="attempts" class="stat-value">0</div>
-      </div>
-      <div class="stat">
-        <div class="stat-label">連続成功</div>
-        <div id="streak" class="stat-value">0</div>
-      </div>
+    <section class="stats" aria-label="ゲーム情報">
+      <div class="stat"><div class="stat-label">ステージ</div><div id="stageDisplay" class="stat-value">1 / 24</div></div>
+      <div class="stat"><div class="stat-label">入った点</div><div id="hitDisplay" class="stat-value">0 / 8</div></div>
+      <div class="stat"><div class="stat-label">残り発射</div><div id="shotDisplay" class="stat-value">3</div></div>
+      <div class="stat"><div class="stat-label">風</div><div id="windDisplay" class="stat-value">なし</div></div>
+      <div class="stat"><div class="stat-label">合計スター</div><div id="totalStarsDisplay" class="stat-value">0 ★</div></div>
     </section>
 
-    <div class="game-frame">
-      <canvas id="gameCanvas" width="760" height="430" aria-label="トイレを狙うゲーム画面"></canvas>
+    <div class="game-shell">
+      <canvas id="gameCanvas" width="900" height="520" aria-label="ドット状のおしっこをトイレに入れるゲーム"></canvas>
     </div>
 
-    <div id="message" class="message" aria-live="polite">
-      ↑↓で方向、←→で強さを調整しよう！
-    </div>
+    <div id="message" class="message" aria-live="polite">角度と強さを決めて発射しよう！</div>
 
     <section class="controls">
       <div class="panel">
-        <div class="range-row">
-          <div class="range-head">
-            <label for="angleRange">方向</label>
-            <span id="angleLabel" class="badge">45°</span>
-          </div>
-          <input id="angleRange" type="range" min="10" max="75" value="45">
+        <div class="control-row">
+          <div class="control-head"><label for="angleRange">方向</label><span id="angleValue" class="badge">42°</span></div>
+          <input id="angleRange" type="range" min="5" max="82" value="42">
         </div>
-
-        <div class="range-row">
-          <div class="range-head">
-            <label for="powerRange">強さ</label>
-            <span id="powerLabel" class="badge">14</span>
-          </div>
-          <input id="powerRange" type="range" min="7" max="22" value="14">
+        <div class="control-row">
+          <div class="control-head"><label for="powerRange">強さ</label><span id="powerValue" class="badge">15</span></div>
+          <input id="powerRange" type="range" min="6" max="26" value="15">
+        </div>
+        <div class="control-row">
+          <div class="control-head"><span>点の間隔</span><span id="dotSpacingDisplay" class="badge">普通</span></div>
+          <input id="dotSpacingRange" type="range" min="1" max="3" value="2" aria-label="尿の点の間隔">
         </div>
       </div>
 
       <div class="panel">
         <div class="pad">
-          <span></span>
-          <button id="upButton" type="button" aria-label="方向を上げる">↑</button>
-          <span></span>
-
-          <button id="leftButton" type="button" aria-label="強さを弱くする">←</button>
+          <span></span><button id="upButton" type="button" aria-label="方向を上げる">↑</button><span></span>
+          <button id="leftButton" type="button" aria-label="強さを弱める">←</button>
           <button id="launchButton" class="launch" type="button">発射！</button>
-          <button id="rightButton" type="button" aria-label="強さを強くする">→</button>
-
-          <span></span>
-          <button id="downButton" type="button" aria-label="方向を下げる">↓</button>
-          <span></span>
+          <button id="rightButton" type="button" aria-label="強さを強める">→</button>
+          <span></span><button id="downButton" type="button" aria-label="方向を下げる">↓</button><span></span>
         </div>
-
-        <button id="newTargetButton" class="wide" type="button">トイレの位置を変える</button>
-        <p class="help">キーボード操作：矢印キーで調整、スペースキーで発射。</p>
+        <div class="action-row">
+          <button id="retryButton" type="button">やり直す</button>
+          <button id="hintButton" type="button">ヒント</button>
+        </div>
+        <p class="help">キーボード：矢印キーで調整、スペースで発射、Rでやり直し。点がゆっくり飛ぶので、最後まで見届けよう。</p>
       </div>
     </section>
   </main>
 
+  <dialog id="stageDialog">
+    <div class="dialog-inner">
+      <div class="dialog-header">
+        <div><h2>ステージ選択</h2><div class="subtitle">クリアすると次のステージが開きます。</div></div>
+        <button id="closeStageDialog" class="close-button" type="button" aria-label="閉じる">×</button>
+      </div>
+      <div id="stageGrid" class="stage-grid"></div>
+    </div>
+  </dialog>
+
+  <dialog id="resultDialog">
+    <div class="dialog-inner result-card">
+      <h2 id="resultTitle">ステージクリア！</h2>
+      <div id="resultStars" class="big-stars">★★★</div>
+      <p id="resultText">見事に便器へ入りました。</p>
+      <div class="result-info">
+        <div><div class="stat-label">使用した発射</div><div id="resultShots" class="stat-value">1</div></div>
+        <div><div class="stat-label">入った点</div><div id="resultHits" class="stat-value">8</div></div>
+        <div><div class="stat-label">ベスト</div><div id="resultBest" class="stat-value">3 ★</div></div>
+      </div>
+      <div class="result-actions">
+        <button id="resultRetryButton" type="button">もう一度</button>
+        <button id="nextStageButton" class="primary" type="button">次のステージ</button>
+      </div>
+    </div>
+  </dialog>
+
   <script>
     (() => {
+      "use strict";
+
       const canvas = document.getElementById("gameCanvas");
       const ctx = canvas.getContext("2d");
-
-      const angleRange = document.getElementById("angleRange");
-      const powerRange = document.getElementById("powerRange");
-      const angleLabel = document.getElementById("angleLabel");
-      const powerLabel = document.getElementById("powerLabel");
-      const message = document.getElementById("message");
-      const scoreEl = document.getElementById("score");
-      const attemptsEl = document.getElementById("attempts");
-      const streakEl = document.getElementById("streak");
-      const launchButton = document.getElementById("launchButton");
-
       const W = canvas.width;
       const H = canvas.height;
-      const groundY = 372;
+      const groundY = 466;
+      const origin = { x: 122, y: 338 };
 
-      // 股間の少し前を発射位置にしています。
-      const origin = { x: 113, y: 291 };
+      const ui = {
+        angle: document.getElementById("angleRange"),
+        power: document.getElementById("powerRange"),
+        spacing: document.getElementById("dotSpacingRange"),
+        angleValue: document.getElementById("angleValue"),
+        powerValue: document.getElementById("powerValue"),
+        spacingDisplay: document.getElementById("dotSpacingDisplay"),
+        stage: document.getElementById("stageDisplay"),
+        hits: document.getElementById("hitDisplay"),
+        shots: document.getElementById("shotDisplay"),
+        wind: document.getElementById("windDisplay"),
+        totalStars: document.getElementById("totalStarsDisplay"),
+        message: document.getElementById("message"),
+        launch: document.getElementById("launchButton"),
+        stageDialog: document.getElementById("stageDialog"),
+        stageGrid: document.getElementById("stageGrid"),
+        resultDialog: document.getElementById("resultDialog"),
+        resultTitle: document.getElementById("resultTitle"),
+        resultStars: document.getElementById("resultStars"),
+        resultText: document.getElementById("resultText"),
+        resultShots: document.getElementById("resultShots"),
+        resultHits: document.getElementById("resultHits"),
+        resultBest: document.getElementById("resultBest"),
+        nextStage: document.getElementById("nextStageButton"),
+        sound: document.getElementById("soundButton")
+      };
 
-      let score = 0;
-      let attempts = 0;
-      let streak = 0;
-      let targetX = 555;
-      let active = false;
-      let shot = null;
-      let trail = [];
+      const makeRect = (x, y, w, h, options = {}) => ({
+        type: "rect", x, y, w, h,
+        moveX: options.moveX || 0,
+        moveY: options.moveY || 0,
+        speed: options.speed || 0,
+        phase: options.phase || 0,
+        label: options.label || "障害物"
+      });
+
+      const stages = [
+        { name: "はじめの一歩", toilet: { x: 690, y: 366 }, required: 7, shots: 3, gravity: .105, wind: 0, obstacles: [], hint: "45度前後・強さ15前後から試そう。" },
+        { name: "少し遠くへ", toilet: { x: 755, y: 366 }, required: 7, shots: 3, gravity: .105, wind: 0, obstacles: [], hint: "少しだけ強くすると届きやすい。" },
+        { name: "低い仕切り", toilet: { x: 725, y: 366 }, required: 7, shots: 3, gravity: .105, wind: 0, obstacles: [makeRect(430, 372, 42, 94)], hint: "仕切りの上を通すため角度を上げよう。" },
+        { name: "高い仕切り", toilet: { x: 735, y: 366 }, required: 7, shots: 3, gravity: .105, wind: 0, obstacles: [makeRect(455, 296, 46, 170)], hint: "高めの角度と少し強めの発射が必要。" },
+        { name: "向かい風", toilet: { x: 735, y: 366 }, required: 7, shots: 3, gravity: .105, wind: -.012, obstacles: [], hint: "左向きの風。いつもより強めに。" },
+        { name: "追い風", toilet: { x: 690, y: 366 }, required: 7, shots: 3, gravity: .105, wind: .014, obstacles: [makeRect(515, 388, 38, 78)], hint: "飛びすぎ注意。強さを下げよう。" },
+        { name: "二枚の壁", toilet: { x: 770, y: 366 }, required: 8, shots: 3, gravity: .105, wind: 0, obstacles: [makeRect(340, 382, 35, 84), makeRect(565, 328, 38, 138)], hint: "山なりにして両方を越えよう。" },
+        { name: "せまい窓", toilet: { x: 760, y: 366 }, required: 7, shots: 4, gravity: .10, wind: 0, obstacles: [makeRect(465, 212, 42, 100), makeRect(465, 380, 42, 86)], hint: "壁の隙間を通す。角度を細かく調整しよう。" },
+        { name: "重たい空気", toilet: { x: 715, y: 366 }, required: 7, shots: 3, gravity: .145, wind: 0, obstacles: [], hint: "重力が強い。強め・高めで狙おう。" },
+        { name: "ふわふわ空間", toilet: { x: 755, y: 366 }, required: 7, shots: 3, gravity: .072, wind: 0, obstacles: [makeRect(520, 365, 42, 101)], hint: "重力が弱いので、低めの角度が安定。" },
+        { name: "動く便器", toilet: { x: 675, y: 366, moveX: 90, speed: .018 }, required: 7, shots: 4, gravity: .105, wind: 0, obstacles: [], hint: "便器が右へ向かう瞬間を狙おう。" },
+        { name: "上下する便器", toilet: { x: 735, y: 355, moveY: 42, speed: .022 }, required: 7, shots: 4, gravity: .105, wind: 0, obstacles: [makeRect(500, 390, 42, 76)], hint: "便器が下がったタイミングが狙いやすい。" },
+        { name: "動くブロック", toilet: { x: 750, y: 366 }, required: 8, shots: 4, gravity: .105, wind: 0, obstacles: [makeRect(485, 310, 48, 110, { moveY: 95, speed: .026 })], hint: "ブロックが下がった瞬間に上を通そう。" },
+        { name: "横切る壁", toilet: { x: 750, y: 366 }, required: 8, shots: 4, gravity: .105, wind: 0, obstacles: [makeRect(440, 330, 45, 136, { moveX: 120, speed: .023 })], hint: "壁の位置を見て、発射のタイミングを変えよう。" },
+        { name: "風と壁", toilet: { x: 770, y: 366 }, required: 8, shots: 4, gravity: .105, wind: -.013, obstacles: [makeRect(500, 320, 45, 146)], hint: "向かい風を考えて、かなり強めに。" },
+        { name: "下をくぐれ", toilet: { x: 760, y: 366 }, required: 7, shots: 4, gravity: .095, wind: 0, obstacles: [makeRect(390, 188, 250, 90)], hint: "低めの軌道で天井の下を通そう。" },
+        { name: "上を越えろ", toilet: { x: 760, y: 366 }, required: 8, shots: 4, gravity: .11, wind: 0, obstacles: [makeRect(390, 335, 255, 131)], hint: "大きな山なりの軌道で越えよう。" },
+        { name: "ジグザグ", toilet: { x: 780, y: 366 }, required: 7, shots: 5, gravity: .10, wind: 0, obstacles: [makeRect(340, 350, 40, 116), makeRect(505, 220, 40, 120), makeRect(650, 365, 38, 101)], hint: "真ん中の高い壁を越える軌道を探そう。" },
+        { name: "強風注意", toilet: { x: 745, y: 366 }, required: 8, shots: 4, gravity: .105, wind: .026, obstacles: [makeRect(520, 378, 42, 88)], hint: "強い追い風。思い切って弱めに。" },
+        { name: "逆風の塔", toilet: { x: 790, y: 366 }, required: 8, shots: 5, gravity: .105, wind: -.023, obstacles: [makeRect(520, 290, 48, 176)], hint: "高い塔と強い向かい風。角度も強さも高めに。" },
+        { name: "動く迷路", toilet: { x: 770, y: 366 }, required: 8, shots: 5, gravity: .10, wind: 0, obstacles: [makeRect(360, 360, 38, 106, { moveY: 65, speed: .021 }), makeRect(535, 270, 42, 115, { moveY: 70, speed: .026, phase: 2 }), makeRect(665, 380, 36, 86)], hint: "障害物がそろって低くなる瞬間を見つけよう。" },
+        { name: "逃げる便器", toilet: { x: 700, y: 366, moveX: 115, speed: .032 }, required: 8, shots: 5, gravity: .105, wind: .008, obstacles: [makeRect(490, 365, 38, 101)], hint: "便器の進行先へ少し先回りして狙おう。" },
+        { name: "空中回廊", toilet: { x: 780, y: 345, moveY: 34, speed: .025 }, required: 8, shots: 5, gravity: .09, wind: -.008, obstacles: [makeRect(355, 198, 40, 155), makeRect(535, 355, 40, 111), makeRect(675, 205, 38, 118)], hint: "低い壁と高い壁の間を通る軌道を探そう。" },
+        { name: "最終ステージ", toilet: { x: 770, y: 350, moveX: 75, moveY: 28, speed: .027 }, required: 10, shots: 5, gravity: .112, wind: -.015, obstacles: [makeRect(340, 365, 38, 101, { moveY: 65, speed: .022 }), makeRect(500, 250, 44, 130, { moveX: 85, speed: .026, phase: 1.4 }), makeRect(670, 365, 38, 101)], hint: "風、動く壁、動く便器。タイミングまで含めて狙おう。" }
+      ];
+
+      let currentStage = 0;
+      let unlocked = 1;
+      let bestStars = Array(stages.length).fill(0);
+      let soundOn = true;
+      let audioContext = null;
+
+      try {
+        const saved = JSON.parse(localStorage.getItem("toiletDotStageSave") || "null");
+        if (saved && Number.isInteger(saved.unlocked) && Array.isArray(saved.bestStars)) {
+          unlocked = Math.max(1, Math.min(stages.length, saved.unlocked));
+          bestStars = stages.map((_, i) => Math.max(0, Math.min(3, Number(saved.bestStars[i]) || 0)));
+        }
+      } catch (_) {
+        // 保存データが壊れていてもゲームは続行する。
+      }
+
+      let stageStartTime = performance.now();
+      let tick = 0;
+      let droplets = [];
       let splashes = [];
-      let resultLocked = false;
+      let emitState = null;
+      let active = false;
+      let shotsLeft = 3;
+      let shotsUsed = 0;
+      let hitCount = 0;
+      let missCount = 0;
+      let completed = false;
+      let currentToilet = { x: 0, y: 0 };
+      let currentObstacles = [];
 
-      function cssVar(name, fallback) {
-        const value = getComputedStyle(document.documentElement)
-          .getPropertyValue(name)
-          .trim();
-        return value || fallback;
+      function saveProgress() {
+        try {
+          localStorage.setItem("toiletDotStageSave", JSON.stringify({ unlocked, bestStars }));
+        } catch (_) {
+          // 保存不可でもプレイは可能。
+        }
       }
 
-      function colors() {
-        return {
-          panel: cssVar("--panel", "#ffffff"),
-          text: cssVar("--text", "#172033"),
-          muted: cssVar("--muted", "#667085"),
-          border: cssVar("--border", "#cfd6e2"),
-          accent: cssVar("--accent", "#3867d6"),
-          stream: cssVar("--stream", "#f2c94c"),
-          ground: cssVar("--ground", "#dce8dc")
+      function totalStars() {
+        return bestStars.reduce((sum, value) => sum + value, 0);
+      }
+
+      function setMessage(text, type = "") {
+        ui.message.textContent = text;
+        ui.message.className = "message" + (type ? " " + type : "");
+      }
+
+      function playTone(frequency, duration = .08, type = "sine", volume = .035) {
+        if (!soundOn) return;
+        try {
+          audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
+          const oscillator = audioContext.createOscillator();
+          const gain = audioContext.createGain();
+          oscillator.type = type;
+          oscillator.frequency.value = frequency;
+          gain.gain.value = volume;
+          oscillator.connect(gain);
+          gain.connect(audioContext.destination);
+          oscillator.start();
+          gain.gain.exponentialRampToValueAtTime(.0001, audioContext.currentTime + duration);
+          oscillator.stop(audioContext.currentTime + duration);
+        } catch (_) {
+          // 音声APIが使えない環境では無音で続行。
+        }
+      }
+
+      function stageState(stage, elapsed) {
+        const toilet = {
+          x: stage.toilet.x + Math.sin(elapsed * (stage.toilet.speed || 0) + (stage.toilet.phase || 0)) * (stage.toilet.moveX || 0),
+          y: stage.toilet.y + Math.sin(elapsed * (stage.toilet.speed || 0) + (stage.toilet.phase || 0)) * (stage.toilet.moveY || 0)
         };
+
+        const obstacles = stage.obstacles.map(obstacle => ({
+          ...obstacle,
+          x: obstacle.x + Math.sin(elapsed * obstacle.speed + obstacle.phase) * obstacle.moveX,
+          y: obstacle.y + Math.sin(elapsed * obstacle.speed + obstacle.phase) * obstacle.moveY
+        }));
+
+        return { toilet, obstacles };
       }
 
-      function updateLabels() {
-        angleLabel.textContent = angleRange.value + "°";
-        powerLabel.textContent = powerRange.value;
+      function updateStageState() {
+        const elapsed = (performance.now() - stageStartTime) / 16.6667;
+        const state = stageState(stages[currentStage], elapsed);
+        currentToilet = state.toilet;
+        currentObstacles = state.obstacles;
       }
 
-      function updateStats() {
-        scoreEl.textContent = score;
-        attemptsEl.textContent = attempts;
-        streakEl.textContent = streak;
+      function windText(value) {
+        if (Math.abs(value) < .001) return "なし";
+        const arrows = Math.abs(value) >= .02 ? "強" : "弱";
+        return value > 0 ? `→ ${arrows}` : `← ${arrows}`;
       }
 
-      function setMessage(text) {
-        message.textContent = text;
+      function syncUI() {
+        const stage = stages[currentStage];
+        ui.angleValue.textContent = `${ui.angle.value}°`;
+        ui.powerValue.textContent = ui.power.value;
+        ui.spacingDisplay.textContent = ["広い", "普通", "細かい"][Number(ui.spacing.value) - 1];
+        ui.stage.textContent = `${currentStage + 1} / ${stages.length}`;
+        ui.hits.textContent = `${hitCount} / ${stage.required}`;
+        ui.shots.textContent = shotsLeft;
+        ui.wind.textContent = windText(stage.wind);
+        ui.totalStars.textContent = `${totalStars()} ★`;
+        ui.launch.disabled = active || completed || shotsLeft <= 0;
       }
 
-      function randomizeTarget() {
-        if (active) return;
-        targetX = 485 + Math.random() * 145;
-        trail = [];
+      function resetStage(showMessage = true) {
+        const stage = stages[currentStage];
+        droplets = [];
         splashes = [];
-        shot = null;
-        setMessage("新しいトイレです。狙いを定めよう！");
+        emitState = null;
+        active = false;
+        completed = false;
+        shotsLeft = stage.shots;
+        shotsUsed = 0;
+        hitCount = 0;
+        missCount = 0;
+        stageStartTime = performance.now();
+        ui.angle.value = stage.angle || 42;
+        ui.power.value = stage.power || 15;
+        if (showMessage) setMessage(`ステージ${currentStage + 1}「${stage.name}」　角度と強さを決めよう！`);
+        syncUI();
       }
 
-      function adjustAngle(delta) {
-        if (active) return;
-        angleRange.value = Math.max(
-          Number(angleRange.min),
-          Math.min(Number(angleRange.max), Number(angleRange.value) + delta)
-        );
-        updateLabels();
+      function loadStage(index) {
+        if (index < 0 || index >= stages.length || index >= unlocked) return;
+        currentStage = index;
+        resetStage();
+        renderStageGrid();
+        if (ui.stageDialog.open) ui.stageDialog.close();
       }
 
-      function adjustPower(delta) {
-        if (active) return;
-        powerRange.value = Math.max(
-          Number(powerRange.min),
-          Math.min(Number(powerRange.max), Number(powerRange.value) + delta)
-        );
-        updateLabels();
+      function renderStageGrid() {
+        ui.stageGrid.replaceChildren();
+
+        stages.forEach((stage, index) => {
+          const locked = index >= unlocked;
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "stage-card" + (index === currentStage ? " current" : "") + (locked ? " locked" : "");
+          button.disabled = locked;
+          const stars = bestStars[index];
+          button.innerHTML = `
+            <span class="stage-number"><span>STAGE ${index + 1}</span><span>${locked ? "🔒" : ""}</span></span>
+            <span class="stage-name">${stage.name}</span>
+            <span class="stage-stars">${stars ? "★".repeat(stars) + "☆".repeat(3 - stars) : "☆☆☆"}</span>
+          `;
+          button.addEventListener("click", () => loadStage(index));
+          ui.stageGrid.append(button);
+        });
+      }
+
+      function spacingConfig() {
+        const value = Number(ui.spacing.value);
+        if (value === 1) return { interval: 118, count: 18, radius: 5.1 };
+        if (value === 3) return { interval: 54, count: 38, radius: 3.7 };
+        return { interval: 78, count: 28, radius: 4.4 };
       }
 
       function launch() {
-        if (active) return;
+        if (active || completed || shotsLeft <= 0) return;
 
-        attempts += 1;
-        updateStats();
-        resultLocked = false;
+        const config = spacingConfig();
+        shotsLeft -= 1;
+        shotsUsed += 1;
         active = true;
-        launchButton.disabled = true;
-        trail = [];
-        splashes = [];
+        emitState = {
+          emitted: 0,
+          max: config.count,
+          interval: config.interval,
+          radius: config.radius,
+          lastEmit: performance.now() - config.interval
+        };
+        setMessage("点々のおしっこが、ゆっくり進んでいます……");
+        playTone(320, .09, "triangle", .025);
+        syncUI();
+      }
 
-        const angle = Number(angleRange.value) * Math.PI / 180;
-        const power = Number(powerRange.value);
-
-        shot = {
+      function emitDroplet() {
+        const angle = Number(ui.angle.value) * Math.PI / 180;
+        const power = Number(ui.power.value) * .58;
+        const jitter = (Math.random() - .5) * .025;
+        droplets.push({
           x: origin.x,
           y: origin.y,
-          vx: Math.cos(angle) * power,
-          vy: -Math.sin(angle) * power,
-          life: 0
-        };
-
-        setMessage("発射中……便器の中に入るかな？");
+          vx: Math.cos(angle + jitter) * power,
+          vy: -Math.sin(angle + jitter) * power,
+          radius: emitState.radius,
+          life: 0,
+          state: "flying"
+        });
+        emitState.emitted += 1;
       }
 
-      function finish(success) {
-        if (resultLocked) return;
-
-        resultLocked = true;
-        active = false;
-        launchButton.disabled = false;
-
-        if (success) {
-          streak += 1;
-          score += 100 + Math.min(streak * 20, 100);
-          setMessage("成功！ 便器の中に入りました！ 🎉");
-          createSplash(targetX + 59, 293, true);
-
-          window.setTimeout(() => {
-            targetX = 485 + Math.random() * 145;
-            trail = [];
-            splashes = [];
-            shot = null;
-            setMessage("次のトイレを狙おう！");
-          }, 1000);
-        } else {
-          streak = 0;
-          setMessage("おしい！ 方向か強さを調整して再挑戦！");
-          createSplash(
-            shot ? shot.x : origin.x,
-            Math.min(groundY - 3, shot ? shot.y : groundY),
-            false
-          );
-        }
-
-        updateStats();
+      function circleRectCollision(drop, rect) {
+        const nearestX = Math.max(rect.x, Math.min(drop.x, rect.x + rect.w));
+        const nearestY = Math.max(rect.y, Math.min(drop.y, rect.y + rect.h));
+        const dx = drop.x - nearestX;
+        const dy = drop.y - nearestY;
+        return dx * dx + dy * dy <= drop.radius * drop.radius;
       }
 
-      function createSplash(x, y, success) {
-        const count = success ? 16 : 9;
+      function pointInBowl(drop, toilet) {
+        const cx = toilet.x + 58;
+        const cy = toilet.y - 70;
+        const dx = (drop.x - cx) / 47;
+        const dy = (drop.y - cy) / 14;
+        return dx * dx + dy * dy <= 1 && drop.vy > 0;
+      }
 
+      function addSplash(x, y, count, success) {
         for (let i = 0; i < count; i += 1) {
           splashes.push({
-            x,
-            y,
-            vx: (Math.random() - 0.5) * 5,
-            vy: -Math.random() * 5 - 1,
-            life: 35 + Math.random() * 20
+            x, y,
+            vx: (Math.random() - .5) * (success ? 2.8 : 4.6),
+            vy: -Math.random() * (success ? 2.8 : 4.6) - .4,
+            life: 28 + Math.random() * 22,
+            radius: 1.8 + Math.random() * 2.2
           });
         }
       }
 
-      function updatePhysics() {
-        if (active && shot) {
-          shot.vy += 0.42;
-          shot.x += shot.vx;
-          shot.y += shot.vy;
-          shot.life += 1;
+      function resolveDroplet(drop) {
+        if (drop.state !== "flying") return;
 
-          trail.push({ x: shot.x, y: shot.y });
-          if (trail.length > 45) trail.shift();
-
-          const bowlLeft = targetX + 16;
-          const bowlRight = targetX + 105;
-          const bowlTop = 279;
-          const bowlBottom = 313;
-
-          const enteredBowl =
-            shot.x >= bowlLeft &&
-            shot.x <= bowlRight &&
-            shot.y >= bowlTop &&
-            shot.y <= bowlBottom &&
-            shot.vy > 0;
-
-          if (enteredBowl) {
-            finish(true);
-          } else if (
-            shot.y >= groundY ||
-            shot.x > W + 30 ||
-            shot.y > H + 30 ||
-            shot.life > 190
-          ) {
-            finish(false);
+        for (const obstacle of currentObstacles) {
+          if (circleRectCollision(drop, obstacle)) {
+            drop.state = "dead";
+            missCount += 1;
+            addSplash(drop.x, drop.y, 3, false);
+            return;
           }
         }
 
-        for (const p of splashes) {
-          p.vy += 0.18;
-          p.x += p.vx;
-          p.y += p.vy;
-          p.life -= 1;
+        if (pointInBowl(drop, currentToilet)) {
+          drop.state = "hit";
+          hitCount += 1;
+          addSplash(currentToilet.x + 58, currentToilet.y - 70, 3, true);
+          playTone(520 + Math.min(hitCount, 10) * 18, .045, "sine", .018);
+          syncUI();
+
+          if (hitCount >= stages[currentStage].required) {
+            completeStage();
+          }
+          return;
         }
 
-        splashes = splashes.filter(p => p.life > 0);
+        if (drop.y + drop.radius >= groundY || drop.x > W + 20 || drop.x < -20 || drop.y > H + 20) {
+          drop.state = "dead";
+          missCount += 1;
+          addSplash(Math.max(0, Math.min(W, drop.x)), Math.min(groundY - 2, drop.y), 3, false);
+        }
+      }
+
+      function updateDroplets(now) {
+        const stage = stages[currentStage];
+
+        if (active && emitState && emitState.emitted < emitState.max && now - emitState.lastEmit >= emitState.interval) {
+          emitDroplet();
+          emitState.lastEmit = now;
+        }
+
+        for (const drop of droplets) {
+          if (drop.state !== "flying") continue;
+          const slowMotion = .62;
+          drop.vx += stage.wind * slowMotion;
+          drop.vy += stage.gravity * slowMotion;
+          drop.x += drop.vx * slowMotion;
+          drop.y += drop.vy * slowMotion;
+          drop.life += 1;
+          resolveDroplet(drop);
+        }
+
+        droplets = droplets.filter(drop => drop.state === "flying" && drop.life < 700);
+
+        for (const particle of splashes) {
+          particle.vy += .08;
+          particle.x += particle.vx;
+          particle.y += particle.vy;
+          particle.life -= 1;
+        }
+        splashes = splashes.filter(particle => particle.life > 0);
+
+        const emissionFinished = emitState && emitState.emitted >= emitState.max;
+        if (active && emissionFinished && droplets.length === 0 && !completed) {
+          active = false;
+          emitState = null;
+
+          if (shotsLeft > 0) {
+            setMessage(`あと${shotsLeft}回。入った点は${hitCount}個。角度か強さを調整しよう。`, "fail");
+          } else {
+            setMessage("発射回数を使い切りました。やり直して再挑戦！", "fail");
+          }
+          syncUI();
+        }
+      }
+
+      function calculateStars() {
+        const stage = stages[currentStage];
+        if (shotsUsed <= 1 && hitCount >= stage.required + 2) return 3;
+        if (shotsUsed <= Math.max(2, stage.shots - 1)) return 2;
+        return 1;
+      }
+
+      function completeStage() {
+        if (completed) return;
+        completed = true;
+        active = false;
+        emitState = null;
+        droplets = [];
+
+        const stars = calculateStars();
+        bestStars[currentStage] = Math.max(bestStars[currentStage], stars);
+        if (currentStage + 1 < stages.length) {
+          unlocked = Math.max(unlocked, currentStage + 2);
+        }
+        saveProgress();
+        syncUI();
+        renderStageGrid();
+
+        setMessage(`ステージクリア！ ${"★".repeat(stars)}${"☆".repeat(3 - stars)}`, "success");
+        playTone(660, .12, "triangle", .04);
+        setTimeout(() => playTone(820, .16, "triangle", .04), 100);
+
+        ui.resultTitle.textContent = currentStage === stages.length - 1 ? "全ステージ制覇！" : "ステージクリア！";
+        ui.resultStars.textContent = "★".repeat(stars) + "☆".repeat(3 - stars);
+        ui.resultText.textContent = `${stages[currentStage].name}をクリアしました。`;
+        ui.resultShots.textContent = shotsUsed;
+        ui.resultHits.textContent = hitCount;
+        ui.resultBest.textContent = `${bestStars[currentStage]} ★`;
+        ui.nextStage.disabled = currentStage >= stages.length - 1;
+        ui.nextStage.textContent = currentStage >= stages.length - 1 ? "全ステージ完了" : "次のステージ";
+        ui.resultDialog.showModal();
+      }
+
+      function drawRoundedRect(x, y, w, h, r) {
+        const radius = Math.min(r, w / 2, h / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.arcTo(x + w, y, x + w, y + h, radius);
+        ctx.arcTo(x + w, y + h, x, y + h, radius);
+        ctx.arcTo(x, y + h, x, y, radius);
+        ctx.arcTo(x, y, x + w, y, radius);
+        ctx.closePath();
+      }
+
+      function palette() {
+        const style = getComputedStyle(document.documentElement);
+        const read = (name, fallback) => style.getPropertyValue(name).trim() || fallback;
+        return {
+          panel: read("--panel", "#fff"),
+          panel2: read("--panel-2", "#f7f9fc"),
+          text: read("--text", "#172033"),
+          muted: read("--muted", "#697386"),
+          border: read("--border", "#cdd5df"),
+          accent: read("--accent", "#3d67d8"),
+          pee: read("--pee", "#e8b91f"),
+          ground: read("--ground", "#dce8dc"),
+          wall: read("--wall", "#8995a8")
+        };
       }
 
       function drawBackground(c) {
-        ctx.fillStyle = c.panel;
+        ctx.fillStyle = c.panel2;
         ctx.fillRect(0, 0, W, H);
+
+        ctx.globalAlpha = .09;
+        ctx.fillStyle = c.accent;
+        ctx.beginPath();
+        ctx.arc(770, 90, 72, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
 
         ctx.fillStyle = c.ground;
         ctx.fillRect(0, groundY, W, H - groundY);
-
         ctx.strokeStyle = c.border;
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(0, groundY);
         ctx.lineTo(W, groundY);
         ctx.stroke();
-
-        ctx.globalAlpha = 0.14;
-        ctx.fillStyle = c.accent;
-        ctx.beginPath();
-        ctx.arc(665, 72, 48, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = 1;
       }
 
       function drawPlayer(c) {
         ctx.save();
         ctx.strokeStyle = c.text;
         ctx.fillStyle = c.panel;
-        ctx.lineWidth = 6;
+        ctx.lineWidth = 7;
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
 
-        // 頭
         ctx.beginPath();
-        ctx.arc(70, 205, 23, 0, Math.PI * 2);
+        ctx.arc(76, 245, 25, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
 
-        // 背中・胴体
         ctx.beginPath();
-        ctx.moveTo(73, 230);
-        ctx.quadraticCurveTo(82, 253, 89, 286);
+        ctx.moveTo(79, 271);
+        ctx.quadraticCurveTo(88, 295, 94, 330);
         ctx.stroke();
 
-        // 腕
         ctx.beginPath();
-        ctx.moveTo(78, 246);
-        ctx.lineTo(111, 269);
+        ctx.moveTo(83, 287);
+        ctx.lineTo(116, 313);
         ctx.stroke();
 
-        // 骨盤
         ctx.beginPath();
-        ctx.moveTo(84, 286);
-        ctx.lineTo(101, 289);
+        ctx.moveTo(89, 332);
+        ctx.lineTo(64, 455);
+        ctx.moveTo(99, 332);
+        ctx.lineTo(126, 455);
         ctx.stroke();
 
-        // 脚
-        ctx.beginPath();
-        ctx.moveTo(88, 291);
-        ctx.lineTo(65, 365);
-        ctx.moveTo(98, 292);
-        ctx.lineTo(123, 365);
-        ctx.stroke();
-
-        // 発射位置が分かる小さな目印
         ctx.fillStyle = c.accent;
         ctx.beginPath();
         ctx.arc(origin.x, origin.y, 5.5, 0, Math.PI * 2);
@@ -552,42 +975,39 @@
         ctx.fillStyle = c.text;
         ctx.font = "15px system-ui, sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("プレイヤー", 88, 405);
+        ctx.fillText("プレイヤー", 90, 497);
         ctx.restore();
       }
 
-      function drawToilet(c) {
+      function drawToilet(c, toilet) {
+        const x = toilet.x;
+        const y = toilet.y;
         ctx.save();
         ctx.strokeStyle = c.text;
         ctx.fillStyle = c.panel;
         ctx.lineWidth = 3;
 
-        // タンク
-        ctx.beginPath();
-        roundRect(ctx, targetX + 63, 217, 62, 77, 10);
+        drawRoundedRect(x + 61, y - 145, 63, 76, 10);
         ctx.fill();
         ctx.stroke();
 
-        // 便座
         ctx.beginPath();
-        ctx.ellipse(targetX + 60, 294, 60, 18, 0, 0, Math.PI * 2);
+        ctx.ellipse(x + 58, y - 70, 59, 18, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
 
-        // 便器の穴
         ctx.fillStyle = c.ground;
         ctx.beginPath();
-        ctx.ellipse(targetX + 60, 291, 43, 10, 0, 0, Math.PI * 2);
+        ctx.ellipse(x + 58, y - 70, 46, 12, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
 
-        // 本体
         ctx.fillStyle = c.panel;
         ctx.beginPath();
-        ctx.moveTo(targetX + 23, 304);
-        ctx.quadraticCurveTo(targetX + 30, 355, targetX + 51, 365);
-        ctx.lineTo(targetX + 101, 365);
-        ctx.quadraticCurveTo(targetX + 100, 338, targetX + 93, 307);
+        ctx.moveTo(x + 21, y - 60);
+        ctx.quadraticCurveTo(x + 28, y - 10, x + 50, y);
+        ctx.lineTo(x + 101, y);
+        ctx.quadraticCurveTo(x + 99, y - 29, x + 91, y - 57);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
@@ -595,142 +1015,212 @@
         ctx.fillStyle = c.text;
         ctx.font = "15px system-ui, sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("トイレ", targetX + 65, 405);
+        ctx.fillText("トイレ", x + 63, y + 34);
         ctx.restore();
       }
 
-      function roundRect(context, x, y, width, height, radius) {
-        const r = Math.min(radius, width / 2, height / 2);
-        context.moveTo(x + r, y);
-        context.arcTo(x + width, y, x + width, y + height, r);
-        context.arcTo(x + width, y + height, x, y + height, r);
-        context.arcTo(x, y + height, x, y, r);
-        context.arcTo(x, y, x + width, y, r);
-        context.closePath();
+      function drawObstacles(c) {
+        for (const obstacle of currentObstacles) {
+          ctx.save();
+          ctx.fillStyle = c.wall;
+          ctx.strokeStyle = c.text;
+          ctx.lineWidth = 2;
+          drawRoundedRect(obstacle.x, obstacle.y, obstacle.w, obstacle.h, 7);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.globalAlpha = .22;
+          ctx.strokeStyle = c.panel;
+          ctx.lineWidth = 2;
+          for (let y = obstacle.y + 12; y < obstacle.y + obstacle.h; y += 18) {
+            ctx.beginPath();
+            ctx.moveTo(obstacle.x + 6, y);
+            ctx.lineTo(obstacle.x + obstacle.w - 6, y);
+            ctx.stroke();
+          }
+          ctx.restore();
+        }
       }
 
       function drawAim(c) {
-        if (active) return;
-
-        const angle = Number(angleRange.value) * Math.PI / 180;
-        const length = 42 + Number(powerRange.value) * 3.3;
-        const endX = origin.x + Math.cos(angle) * length;
-        const endY = origin.y - Math.sin(angle) * length;
+        if (active || completed) return;
+        const stage = stages[currentStage];
+        const radians = Number(ui.angle.value) * Math.PI / 180;
+        let x = origin.x;
+        let y = origin.y;
+        let vx = Math.cos(radians) * Number(ui.power.value) * .58;
+        let vy = -Math.sin(radians) * Number(ui.power.value) * .58;
 
         ctx.save();
-        ctx.strokeStyle = c.accent;
         ctx.fillStyle = c.accent;
-        ctx.lineWidth = 4;
-        ctx.setLineDash([8, 6]);
-
-        ctx.beginPath();
-        ctx.moveTo(origin.x, origin.y);
-        ctx.lineTo(endX, endY);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        const arrowAngle = Math.atan2(endY - origin.y, endX - origin.x);
-
-        ctx.beginPath();
-        ctx.moveTo(endX, endY);
-        ctx.lineTo(
-          endX - 14 * Math.cos(arrowAngle - 0.5),
-          endY - 14 * Math.sin(arrowAngle - 0.5)
-        );
-        ctx.lineTo(
-          endX - 14 * Math.cos(arrowAngle + 0.5),
-          endY - 14 * Math.sin(arrowAngle + 0.5)
-        );
-        ctx.closePath();
-        ctx.fill();
+        ctx.globalAlpha = .72;
+        for (let i = 0; i < 96; i += 1) {
+          const previewStep = .62;
+          vx += stage.wind * previewStep;
+          vy += stage.gravity * previewStep;
+          x += vx * previewStep;
+          y += vy * previewStep;
+          if (i % 7 === 0) {
+            ctx.beginPath();
+            ctx.arc(x, y, 2.4, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          if (x > W || y > groundY) break;
+        }
         ctx.restore();
       }
 
-      function drawStream(c) {
-        if (trail.length > 1) {
-          ctx.save();
-          ctx.strokeStyle = c.stream;
-          ctx.lineWidth = 7;
-          ctx.lineCap = "round";
-          ctx.lineJoin = "round";
+      function drawWind(c) {
+        const wind = stages[currentStage].wind;
+        if (Math.abs(wind) < .001) return;
+        ctx.save();
+        ctx.strokeStyle = c.accent;
+        ctx.fillStyle = c.accent;
+        ctx.globalAlpha = .4;
+        ctx.lineWidth = 3;
+        const direction = wind > 0 ? 1 : -1;
+        for (let row = 0; row < 3; row += 1) {
+          const y = 100 + row * 80;
+          const startX = direction > 0 ? 250 : 650;
+          const endX = startX + direction * 90;
           ctx.beginPath();
-
-          trail.forEach((point, index) => {
-            if (index === 0) {
-              ctx.moveTo(point.x, point.y);
-            } else {
-              ctx.lineTo(point.x, point.y);
-            }
-          });
-
+          ctx.moveTo(startX, y);
+          ctx.lineTo(endX, y);
           ctx.stroke();
-          ctx.restore();
-        }
-
-        if (active && shot) {
-          ctx.fillStyle = c.stream;
           ctx.beginPath();
-          ctx.arc(shot.x, shot.y, 6, 0, Math.PI * 2);
+          ctx.moveTo(endX, y);
+          ctx.lineTo(endX - direction * 12, y - 7);
+          ctx.lineTo(endX - direction * 12, y + 7);
+          ctx.closePath();
           ctx.fill();
         }
+        ctx.restore();
+      }
 
-        ctx.fillStyle = c.stream;
-
-        for (const p of splashes) {
-          ctx.globalAlpha = Math.max(0, Math.min(1, p.life / 40));
+      function drawDroplets(c) {
+        ctx.save();
+        ctx.fillStyle = c.pee;
+        ctx.shadowColor = c.pee;
+        ctx.shadowBlur = 2;
+        for (const drop of droplets) {
           ctx.beginPath();
-          ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+          ctx.arc(drop.x, drop.y, drop.radius, 0, Math.PI * 2);
           ctx.fill();
         }
-
+        ctx.shadowBlur = 0;
+        for (const particle of splashes) {
+          ctx.globalAlpha = Math.max(0, Math.min(1, particle.life / 30));
+          ctx.beginPath();
+          ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+          ctx.fill();
+        }
         ctx.globalAlpha = 1;
+        ctx.restore();
+      }
+
+      function drawStageLabel(c) {
+        ctx.save();
+        ctx.fillStyle = c.text;
+        ctx.font = "700 18px system-ui, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(`STAGE ${currentStage + 1}  ${stages[currentStage].name}`, W / 2, 34);
+        ctx.fillStyle = c.muted;
+        ctx.font = "14px system-ui, sans-serif";
+        ctx.fillText(`必要な点：${stages[currentStage].required}　発射：${stages[currentStage].shots}回`, W / 2, 57);
+        ctx.restore();
       }
 
       function draw() {
-        const c = colors();
+        const c = palette();
         drawBackground(c);
+        drawWind(c);
+        drawObstacles(c);
         drawPlayer(c);
-        drawToilet(c);
+        drawToilet(c, currentToilet);
         drawAim(c);
-        drawStream(c);
+        drawDroplets(c);
+        drawStageLabel(c);
       }
 
-      function loop() {
-        updatePhysics();
+      function gameLoop(now) {
+        tick += 1;
+        updateStageState();
+        updateDroplets(now);
         draw();
-        requestAnimationFrame(loop);
+        requestAnimationFrame(gameLoop);
       }
 
-      document.getElementById("upButton").addEventListener("click", () => adjustAngle(2));
-      document.getElementById("downButton").addEventListener("click", () => adjustAngle(-2));
-      document.getElementById("leftButton").addEventListener("click", () => adjustPower(-1));
-      document.getElementById("rightButton").addEventListener("click", () => adjustPower(1));
-      document.getElementById("newTargetButton").addEventListener("click", randomizeTarget);
-      launchButton.addEventListener("click", launch);
+      function showHint() {
+        setMessage(`ヒント：${stages[currentStage].hint}`);
+      }
 
-      angleRange.addEventListener("input", () => {
-        if (!active) updateLabels();
+      document.getElementById("upButton").addEventListener("click", () => {
+        if (!active) ui.angle.value = Math.min(Number(ui.angle.max), Number(ui.angle.value) + 2);
+        syncUI();
+      });
+      document.getElementById("downButton").addEventListener("click", () => {
+        if (!active) ui.angle.value = Math.max(Number(ui.angle.min), Number(ui.angle.value) - 2);
+        syncUI();
+      });
+      document.getElementById("leftButton").addEventListener("click", () => {
+        if (!active) ui.power.value = Math.max(Number(ui.power.min), Number(ui.power.value) - 1);
+        syncUI();
+      });
+      document.getElementById("rightButton").addEventListener("click", () => {
+        if (!active) ui.power.value = Math.min(Number(ui.power.max), Number(ui.power.value) + 1);
+        syncUI();
       });
 
-      powerRange.addEventListener("input", () => {
-        if (!active) updateLabels();
+      ui.angle.addEventListener("input", syncUI);
+      ui.power.addEventListener("input", syncUI);
+      ui.spacing.addEventListener("input", syncUI);
+      ui.launch.addEventListener("click", launch);
+      document.getElementById("retryButton").addEventListener("click", () => resetStage());
+      document.getElementById("hintButton").addEventListener("click", showHint);
+
+      document.getElementById("stageMenuButton").addEventListener("click", () => {
+        renderStageGrid();
+        ui.stageDialog.showModal();
+      });
+      document.getElementById("closeStageDialog").addEventListener("click", () => ui.stageDialog.close());
+      ui.stageDialog.addEventListener("click", event => {
+        if (event.target === ui.stageDialog) ui.stageDialog.close();
+      });
+
+      document.getElementById("resultRetryButton").addEventListener("click", () => {
+        ui.resultDialog.close();
+        resetStage();
+      });
+      ui.nextStage.addEventListener("click", () => {
+        if (currentStage + 1 >= stages.length) return;
+        ui.resultDialog.close();
+        loadStage(currentStage + 1);
+      });
+
+      ui.sound.addEventListener("click", () => {
+        soundOn = !soundOn;
+        ui.sound.textContent = `効果音：${soundOn ? "ON" : "OFF"}`;
+        ui.sound.setAttribute("aria-pressed", String(soundOn));
+        if (soundOn) playTone(440, .07, "sine", .025);
       });
 
       window.addEventListener("keydown", event => {
         if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(event.key)) {
           event.preventDefault();
         }
-
-        if (event.key === "ArrowUp") adjustAngle(2);
-        if (event.key === "ArrowDown") adjustAngle(-2);
-        if (event.key === "ArrowLeft") adjustPower(-1);
-        if (event.key === "ArrowRight") adjustPower(1);
+        if (event.key === "ArrowUp" && !active) ui.angle.value = Math.min(Number(ui.angle.max), Number(ui.angle.value) + 2);
+        if (event.key === "ArrowDown" && !active) ui.angle.value = Math.max(Number(ui.angle.min), Number(ui.angle.value) - 2);
+        if (event.key === "ArrowLeft" && !active) ui.power.value = Math.max(Number(ui.power.min), Number(ui.power.value) - 1);
+        if (event.key === "ArrowRight" && !active) ui.power.value = Math.min(Number(ui.power.max), Number(ui.power.value) + 1);
         if (event.key === " ") launch();
+        if (event.key.toLowerCase() === "r") resetStage();
+        syncUI();
       });
 
-      updateLabels();
-      updateStats();
-      loop();
+      renderStageGrid();
+      resetStage(false);
+      setMessage(`ステージ1「${stages[0].name}」　角度と強さを決めて発射しよう！`);
+      requestAnimationFrame(gameLoop);
     })();
   </script>
 </body>
