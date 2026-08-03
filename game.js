@@ -186,14 +186,25 @@
     g.strokeRect(x, y, w, h);
   }
 
+  const HEART_PIXELS = [
+    '011101110',
+    '111111111',
+    '111111111',
+    '111111111',
+    '011111110',
+    '001111100',
+    '000111000',
+    '000010000'
+  ];
+
   function heartShape(x, y, color = '#ed001f') {
-    rect(x - 4, y - 4, 3, 2, color);
-    rect(x + 1, y - 4, 3, 2, color);
-    rect(x - 5, y - 2, 11, 4, color);
-    rect(x - 4, y + 2, 9, 2, color);
-    rect(x - 3, y + 4, 7, 2, color);
-    rect(x - 2, y + 6, 5, 2, color);
-    rect(x - 1, y + 8, 3, 2, color);
+    for (let row = 0; row < HEART_PIXELS.length; row++) {
+      for (let column = 0; column < HEART_PIXELS[row].length; column++) {
+        if (HEART_PIXELS[row][column] === '1') {
+          rect(x - 4 + column, y - 4 + row, 1, 1, color);
+        }
+      }
+    }
   }
 
   function drawGrid() {
