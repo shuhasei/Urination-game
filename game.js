@@ -510,7 +510,20 @@
     rect(76, 94, 218, 47, '#000');
     heartShape(heart.x, heart.y, stage === 10 ? '#168bff' : '#f5222d');
     for (const bullet of bullets) {
-      if (bullet.kind === 'bone') {
+      if (bullet.kind === 'beam') {
+        const active = bullet.age >= bullet.warning;
+        g.globalAlpha = active ? 1 : .35 + Math.sin(bullet.age * 35) * .18;
+        if (bullet.orientation === 'horizontal') {
+          rect(76, bullet.y - (active ? 3 : 1), 218, active ? 7 : 2, '#fff');
+          rect(bullet.x - 5, bullet.y - 7, 9, 14, '#fff');
+          rect(bullet.x - 3, bullet.y - 3, 5, 6, '#000');
+        } else {
+          rect(bullet.x - (active ? 3 : 1), 94, active ? 7 : 2, 47, '#fff');
+          rect(bullet.x - 7, 92, 14, 9, '#fff');
+          rect(bullet.x - 3, 94, 6, 5, '#000');
+        }
+        g.globalAlpha = 1;
+      } else if (bullet.kind === 'bone') {
         rect(bullet.x - 2, bullet.y - bullet.h, 5, bullet.h, '#fff');
         rect(bullet.x - 4, bullet.y - bullet.h, 9, 3, '#fff');
         rect(bullet.x - 4, bullet.y - 3, 9, 3, '#fff');
@@ -1032,6 +1045,10 @@
       h: extras.h || (kind === 'bone' ? 14 : 0),
       curve: extras.curve || 0,
       homing: extras.homing || 0,
+      orientation: extras.orientation || 'horizontal',
+      length: extras.length || 0,
+      warning: extras.warning || 0,
+      life: extras.life || 5,
       age: 0
     });
   }
@@ -1041,8 +1058,84 @@
     return { vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed };
   }
 
+  function spawnSansVolley(pattern, now) {
+    const phase = (pattern.id - 1) % 8;
+    const speed = pattern.speed;
+    const left = 79, right = 291, top = 96, bottom = 140;
+
+    if (phase === 0) {
+      const gap = 2 + (turnCount % 3);
+      for (let lane = 0; lane < 7; lane++) {
+        if (lane === gap || lane === gap + 1) continue;
+        addProjectile('bone', right, bottom, -speed, 0, { h: 8 + lane * 4 });
+      }
+    } else if (phase === 1) {
+      for (let i = 0; i < 8; i++) {
+        if (i === (turnCount * 3) % 8) continue;
+        addProjectile('bone', 88 + i * 27, bottom + 6, 0, -speed * .72, { h: 12 + (i % 3) * 6 });
+      }
+    } else if (phase === 2) {
+      const safe = 1 + turnCount % 3;
+      for (let lane = 0; lane < 4; lane++) {
+        if (lane === safe) continue;
+        addProjectile('beam', left, 103 + lane * 10, 0, 0, {
+          orientation: 'horizontal', length: right - left, warning: .42, life: .72
+        });
+      }
+    } else if (phase === 3) {
+      const safe = 1 + turnCount % 4;
+      for (let lane = 0; lane < 6; lane++) {
+        if (lane === safe || lane === safe + 1) continue;
+        addProjectile('beam', 91 + lane * 37, top, 0, 0, {
+          orientation: 'vertical', length: bottom - top, warning: .38, life: .7
+        });
+      }
+    } else if (phase === 4) {
+      for (let i = 0; i < 10; i++) {
+        const angle = now / 320 + i * Math.PI * 2 / 10;
+        addProjectile('bone', 185 + Math.cos(angle) * 106, 117 + Math.sin(angle) * 31,
+          -Math.cos(angle) * speed, -Math.sin(angle) * speed * .55,
+          { h: 8 + i % 4, curve: i % 2 ? .45 : -.45 });
+      }
+    } else if (phase === 5) {
+      const gapX = 105 + (turnCount * 31) % 130;
+      for (let x = 86; x < 291; x += 17) {
+        if (Math.abs(x - gapX) < 20) continue;
+        addProjectile('bone', x, bottom + 5, 0, -speed * .45, { h: 18 + (x % 4) * 3 });
+      }
+      addProjectile('beam', left, top + 8 + turnCount % 3 * 11, 0, 0, {
+        orientation: 'horizontal', length: right - left, warning: .55, life: .85
+      });
+    } else if (phase === 6) {
+      for (let i = 0; i < 5; i++) {
+        const y = 101 + i * 8;
+        addProjectile('bone', i % 2 ? left : right, bottom, i % 2 ? speed : -speed, 0, { h: 9 + i * 6 });
+      }
+      addProjectile('beam', 185, top, 0, 0, {
+        orientation: 'vertical', length: bottom - top, warning: .48, life: .8
+      });
+    } else {
+      addProjectile('beam', left, 106, 0, 0, {
+        orientation: 'horizontal', length: right - left, warning: .48, life: .78
+      });
+      addProjectile('beam', left, 130, 0, 0, {
+        orientation: 'horizontal', length: right - left, warning: .48, life: .78
+      });
+      addProjectile('beam', 138, top, 0, 0, {
+        orientation: 'vertical', length: bottom - top, warning: .6, life: .9
+      });
+      addProjectile('beam', 232, top, 0, 0, {
+        orientation: 'vertical', length: bottom - top, warning: .6, life: .9
+      });
+    }
+  }
+
   function spawnPatternVolley(pattern, now) {
     const kind = pattern.kind;
+    if (kind === 'bone') {
+      spawnSansVolley(pattern, now);
+      return;
+    }
     const speed = pattern.speed;
     const formation = pattern.formation;
     const left = 79, right = 291, top = 96, bottom = 140;
@@ -1217,9 +1310,17 @@
       bullet.x += bullet.vx * dt;
       bullet.y += bullet.vy * dt;
 
-      const hit = bullet.kind === 'bone'
-        ? Math.abs(bullet.x - heart.x) < 6 && heart.y > bullet.y - bullet.h - 4 && heart.y < bullet.y + 5
-        : Math.abs(bullet.x - heart.x) < 6 && Math.abs(bullet.y - heart.y) < 7;
+      let hit;
+      if (bullet.kind === 'beam') {
+        const active = bullet.age >= bullet.warning && bullet.age <= bullet.life;
+        hit = active && (bullet.orientation === 'horizontal'
+          ? Math.abs(bullet.y - heart.y) < 6
+          : Math.abs(bullet.x - heart.x) < 6);
+      } else if (bullet.kind === 'bone') {
+        hit = Math.abs(bullet.x - heart.x) < 6 && heart.y > bullet.y - bullet.h - 4 && heart.y < bullet.y + 5;
+      } else {
+        hit = Math.abs(bullet.x - heart.x) < 6 && Math.abs(bullet.y - heart.y) < 7;
+      }
       if (invincible <= 0 && hit) {
         hp = Math.max(0, hp - pattern.damage);
         invincible = bullet.kind === 'bone' ? .34 : .58;
@@ -1227,7 +1328,9 @@
       }
     }
 
-    bullets = bullets.filter(bullet => bullet.x > 68 && bullet.x < 302 && bullet.y > 84 && bullet.y < 155);
+    bullets = bullets.filter(bullet => bullet.kind === 'beam'
+      ? bullet.age < bullet.life
+      : bullet.x > 68 && bullet.x < 302 && bullet.y > 84 && bullet.y < 155);
     invincible -= dt;
     if (hp <= 0) {
       if (reviveItems > 0) {
