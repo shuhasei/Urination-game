@@ -73,8 +73,10 @@
   ];
   const MEGALOVANIA = 'spotify:track:1J03Vp93ybKIxfzYI4YJtL';
   const SANS_ATTACK_SEQUENCE = [
-    12, 0, 1, 5, 6, 8, 2, 3, 0, 4, 9, 10,
-    6, 2, 8, 5, 3, 9, 10, 4, 7, 11, 7, 11
+    12,
+    0, 5, 8, 13, 13, 13, 13, 14, 15, 0, 13, 8,
+    11, 2, 11, 10, 10, 3, 10, 11, 10,
+    11, 7
   ];
   const SANS_BATTLE_LINES = [
     'まずは 重さを 思い出してもらう。',
@@ -243,7 +245,7 @@
 
   function battleArena() {
     return stage === 10
-      ? { x: 133, y: 91, w: 54, h: 54, left: 136, right: 184, top: 94, bottom: 142 }
+      ? { x: 128, y: 83, w: 64, h: 64, left: 131, right: 189, top: 86, bottom: 144 }
       : { x: 73, y: 91, w: 224, h: 53, left: 76, right: 294, top: 94, bottom: 141 };
   }
 
@@ -264,6 +266,15 @@
         if (HEART_PIXELS[row][column] === '1') {
           rect(x - 4 + column, y - 4 + row, 1, 1, color);
         }
+      }
+    }
+  }
+
+  function battleHeartShape(x, y, color) {
+    const pixels = ['11011', '11111', '11111', '01110', '00100'];
+    for (let row = 0; row < pixels.length; row++) {
+      for (let column = 0; column < pixels[row].length; column++) {
+        if (pixels[row][column] === '1') rect(x - 2 + column, y - 2 + row, 1, 1, color);
       }
     }
   }
@@ -915,9 +926,13 @@
     const arena = battleArena();
     rect(arena.x, arena.y, arena.w, arena.h, '#fff');
     rect(arena.left, arena.top, arena.right - arena.left, arena.bottom - arena.top, '#000');
-    heartShape(heart.x, heart.y, stage === 10 ? '#168bff' : '#f5222d');
+    if (stage === 10) battleHeartShape(heart.x, heart.y, '#168bff');
+    else heartShape(heart.x, heart.y, '#f5222d');
     for (const bullet of bullets) {
-      if (bullet.kind === 'beam') {
+      if (bullet.kind === 'platform') {
+        rect(bullet.x - bullet.w / 2, bullet.y, bullet.w, 2, '#55e69a');
+        rect(bullet.x - bullet.w / 2 + 2, bullet.y + 2, bullet.w - 4, 2, '#176641');
+      } else if (bullet.kind === 'beam') {
         const active = bullet.age >= bullet.warning;
         const fireProgress = active
           ? Math.max(0, Math.min(1, (bullet.age - bullet.warning) / .085))
@@ -1728,8 +1743,8 @@
     if (attacker.type === 'sans') {
       const sequenceIndex = sansTurn % SANS_ATTACK_SEQUENCE.length;
       const sansPhase = SANS_ATTACK_SEQUENCE[sequenceIndex];
-      const phaseIntervals = [760, 820, 1180, 1120, 900, 980, 1160, 1320, 980, 1280, 920, 1380, 680];
-      const phaseSpeeds = [48, 42, 0, 0, 36, 45, 43, 0, 40, 0, 39, 0, 46];
+      const phaseIntervals = [820, 880, 1240, 1180, 980, 1040, 1220, 1380, 1040, 1340, 980, 1440, 760, 940, 720, 980];
+      const phaseSpeeds = [48, 42, 0, 0, 36, 45, 43, 0, 40, 0, 39, 0, 46, 42, 58, 44];
       const turnDurations = [
         15000, 14500, 16000, 15500, 16500, 16000,
         16500, 15500, 17000, 16500, 17000, 17500,
@@ -1740,7 +1755,7 @@
         ...attackPattern,
         sansPhase,
         finalSpecial: sequenceIndex >= SANS_ATTACK_SEQUENCE.length - 2,
-        gravity: [0, 1, 4, 5, 6, 8, 10, 11, 12].includes(sansPhase),
+        gravity: [0, 1, 4, 5, 6, 8, 10, 11, 12, 13, 14, 15].includes(sansPhase),
         interval: phaseIntervals[sansPhase],
         speed: phaseSpeeds[sansPhase],
         damage: 1,
@@ -1829,6 +1844,7 @@
       vy *= transform.scaleY;
       extras = {
         ...extras,
+        w: extras.w ? extras.w * transform.scaleX : extras.w,
         h: extras.h ? extras.h * transform.scaleY : extras.h,
         length: extras.length
           ? extras.length * (extras.orientation === 'vertical' ? transform.scaleY : transform.scaleX)
@@ -1841,6 +1857,7 @@
       y,
       vx,
       vy,
+      w: extras.w || (kind === 'platform' ? 28 : 0),
       h: extras.h || (kind === 'bone' ? 14 : 0),
       fromTop: extras.fromTop || false,
       blue: extras.blue || false,
@@ -1992,6 +2009,49 @@
           side: shot % 2 ? 'bottom' : 'top'
         });
       }
+    } else if (phase === 13) {
+      // Moving-platform passage above a low bone stream.
+      gravityDirection = 'down';
+      const platformY = shot % 3 === 0 ? 112 : shot % 3 === 1 ? 123 : 105;
+      addProjectile('platform', startX, platformY, direction * speed * 2.5, 0, {
+        w: 34,
+        life: 4
+      });
+      if (shot % 2 === 0) {
+        addProjectile('bone', startX, bottom, direction * speed * 2.2, 0, {
+          h: 8,
+          life: 4
+        });
+      }
+    } else if (phase === 14) {
+      // Opposing horizontal bone slides retain one continuous moving gap.
+      const gapCenter = [108, 125, 114, 129][shot % 4];
+      movingBoneGate(gapCenter, 19, speed * 3.4);
+      if (shot % 2 === 0) {
+        const otherX = fromRight ? left - 4 : right + 4;
+        const otherDirection = -direction;
+        const gapTop = gapCenter - 9.5;
+        const gapBottom = gapCenter + 9.5;
+        addProjectile('bone', otherX, top, otherDirection * speed * 3.4, 0, {
+          h: Math.max(5, gapTop - top), fromTop: true
+        });
+        addProjectile('bone', otherX, bottom, otherDirection * speed * 3.4, 0, {
+          h: Math.max(5, bottom - gapBottom)
+        });
+      }
+    } else if (phase === 15) {
+      // Platform and blaster combination with a full platform-width safe band.
+      gravityDirection = 'down';
+      const platformY = shot % 2 ? 126 : 110;
+      addProjectile('platform', startX, platformY, direction * speed * 2.2, 0, {
+        w: 38,
+        life: 4
+      });
+      const beamY = platformY < 118 ? 132 : 102;
+      addProjectile('beam', left, beamY, 0, 0, {
+        orientation: 'horizontal', length: right - left,
+        warning: .72, life: 1.08, side: fromRight ? 'right' : 'left'
+      });
     } else if (phase === 4) {
       // A five-bone arc closes slowly; the missing sector rotates one step at a time.
       const openSector = shot % 6;
@@ -2337,9 +2397,19 @@
       bullet.y += bullet.vy * dt;
 
       let hit;
-      if (bullet.kind === 'beam') {
+      if (bullet.kind === 'platform') {
+        const sole = heart.y + 3;
+        const landingRange = Math.max(4, Math.abs(heart.vy * dt) + 3);
+        const overPlatform = Math.abs(heart.x - bullet.x) <= bullet.w / 2 + 1;
+        if (gravityDirection === 'down' && heart.vy >= 0 && overPlatform
+          && sole >= bullet.y - 1 && sole <= bullet.y + landingRange) {
+          heart.y = bullet.y - 3;
+          heart.vy = 0;
+        }
+        hit = false;
+      } else if (bullet.kind === 'beam') {
         const active = bullet.age >= bullet.warning && bullet.age <= bullet.life;
-        const beamHitRadius = stage === 10 ? 3.5 : 6;
+        const beamHitRadius = stage === 10 ? 2.35 : 6;
         const fireProgress = Math.max(0, Math.min(1, (bullet.age - bullet.warning) / .085));
         if (bullet.orientation === 'horizontal') {
           const reach = (arena.right - arena.left) * fireProgress;
@@ -2357,9 +2427,10 @@
       } else if (bullet.kind === 'bone') {
         const boneTop = bullet.fromTop ? bullet.y : bullet.y - bullet.h;
         const boneBottom = boneTop + bullet.h;
-        hit = Math.abs(bullet.x - heart.x) < (stage === 10 ? 3 : 5)
-          && heart.y > boneTop - 4
-          && heart.y < boneBottom + 4;
+        const heartRadius = stage === 10 ? 2.25 : 4;
+        hit = Math.abs(bullet.x - heart.x) < (stage === 10 ? 2.35 : 5)
+          && heart.y > boneTop - heartRadius
+          && heart.y < boneBottom + heartRadius;
       } else {
         hit = Math.abs(bullet.x - heart.x) < 6 && Math.abs(bullet.y - heart.y) < 7;
       }
