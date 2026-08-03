@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>縺｡縺ｦ縺・・繧ゅ・縺後◆繧・/title>
+  <title>ちていのものがたり</title>
   <style>
     * { box-sizing: border-box; }
     html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #000; }
@@ -25,15 +25,15 @@
   </style>
 </head>
 <body>
-  <main id="game-shell" aria-label="蝨ｰ荳矩⊆霍｡繧呈爾邏｢縺吶ｋ繝ｬ繝医Ο繧ｲ繝ｼ繝">
-    <canvas id="game" width="640" height="360" tabindex="0" aria-label="繧ｲ繝ｼ繝逕ｻ髱｢縲よ婿蜷代く繝ｼ縺ｧ遘ｻ蜍輔・nter縺技縺ｧ豎ｺ螳・></canvas>
-    <div id="start-hint">ENTER / Z / 繧ｿ繝・・</div>
+  <main id="game-shell" aria-label="地下遺跡を探索するレトロゲーム">
+    <canvas id="game" width="640" height="360" tabindex="0" aria-label="ゲーム画面。方向キーで移動、EnterかZで決定"></canvas>
+    <div id="start-hint">ENTER / Z / タップ</div>
     <div id="touch" aria-hidden="true">
-      <button class="touch-button" id="up" data-key="ArrowUp" aria-label="荳・>笆ｲ</button>
-      <button class="touch-button" id="down" data-key="ArrowDown" aria-label="荳・>笆ｼ</button>
-      <button class="touch-button" id="left" data-key="ArrowLeft" aria-label="蟾ｦ">笳</button>
-      <button class="touch-button" id="right" data-key="ArrowRight" aria-label="蜿ｳ">笆ｶ</button>
-      <button class="touch-button" id="ok" data-key="Enter" aria-label="豎ｺ螳・>OK</button>
+      <button class="touch-button" id="up" data-key="ArrowUp" aria-label="上">▲</button>
+      <button class="touch-button" id="down" data-key="ArrowDown" aria-label="下">▼</button>
+      <button class="touch-button" id="left" data-key="ArrowLeft" aria-label="左">◀</button>
+      <button class="touch-button" id="right" data-key="ArrowRight" aria-label="右">▶</button>
+      <button class="touch-button" id="ok" data-key="Enter" aria-label="決定">OK</button>
     </div>
     <div id="spotify-embed" aria-hidden="true"></div>
   </main>
@@ -113,23 +113,23 @@
     function stopSpotify() { spotifyWanted = false; if (spotifyController) spotifyController.pause(); }
 
     const chars = [
-      '縺・,'縺・,'縺・,'縺・,'縺・,'縺・,'縺・,'縺・,'縺・,'縺・,
-      '縺・,'縺・,'縺・,'縺・,'縺・,'縺・,'縺｡','縺､','縺ｦ','縺ｨ',
-      '縺ｪ','縺ｫ','縺ｬ','縺ｭ','縺ｮ','縺ｯ','縺ｲ','縺ｵ','縺ｸ','縺ｻ',
-      '縺ｾ','縺ｿ','繧','繧・,'繧・,'繧・,'繧・,'繧・,'繧・,'繧・,
-      '繧・,'繧・,'繧・,'繧・,'繧・,'繧・,'繝ｼ','繧・,'縺代☆','縺翫ｏ繧・
+      'あ','い','う','え','お','か','き','く','け','こ',
+      'さ','し','す','せ','そ','た','ち','つ','て','と',
+      'な','に','ぬ','ね','の','は','ひ','ふ','へ','ほ',
+      'ま','み','む','め','も','や','ゆ','よ','ら','り',
+      'る','れ','ろ','わ','を','ん','ー','゛','けす','おわり'
     ];
     const dialogue = [
-      '繝上Ο繝ｼ・・,
-      '縺ｼ縺上・ 繝輔Ν繝ｫ縲・n縺｡縺ｦ縺・↓ 縺輔＞縺・縺願干縺包ｼ・,
-      '縺薙％縺ｸ譚･繧九・縺ｯ 縺ｯ縺倥ａ縺ｦ縺縺ｭ・歃n縺ｼ縺上′ 縺ｿ縺｡縺ゅｓ縺ｪ縺・＠縺ｦ縺ゅ￡繧九・
+      'ハロー！',
+      'ぼくは フルル。\nちていに さいた お花さ！',
+      'ここへ来るのは はじめてだね？\nぼくが みちあんないしてあげる。'
     ];
     const roomLines = {
-      3: '繧上◆縺励・ 繧ｻ繝ｩ縲・n縺薙・驕ｺ霍｡縺ｮ 邂｡逅・ｺｺ縺ｧ縺吶・n縺薙■繧峨∈ 縺､縺・※縺阪※縺上□縺輔＞縲・,
-      4: '縺薙・驛ｨ螻九〒縺ｯ 繧ｹ繧､繝・メ繧呈款縺吶→\n驕薙′縺ｲ繧峨″縺ｾ縺吶・,
-      6: '繝医ご縺ｮ荳翫↓縺ｯ 螳牙・縺ｪ驕薙′\n縺九￥縺輔ｌ縺ｦ縺・∪縺吶・,
-      9: '蟯ｩ縺ｫ繧・縺昴ｌ縺槭ｌ諤ｧ譬ｼ縺後≠繧九・縺ｧ縺吶・,
-      11: '繧医￥ 縺薙％縺ｾ縺ｧ譚･縺ｾ縺励◆縺ｭ縲・n縺薙・蜈医↓ 繧上◆縺励・螳ｶ縺後≠繧翫∪縺吶・
+      3: 'わたしは セラ。\nこの遺跡の 管理人です。\nこちらへ ついてきてください。',
+      4: 'この部屋では スイッチを押すと\n道がひらきます。',
+      6: 'トゲの上には 安全な道が\nかくされています。',
+      9: '岩にも それぞれ性格があるのです。',
+      11: 'よく ここまで来ましたね。\nこの先に わたしの家があります。'
     };
 
     function setState(next) {
@@ -156,7 +156,24 @@
         o.type = type; o.frequency.value = 440 * Math.pow(2, (midi - 69) / 12);
         gain.gain.setValueAtTime(volume, ac.currentTime + when);
         gain.gain.exponentialRampToValueAtTime(.001, ac.currentTime + when + duration);
-    …1108 tokens truncated…ad.addColorStop(1,'rgba(255,245,160,.07)');
+        o.connect(gain); gain.connect(master); o.start(ac.currentTime + when); o.stop(ac.currentTime + when + duration + .02);
+      }
+      function tick() {
+        if (!ac || ac.state !== 'running') return;
+        if (mode === 'menu') {
+          tone(menuA[step % 16], .13, 'square', .38);
+          if (step % 2 === 0) tone(menuB[step % 16], .22, 'triangle', .32);
+        } else if (mode === 'friend') {
+          tone(friendA[step % 16], .09, 'square', .46);
+          tone(friendA[(step + 4) % 16] - 12, .07, 'square', .18, .055);
+          if (step % 4 === 0) tone(48 + ((st…865 tokens truncated…18){ line(27,y,293,y,'#382c47'); for(let x=34+(y%36?12:0);x<288;x+=30) line(x,y-5,x,y+5,'#382c47'); }
+      }
+    }
+
+    function spotlight(cx, top, bottom, half) {
+      g.save();
+      const grad=g.createLinearGradient(0,top,0,bottom);
+      grad.addColorStop(0,'rgba(255,249,190,.24)'); grad.addColorStop(1,'rgba(255,245,160,.07)');
       g.fillStyle=grad; g.beginPath(); g.moveTo(cx-5,top); g.lineTo(cx+5,top); g.lineTo(cx+half,bottom); g.lineTo(cx-half,bottom); g.closePath(); g.fill();
       g.restore();
     }
@@ -190,9 +207,9 @@
       drawMiniPlayer(player.x,player.y,!awake);
       if(openingMessage){
         rect(14,121,292,55,'#fff');rect(17,124,286,49,'#000');
-        pixelText('・奇ｼ医″繧薙＞繧阪・縲縺ｯ縺ｪ縺・・,29,132,10,'#fff');
-        pixelText('・奇ｼ医・縺ｪ縺後繧ｯ繝・す繝ｧ繝ｳ縺ｫ縺ｪ縺｣縺ｦ',29,149,10,'#fff');
-        pixelText('縲縲縺溘☆縺九▲縺溘ｉ縺励＞・・,43,163,10,'#fff');
+        pixelText('＊（きんいろの　はなだ）',29,132,10,'#fff');
+        pixelText('＊（はなが　クッションになって',29,149,10,'#fff');
+        pixelText('　　たすかったらしい）',43,163,10,'#fff');
       }
     }
 
@@ -294,7 +311,7 @@
 
     function drawRoom() {
       if(room>=3){drawRuins(room);return;}
-      if(room===1){drawOpeningChamber();if(!awake)pixelText('繝ｻ',160,153,10,'#aaa','center');return;}
+      if(room===1){drawOpeningChamber();if(!awake)pixelText('・',160,153,10,'#aaa','center');return;}
       stoneBackdrop(room);
       if (room===2) {
         rect(20,105,20,35,'#000');rect(0,111,40,24,'#292139');
@@ -310,8 +327,8 @@
       rect(13,127,294,45,'#000'); g.strokeStyle='#fff'; g.lineWidth=2; g.strokeRect(13,127,294,45);
       const full=dialogue[dialogueIndex];
       const shown=full.slice(0,Math.floor(dialogueChars));
-      pixelText('・・'+shown,25,137,9,'#fff');
-      if (dialogueChars>=full.length) pixelText('笆ｼ',294,159,7,'#fff','center');
+      pixelText('＊ '+shown,25,137,9,'#fff');
+      if (dialogueChars>=full.length) pixelText('▼',294,159,7,'#fff','center');
     }
 
     function drawGuide(x,y) {
@@ -341,20 +358,20 @@
 
     function drawBattle() {
       rect(0,0,W,H,'#000');
-      pixelText(name||'縺ゅ＞',18,151,9,'#fff'); pixelText('LV 1',88,151,9,'#fff');
+      pixelText(name||'あい',18,151,9,'#fff'); pixelText('LV 1',88,151,9,'#fff');
       rect(128,153,54,8,'#6a161c'); rect(128,153,42,8,'#f4d82d'); pixelText('20 / 20',192,151,8,'#fff');
       g.strokeStyle='#fff';g.lineWidth=2;g.strokeRect(75,84,170,58);
       if(state==='floweyBattle'){
         drawFlowey(160,45,flowerTime);
-        if(floweyPhase===0)pixelText('・・縺阪∩縺ｮ 繝上・繝医ｒ 蜍輔°縺励※縺ｿ縺ｦ縲・,86,96,8,'#fff');
+        if(floweyPhase===0)pixelText('＊ きみの ハートを 動かしてみて。',86,96,8,'#fff');
         else if(floweyPhase===1){rect(player.x-3,player.y-3,6,6,'#ef2938');for(let i=0;i<7;i++){const a=flowerTime/500+i*.9;rect(160+Math.cos(a)*45-2,112+Math.sin(a)*20-2,4,4,'#fff');}}
-        else if(floweyPhase===2)pixelText('・・縺薙ｌ縺ｯ 隕ｪ蛻・・繧ｿ繝阪□繧茨ｼ・,92,101,8,'#fff');
-        else {pixelText('・・縺昴％縺ｾ縺ｧ縺ｧ縺呻ｼ・,105,103,9,'#fff');drawGuide(222,70);rect(178,60,18,4,'#f4dfef');}
+        else if(floweyPhase===2)pixelText('＊ これは 親切のタネだよ！',92,101,8,'#fff');
+        else {pixelText('＊ そこまでです！',105,103,9,'#fff');drawGuide(222,70);rect(178,60,18,4,'#f4dfef');}
       }else{
-        if(encounterType==='dummy'){rect(157,41,7,22,'#e1d7ca');rect(152,37,17,8,'#755376');pixelText('・・繝繝溘・縺ｯ 縺倥▲縺ｨ縺励※縺・ｋ縲・,89,99,8,'#fff');}
-        if(encounterType==='frog'){rect(151,44,19,12,'#ddd');rect(148,42,7,6,'#ddd');rect(166,42,7,6,'#ddd');rect(153,47,2,2,'#111');rect(166,47,2,2,'#111');pixelText('・・繧ｱ繝ｭ繝ｪ繝ｳ縺・驕薙ｒ縺ｵ縺輔＞縺縲・,89,99,8,'#fff');}
-        if(encounterType==='wisp'){rect(155,43,12,16,'#ddd');rect(151,39,5,5,'#ddd');rect(166,39,5,5,'#ddd');pixelText('・・繝輔Ρ繝ｪ縺ｯ 縺ｫ縺偵◆縺昴≧縺縲・,93,99,8,'#fff');}
-        pixelText('縺溘◆縺九≧',36,166,7,'#f39828');pixelText('縺薙≧縺ｩ縺・,112,166,7,'#f39828');pixelText('繧｢繧､繝・Β',188,166,7,'#f39828');pixelText('縺ｿ縺ｮ縺後☆',259,166,7,'#f39828');
+        if(encounterType==='dummy'){rect(157,41,7,22,'#e1d7ca');rect(152,37,17,8,'#755376');pixelText('＊ ダミーは じっとしている。',89,99,8,'#fff');}
+        if(encounterType==='frog'){rect(151,44,19,12,'#ddd');rect(148,42,7,6,'#ddd');rect(166,42,7,6,'#ddd');rect(153,47,2,2,'#111');rect(166,47,2,2,'#111');pixelText('＊ ケロリンが 道をふさいだ。',89,99,8,'#fff');}
+        if(encounterType==='wisp'){rect(155,43,12,16,'#ddd');rect(151,39,5,5,'#ddd');rect(166,39,5,5,'#ddd');pixelText('＊ フワリは にげたそうだ。',93,99,8,'#fff');}
+        pixelText('たたかう',36,166,7,'#f39828');pixelText('こうどう',112,166,7,'#f39828');pixelText('アイテム',188,166,7,'#f39828');pixelText('みのがす',259,166,7,'#f39828');
       }
     }
 
@@ -369,8 +386,8 @@
 
     function activateName() {
       const c=chars[cursor];
-      if(c==='縺代☆'){ if(name){name=name.slice(0,-1);music.select();} return; }
-      if(c==='縺翫ｏ繧・){ if(name){confirmChoice=0;setState('confirm');music.select();} return; }
+      if(c==='けす'){ if(name){name=name.slice(0,-1);music.select();} return; }
+      if(c==='おわり'){ if(name){confirmChoice=0;setState('confirm');music.select();} return; }
       if(name.length<6){ name+=c; music.select(); }
     }
 
@@ -478,9 +495,9 @@
       else if(state==='dialogue')drawDialogue();
       else if(state==='floweyBattle'||state==='encounter')drawBattle();
       else if(state==='ruinsText'){
-        drawRuins(room);rect(13,127,294,45,'#000');g.strokeStyle='#fff';g.lineWidth=2;g.strokeRect(13,127,294,45);pixelText('・・'+ruinsText,24,136,8,'#fff');pixelText('笆ｼ',294,159,7,'#fff','center');
+        drawRuins(room);rect(13,127,294,45,'#000');g.strokeStyle='#fff';g.lineWidth=2;g.strokeRect(13,127,294,45);pixelText('＊ '+ruinsText,24,136,8,'#fff');pixelText('▼',294,159,7,'#fff','center');
       } else if(state==='ending'){
-        drawRuins(11);rect(0,0,W,H,`rgba(0,0,0,${Math.min(.75,(now-endingAt)/1500)})`);if(now-endingAt>1200)pixelText('縺､縺･縺・,160,83,12,'#fff','center');
+        drawRuins(11);rect(0,0,W,H,`rgba(0,0,0,${Math.min(.75,(now-endingAt)/1500)})`);if(now-endingAt>1200)pixelText('つづく',160,83,12,'#fff','center');
       }
       ctx.clearRect(0,0,canvas.width,canvas.height);
       ctx.drawImage(off,0,0,canvas.width,canvas.height);
@@ -494,3 +511,4 @@
   <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
 </body>
 </html>
+
