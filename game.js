@@ -928,7 +928,7 @@
       y,
       vx,
       vy,
-      h: extras.h || 0,
+      h: extras.h || (kind === 'bone' ? 14 : 0),
       curve: extras.curve || 0,
       homing: extras.homing || 0,
       age: 0
@@ -1024,7 +1024,7 @@
       case 12:
         for (let i = 0; i < 10; i++) {
           const angle = now / 370 + i * Math.PI * 2 / 10;
-          addProjectile(kind, centerX, centerY, Math.cos(angle) * speed, Math.sin(angle) * speed * .55, { curve: .45 });
+          addProjectile(kind, centerX + Math.cos(angle) * 103, centerY + Math.sin(angle) * 31, -Math.cos(angle) * speed, -Math.sin(angle) * speed * .55, { curve: .45 });
         }
         break;
       case 13:
