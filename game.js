@@ -21,6 +21,8 @@
   heroImage.src = 'assets/hero.png';
   const flowersImage = new Image();
   flowersImage.src = 'assets/flowers.png';
+  const sansReferenceImage = new Image();
+  sansReferenceImage.src = 'data:image/png;base64,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';
 
   const keys = new Set();
   const pressed = new Set();
@@ -367,6 +369,25 @@
     const talking = state === 'enemySpeak' && speakingEnemy?.visual === 'sans';
     const jaw = talking && Math.floor(speechChars) % 2 ? 1 : 0;
     const idle = Math.round(Math.sin(t / 420));
+
+    if (sansReferenceImage.complete && sansReferenceImage.naturalWidth) {
+      const drawX = Math.round(x - 21);
+      const drawY = Math.round(y - 8 + idle);
+      g.drawImage(sansReferenceImage, drawX, drawY, 42, 56);
+
+      if (talking && jaw) {
+        microPixelRect(x - 5, drawY + 17, 10, 2, '#050505');
+        for (let tooth = -4; tooth <= 4; tooth += 2) {
+          microPixelRect(x + tooth, drawY + 17, 1, 2, '#ffffff');
+        }
+      }
+      if (Math.floor(t / 170) % 2) {
+        microPixelRect(x + 6, drawY + 9, 2, 2, '#55f3ff');
+        microPixelRect(x + 7, drawY + 9, 1, 1, '#ffffff');
+      }
+      return;
+    }
+
     const sy = Math.round(y - 8 + idle);
     const white = '#ffffff';
     const bone = '#dedede';
