@@ -81,6 +81,8 @@
   let clearChoice = 1;
   let pendingStage = 1;
   let attackPattern = null;
+  let defeatAt = -10000;
+  let defeatFragments = [];
   let message = ['＊ 10しゅうねんの よる。', '＊ ふたりの ちょうせんしゃが あらわれた。'];
   let attackX = 82;
   let attackDirection = 1;
@@ -530,6 +532,113 @@
     if (Math.floor(now / 500) % 2 === 0) text('ENTER / Z', 160, 142, 9, '#fff', 'center');
   }
 
+  const SOUL_PIXELS = [
+    '001110011100',
+    '011111111110',
+    '111111111111',
+    '111111111111',
+    '111111111111',
+    '011111111110',
+    '001111111100',
+    '000111111000',
+    '000011110000',
+    '000001100000'
+  ];
+
+  function drawLargeSoul(cx, cy, split = 0, cracked = false) {
+    const scale = 3;
+    const width = SOUL_PIXELS[0].length * scale;
+    const height = SOUL_PIXELS.length * scale;
+    for (let row = 0; row < SOUL_PIXELS.length; row++) {
+      for (let col = 0; col < SOUL_PIXELS[row].length; col++) {
+        if (SOUL_PIXELS[row][col] !== '1') continue;
+        const side = col < SOUL_PIXELS[row].length / 2 ? -1 : 1;
+        const x = cx - width / 2 + col * scale + side * split;
+        const y = cy - height / 2 + row * scale + Math.abs(split) * .12;
+        const shade = row < 2 ? '#ff4b56' : row > 7 ? '#c80f21' : '#f51d31';
+        rect(x, y, scale, scale, shade);
+        if (col === 2 && row === 2) rect(x, y, scale, 1, '#ff9ba2');
+      }
+    }
+    if (cracked) {
+      const crack = [[0,-13],[-2,-9],[1,-6],[-2,-2],[1,2],[-1,6],[2,10],[0,14]];
+      for (let i = 0; i < crack.length - 1; i++) {
+        line(cx + crack[i][0], cy + crack[i][1], cx + crack[i + 1][0], cy + crack[i + 1][1], '#050505', 2);
+      }
+    }
+  }
+
+  function drawSoulBreak(now) {
+    rect(0, 0, W, H, '#000');
+    const elapsed = now - defeatAt;
+    const cx = 160;
+    const cy = 90;
+
+    if (elapsed < 520) {
+      const pulse = 1 + Math.sin(elapsed / 45) * .04;
+      g.save();
+      g.translate(cx, cy);
+      g.scale(pulse, pulse);
+      g.translate(-cx, -cy);
+      drawLargeSoul(cx, cy, 0, elapsed > 170);
+      g.restore();
+      if (elapsed > 170) {
+        const flash = Math.max(0, 1 - (elapsed - 170) / 250);
+        g.globalAlpha = flash * .45;
+        rect(0, 0, W, H, '#fff');
+        g.globalAlpha = 1;
+      }
+    } else if (elapsed < 880) {
+      const progress = (elapsed - 520) / 360;
+      const separation = 2 + progress * 13;
+      drawLargeSoul(cx, cy + progress * 3, separation, true);
+    } else {
+      const seconds = (elapsed - 880) / 1000;
+      for (const fragment of defeatFragments) {
+        const x = cx + fragment.x + fragment.vx * seconds;
+        const y = cy + fragment.y + fragment.vy * seconds + 58 * seconds * seconds;
+        const alpha = Math.max(0, 1 - seconds / 1.35);
+        g.globalAlpha = alpha;
+        rect(x, y, fragment.size, fragment.size, fragment.light ? '#ff6570' : '#e9182c');
+      }
+      g.globalAlpha = 1;
+      if (elapsed < 1080) {
+        const burst = Math.max(0, 1 - (elapsed - 880) / 200);
+        g.globalAlpha = burst * .55;
+        rect(0, 0, W, H, '#fff');
+        g.globalAlpha = 1;
+      }
+    }
+
+    if (elapsed > 1450) {
+      const alpha = Math.min(1, (elapsed - 1450) / 500);
+      g.globalAlpha = alpha;
+      text('SOUL LOST', 160, 123, 10, '#8d8d8d', 'center');
+      g.globalAlpha = 1;
+    }
+  }
+
+  function playDefeatSound() {
+    beep(246, .12);
+    setTimeout(() => { if (state === 'soulBreak') beep(174, .16); }, 220);
+    setTimeout(() => { if (state === 'soulBreak') beep(92, .28); }, 520);
+    setTimeout(() => {
+      if (state !== 'soulBreak' || !audio) return;
+      for (let i = 0; i < 5; i++) {
+        const oscillator = audio.createOscillator();
+        const gain = audio.createGain();
+        oscillator.type = 'square';
+        oscillator.frequency.value = 420 + i * 115;
+        gain.gain.setValueAtTime(.035, audio.currentTime + i * .018);
+        gain.gain.exponentialRampToValueAtTime(.001, audio.currentTime + .11 + i * .018);
+        oscillator.connect(gain);
+        gain.connect(audio.destination);
+        oscillator.start(audio.currentTime + i * .018);
+        oscillator.stop(audio.currentTime + .13 + i * .018);
+      }
+    }, 860);
+  }
+
   function drawEnding(victory) {
     rect(0, 0, W, H, '#000');
     text(victory ? 'BATTLE COMPLETE' : 'GAME OVER', 160, 58, 15, victory ? '#fff000' : '#f5222d', 'center');
@@ -542,6 +651,8 @@
       drawTitle(now);
     } else if (state === 'opening') {
       drawOpening(now);
+    } else if (state === 'soulBreak') {
+      drawSoulBreak(now);
     } else if (state === 'victory' || state === 'defeat' || state === 'stageClear') {
       if (state === 'stageClear') {
         rect(0, 0, W, H, '#050505');
@@ -787,8 +898,23 @@
   }
 
   function finishDefeat() {
+    if (state === 'soulBreak' || state === 'defeat') return;
     if (spotifyController) spotifyController.pause();
-    setState('defeat');
+    defeatAt = performance.now();
+    defeatFragments = Array.from({ length: 24 }, (_, index) => {
+      const angle = (Math.PI * 2 * index) / 24 + (index % 3) * .12;
+      const force = 24 + (index * 17) % 35;
+      return {
+        x: ((index * 7) % 17) - 8,
+        y: ((index * 11) % 15) - 7,
+        vx: Math.cos(angle) * force,
+        vy: Math.sin(angle) * force - 24,
+        size: 2 + index % 3,
+        light: index % 4 === 0
+      };
+    });
+    setState('soulBreak');
+    playDefeatSound();
   }
 
   function updateEnemyTurn(dt, now) {
@@ -994,6 +1120,8 @@
     handlePressed();
     if (state === 'opening') {
       updateOpening(dt);
+    } else if (state === 'soulBreak') {
+      if (now - defeatAt > 2250) setState('defeat');
     } else if (state === 'attack') {
       attackX += attackDirection * 125 * dt;
       if (attackX >= 284) attackDirection = -1;
