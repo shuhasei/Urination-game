@@ -69,6 +69,19 @@
     '最後の練習は 終わりだ。',
     'これで 記念戦の締めだ。'
   ];
+  const ROOM_THEMES = [
+    { name: 'FLOWER', floor: '#3d3c49', corridor: '#474656', light: '#68677c', glow: '#d8d5e4', center: '#20bd50', accent: '#ffe523' },
+    { name: 'RIPPLE', floor: '#263f46', corridor: '#31535a', light: '#527984', glow: '#b7e4e8', center: '#1b7587', accent: '#86f0ff' },
+    { name: 'LANTERN', floor: '#4b3b32', corridor: '#59483b', light: '#806955', glow: '#f2d7a4', center: '#865b28', accent: '#ffd45c' },
+    { name: 'MOON', floor: '#323548', corridor: '#3c4058', light: '#5d6480', glow: '#d7def4', center: '#303852', accent: '#f2f5ff' },
+    { name: 'FEATHER', floor: '#3e3846', corridor: '#51465b', light: '#74647f', glow: '#e4d8ea', center: '#55445f', accent: '#ffffff' },
+    { name: 'MIRROR', floor: '#344343', corridor: '#405655', light: '#627878', glow: '#d7ece9', center: '#426462', accent: '#aaffed' },
+    { name: 'CLOCK', floor: '#403d32', corridor: '#514c3a', light: '#716a4e', glow: '#e6dfb9', center: '#5b5536', accent: '#fff08b' },
+    { name: 'CROWN', floor: '#473441', corridor: '#5b4052', light: '#785a70', glow: '#ead2e2', center: '#674057', accent: '#ffdf4f' },
+    { name: 'TWINS', floor: '#413b4d', corridor: '#514960', light: '#756b85', glow: '#e3daef', center: '#51436b', accent: '#ff6d62' },
+    { name: 'JUDGEMENT', floor: '#353535', corridor: '#454545', light: '#626262', glow: '#d8d8d8', center: '#181818', accent: '#ffffff' }
+  ];
+
   function createAttackPatterns(type, seed) {
     return Array.from({ length: 60 }, (_, index) => {
       const level = Math.floor(index / 3) + 1;
@@ -714,10 +727,108 @@
     }
   }
 
+  function drawRoomCenter(roomIndex, theme, now) {
+    if (roomIndex === 0) {
+      if (flowersImage.complete && flowersImage.naturalWidth) {
+        g.drawImage(flowersImage, 94, 81, 72, 42);
+      } else {
+        for (let yy = 87; yy < 119; yy += 6) {
+          for (let xx = 103; xx < 159; xx += 7) {
+            rect(xx, yy, 5, 4, (xx + yy) % 3 ? '#ffe523' : '#e4a900');
+            rect(xx + 2, yy + 1, 2, 2, '#6f4b00');
+          }
+        }
+      }
+    } else if (roomIndex === 1) {
+      for (let ring = 0; ring < 4; ring++) {
+        g.strokeStyle = ring % 2 ? theme.accent : theme.glow;
+        g.lineWidth = 1;
+        g.beginPath();
+        g.ellipse(130, 102, 10 + ring * 8, 4 + ring * 4, 0, 0, Math.PI * 2);
+        g.stroke();
+      }
+      rect(127, 99, 7, 5, '#dffcff');
+    } else if (roomIndex === 2) {
+      for (const x of [108, 130, 152]) {
+        rect(x - 5, 91, 10, 20, '#17120b');
+        rect(x - 4, 92, 8, 16, theme.accent);
+        rect(x - 2, 95, 4, 10, '#fff4b1');
+        line(x - 6, 112, x + 6, 112, '#2b2114');
+      }
+    } else if (roomIndex === 3) {
+      g.strokeStyle = theme.accent;
+      g.lineWidth = 3;
+      g.beginPath();
+      g.arc(132, 101, 15, .55, Math.PI * 1.55);
+      g.stroke();
+      g.beginPath();
+      g.arc(139, 99, 12, Math.PI * 1.5, .7);
+      g.stroke();
+      rect(111, 91, 2, 2, '#fff');
+      rect(156, 107, 2, 2, '#fff');
+    } else if (roomIndex === 4) {
+      for (let i = -3; i <= 3; i++) {
+        const sway = Math.sin(now / 500 + i) * 2;
+        line(130 + i * 7, 112, 126 + i * 7 + sway, 91 + Math.abs(i) * 2, theme.accent);
+        line(126 + i * 7 + sway, 91 + Math.abs(i) * 2, 132 + i * 7, 95 + Math.abs(i), theme.glow);
+      }
+    } else if (roomIndex === 5) {
+      for (const x of [111, 149]) {
+        g.strokeStyle = theme.accent;
+        g.lineWidth = 2;
+        g.strokeRect(x - 9, 88, 18, 27);
+        rect(x - 6, 91, 12, 21, '#101919');
+        line(x - 5, 110, x + 5, 93, theme.glow);
+      }
+    } else if (roomIndex === 6) {
+      g.strokeStyle = theme.accent;
+      g.lineWidth = 2;
+      g.beginPath();
+      g.arc(130, 101, 17, 0, Math.PI * 2);
+      g.stroke();
+      for (let i = 0; i < 12; i++) {
+        const a = i * Math.PI / 6;
+        rect(129 + Math.cos(a) * 13, 100 + Math.sin(a) * 13, 2, 2, theme.accent);
+      }
+      line(130, 101, 130 + Math.sin(now / 850) * 10, 101 - Math.cos(now / 850) * 10, '#fff');
+      line(130, 101, 130 + Math.sin(now / 5000) * 7, 101 - Math.cos(now / 5000) * 7, '#fff');
+    } else if (roomIndex === 7) {
+      line(109, 108, 105, 91, theme.accent, 2);
+      line(105, 91, 117, 100, theme.accent, 2);
+      line(117, 100, 130, 86, theme.accent, 2);
+      line(130, 86, 143, 100, theme.accent, 2);
+      line(143, 100, 155, 91, theme.accent, 2);
+      line(155, 91, 151, 108, theme.accent, 2);
+      rect(109, 108, 43, 7, theme.accent);
+      rect(115, 110, 31, 3, '#7a5d00');
+    } else if (roomIndex === 8) {
+      g.fillStyle = '#ff6d62';
+      g.beginPath(); g.arc(116, 101, 12, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#64b8ff';
+      g.beginPath(); g.arc(144, 101, 12, 0, Math.PI * 2); g.fill();
+      for (let i = 0; i < 8; i++) {
+        const a = i * Math.PI / 4 + now / 900;
+        line(116 + Math.cos(a) * 14, 101 + Math.sin(a) * 14, 116 + Math.cos(a) * 20, 101 + Math.sin(a) * 20, '#ffb15d');
+        line(144 + Math.cos(-a) * 14, 101 + Math.sin(-a) * 14, 144 + Math.cos(-a) * 20, 101 + Math.sin(-a) * 20, '#a6e1ff');
+      }
+    } else {
+      for (const x of [103, 157]) {
+        rect(x - 5, 78, 10, 39, '#e8e8e8');
+        rect(x - 3, 80, 6, 35, '#222');
+        rect(x - 8, 76, 16, 4, '#fff');
+        rect(x - 8, 115, 16, 4, '#fff');
+      }
+      line(113, 102, 147, 102, '#777', 1);
+      rect(128, 98, 4, 8, '#fff');
+    }
+  }
+
   function drawOpening(now) {
+    const roomIndex = Math.max(0, Math.min(9, pendingStage - 1));
+    const theme = ROOM_THEMES[roomIndex];
     rect(0, 0, W, H, '#050505');
 
-    g.fillStyle = '#3d3c49';
+    g.fillStyle = theme.floor;
     g.beginPath();
     g.moveTo(42, 35);
     g.lineTo(205, 35);
@@ -736,37 +847,34 @@
 
     rect(52, 24, 18, 42, '#000');
     rect(177, 24, 18, 42, '#000');
-    rect(176, 98, 144, 28, '#474656');
+    rect(176, 98, 144, 28, theme.corridor);
 
-    g.fillStyle = '#68677c';
+    for (let x = 72; x <= 194; x += 24) {
+      rect(x, 39, 1, 8 + roomIndex % 3, theme.accent);
+      rect(x + 5, 39, 1, 5, theme.glow);
+    }
+
+    g.fillStyle = theme.light;
     g.beginPath();
     g.ellipse(130, 102, 67, 30, 0, 0, Math.PI * 2);
     g.fill();
-    g.fillStyle = '#d8d5e4';
+    g.fillStyle = theme.glow;
     g.beginPath();
     g.ellipse(130, 102, 52, 27, 0, 0, Math.PI * 2);
     g.fill();
-    g.fillStyle = '#20bd50';
+    g.fillStyle = theme.center;
     g.beginPath();
     g.ellipse(130, 102, 37, 24, 0, 0, Math.PI * 2);
     g.fill();
 
-    if (flowersImage.complete && flowersImage.naturalWidth) {
-      g.drawImage(flowersImage, 94, 81, 72, 42);
-    } else {
-      for (let yy = 87; yy < 119; yy += 6) {
-        for (let xx = 103; xx < 159; xx += 7) {
-          rect(xx, yy, 5, 4, (xx + yy) % 3 ? '#ffe523' : '#e4a900');
-          rect(xx + 2, yy + 1, 2, 2, '#6f4b00');
-        }
-      }
-    }
-
+    drawRoomCenter(roomIndex, theme, now);
     drawOpeningHero(now);
 
-    rect(304, 96, 16, 2, '#555463');
-    rect(304, 124, 16, 2, '#31303c');
-    text('STAGE ' + pendingStage, 264, 72, 9, '#fff000', 'center');
+    rect(304, 96, 16, 2, theme.glow);
+    rect(304, 124, 16, 2, theme.floor);
+    text('ROOM ' + String(pendingStage).padStart(2, '0'), 264, 59, 7, theme.glow, 'center');
+    text('STAGE ' + pendingStage, 264, 72, 9, theme.accent, 'center');
+    text(theme.name, 264, 83, 7, '#fff', 'center');
   }
 
   function updateOpening(dt) {
