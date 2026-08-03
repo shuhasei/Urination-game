@@ -244,9 +244,7 @@
   }
 
   function battleArena() {
-    return stage === 10
-      ? { x: 128, y: 83, w: 64, h: 64, left: 131, right: 189, top: 86, bottom: 144 }
-      : { x: 73, y: 91, w: 224, h: 53, left: 76, right: 294, top: 94, bottom: 141 };
+    return { x: 128, y: 83, w: 64, h: 64, left: 131, right: 189, top: 86, bottom: 144 };
   }
 
   const HEART_PIXELS = [
@@ -679,14 +677,13 @@
   }
 
   function drawMenu() {
-    const sansLayout = stage === 10;
-    const boxes = sansLayout ? [[53, 51], [108, 51], [169, 51], [230, 51]] : menuBoxes;
+    const boxes = [[53, 51], [108, 51], [169, 51], [230, 51]];
     const menuY = 162;
     for (let i = 0; i < boxes.length; i++) {
       const [x, w] = boxes[i];
       const selected = state === 'command' && menu === i;
       const color = selected ? '#ffff00' : '#ff7518';
-      if (sansLayout && battleButtonImages[i]?.complete && battleButtonImages[i].naturalWidth) {
+      if (battleButtonImages[i]?.complete && battleButtonImages[i].naturalWidth) {
         g.drawImage(battleButtonImages[i], x, menuY, w, 16);
         if (selected) {
           frameBox(x, menuY, w, 16, '#ffff00', 1);
@@ -1841,9 +1838,10 @@
       sansTurn++;
     } else {
       safeLaneAxis = attackPattern.formation % 2 === 0 ? 'y' : 'x';
+      const arena = battleArena();
       safeLaneValue = safeLaneAxis === 'y'
-        ? 105 + ((attackPattern.id + turnCount) % 3) * 12
-        : 112 + ((attackPattern.id + turnCount) % 4) * 42;
+        ? arena.top + 13 + ((attackPattern.id + turnCount) % 3) * 16
+        : arena.left + 9 + ((attackPattern.id + turnCount) % 4) * 13;
     }
     if (attacker.type !== 'sans') {
       speakingEnemy = null;
@@ -1865,8 +1863,9 @@
 
   function startEnemyAttack() {
     if (spotifyController) spotifyController.play();
-    heart.x = 160;
-    heart.y = 117;
+    const arena = battleArena();
+    heart.x = arena.left + (arena.right - arena.left) / 2;
+    heart.y = arena.top + (arena.bottom - arena.top) / 2;
     heart.vy = 0;
     gravityDirection = 'down';
     bullets = [];
@@ -2260,6 +2259,15 @@
     const formation = pattern.formation;
     const left = 79, right = 291, top = 96, bottom = 140;
     const centerX = 185, centerY = 117;
+    const arena = battleArena();
+    projectileTransform = {
+      sourceLeft: left,
+      sourceTop: top,
+      left: arena.left,
+      top: arena.top,
+      scaleX: (arena.right - arena.left) / (right - left),
+      scaleY: (arena.bottom - arena.top) / (bottom - top)
+    };
     const count = Math.min(7, pattern.burst + (formation % 3));
     const lane = 12;
     const lanePadding = 8;
@@ -2273,7 +2281,10 @@
       addProjectile(kind, x, fromBottom ? bottom : top, extras.vx || 0, fromBottom ? -speed : speed, extras);
     };
     const aimedShot = (x, y, offset = 0, extras = {}) => {
-      const velocity = aimedVelocity(x, y, speed, offset);
+      const targetX = left + (heart.x - arena.left) / projectileTransform.scaleX;
+      const targetY = top + (heart.y - arena.top) / projectileTransform.scaleY;
+      const angle = Math.atan2(targetY - y, targetX - x) + offset;
+      const velocity = { vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed };
       addProjectile(kind, x, y, velocity.vx, velocity.vy, extras);
     };
 
@@ -2390,6 +2401,7 @@
         }
         break;
     }
+    projectileTransform = null;
   }
 
   function spawnGuaranteedThreat(now) {
@@ -2459,7 +2471,10 @@
     for (const bullet of bullets) {
       bullet.age += dt;
       if (bullet.homing > 0 && bullet.age < .85) {
-        const desired = aimedVelocity(bullet.x, bullet.y, pattern.speed, 0);
+        const homingSpeed = stage === 10
+          ? pattern.speed
+          : pattern.speed * ((arena.right - arena.left) / (291 - 79));
+        const desired = aimedVelocity(bullet.x, bullet.y, homingSpeed, 0);
         bullet.vx += (desired.vx - bullet.vx) * bullet.homing;
         bullet.vy += (desired.vy - bullet.vy) * bullet.homing;
       }
@@ -2541,8 +2556,8 @@
         reviveItems--;
         hp = maxHp;
         bullets = [];
-        heart.x = 160;
-        heart.y = 117;
+        heart.x = arena.left + (arena.right - arena.left) / 2;
+        heart.y = arena.top + (arena.bottom - arena.top) / 2;
         heart.vy = 0;
         beep(880, .18);
         setState('result', ['＊ ふっかつのしずくが かがやいた！', '＊ HPが ぜんかいした。']);
