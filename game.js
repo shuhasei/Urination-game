@@ -344,64 +344,65 @@
 
   function drawSans(x, y, t) {
     const talking = state === 'enemySpeak' && speakingEnemy?.visual === 'sans';
-    const jaw = talking && Math.floor(speechChars) % 2 ? 2 : 0;
-    const idle = Math.sin(t / 420) * .65;
-    y += idle;
+    const jaw = talking && Math.floor(speechChars) % 2 ? 1 : 0;
+    const idle = Math.floor(Math.sin(t / 420) * .9);
+    const py = Math.round(y - 8 + idle);
     const white = '#ffffff';
-    const bone = '#e8e8e8';
-    const gray = '#aeb4bd';
-    const dark = '#090909';
-    const eyeGlow = Math.floor(t / 170) % 2 ? '#40f4ff' : '#77ff9a';
+    const bone = '#e9e9e9';
+    const gray = '#a8adb5';
+    const dark = '#050505';
+    const eyeGlow = Math.floor(t / 170) % 2 ? '#48eaff' : '#72ff8e';
 
-    g.fillStyle = white;
-    g.beginPath();
-    g.ellipse(x, y - 10, 17, 16, 0, 0, Math.PI * 2);
-    g.fill();
-    rect(x - 15, y - 12, 30, 13, white);
-    rect(x - 12, y + 1, 24, 5, bone);
+    rect(x - 9, py, 18, 2, white);
+    rect(x - 12, py + 2, 24, 2, white);
+    rect(x - 14, py + 4, 28, 9, white);
+    rect(x - 13, py + 13, 26, 4, white);
+    rect(x - 10, py + 17, 20, 3, bone);
 
-    g.fillStyle = dark;
-    g.beginPath();
-    g.ellipse(x - 7, y - 13, 6, 7, -.15, 0, Math.PI * 2);
-    g.ellipse(x + 7, y - 13, 6, 7, .15, 0, Math.PI * 2);
-    g.fill();
-    rect(x - 2, y - 7, 4, 5, dark);
-    rect(x - 4, y - 4, 3, 3, dark);
-    rect(x + 2, y - 4, 3, 3, dark);
-    rect(x + 5, y - 14, 3, 4, eyeGlow);
-    rect(x + 6, y - 13, 1, 2, '#fff');
+    rect(x - 10, py + 5, 7, 7, dark);
+    rect(x + 3, py + 5, 7, 7, dark);
+    rect(x - 8, py + 5, 3, 2, white);
+    rect(x + 5, py + 5, 3, 2, white);
+    rect(x + 5, py + 7, 2, 3, eyeGlow);
+    rect(x + 6, py + 7, 1, 1, white);
+    rect(x - 2, py + 10, 4, 3, dark);
+    rect(x - 4, py + 12, 3, 2, dark);
+    rect(x + 2, py + 12, 3, 2, dark);
 
-    g.fillStyle = dark;
-    g.beginPath();
-    g.ellipse(x, y + jaw, 13, 7 + jaw * .4, 0, 0, Math.PI);
-    g.fill();
-    rect(x - 12, y - 1 + jaw, 24, 5 + jaw, dark);
-    rect(x - 10, y - 1 + jaw, 20, 3, white);
-    for (let tooth = -8; tooth <= 8; tooth += 3) rect(x + tooth, y - 1 + jaw, 1, 4 + jaw, dark);
-    line(x - 10, y + 3 + jaw, x + 10, y + 3 + jaw, white);
+    rect(x - 10, py + 14 + jaw, 20, 4 + jaw, dark);
+    rect(x - 8, py + 14 + jaw, 16, 2, white);
+    for (let tooth = -7; tooth <= 7; tooth += 3) {
+      rect(x + tooth, py + 14 + jaw, 1, 4, dark);
+    }
+    rect(x - 7, py + 18 + jaw, 14, 1, white);
 
-    rect(x - 4, y + 5, 8, 4, bone);
-    rect(x - 17, y + 8, 34, 20, white);
-    rect(x - 14, y + 10, 28, 17, gray);
-    rect(x - 7, y + 10, 14, 17, dark);
-    line(x - 3, y + 10, x - 3, y + 26, white);
-    rect(x - 17, y + 13, 5, 19, white);
-    rect(x + 13, y + 13, 5, 19, white);
-    line(x - 14, y + 18, x - 7, y + 24, dark, 2);
-    line(x + 14, y + 18, x + 7, y + 24, dark, 2);
-    rect(x - 12, y + 22, 7, 5, dark);
-    rect(x + 6, y + 22, 7, 5, dark);
+    rect(x - 3, py + 20, 6, 3, bone);
+    rect(x - 13, py + 22, 26, 3, white);
+    rect(x - 16, py + 25, 32, 13, white);
+    rect(x - 13, py + 25, 26, 12, gray);
+    rect(x - 6, py + 25, 12, 12, dark);
+    rect(x - 3, py + 25, 2, 11, white);
+    rect(x + 1, py + 25, 2, 11, white);
 
-    rect(x - 12, y + 28, 10, 10, white);
-    rect(x + 3, y + 28, 10, 10, white);
-    rect(x - 10, y + 29, 7, 8, dark);
-    rect(x + 4, y + 29, 7, 8, dark);
-    rect(x - 9, y + 38, 5, 8, bone);
-    rect(x + 5, y + 38, 5, 8, bone);
-    rect(x - 15, y + 44, 13, 4, white);
-    rect(x + 2, y + 44, 14, 4, white);
-    rect(x - 13, y + 45, 8, 2, dark);
-    rect(x + 7, y + 45, 8, 2, dark);
+    rect(x - 17, py + 27, 4, 12, white);
+    rect(x + 13, py + 27, 4, 12, white);
+    rect(x - 15, py + 31, 3, 9, gray);
+    rect(x + 12, py + 31, 3, 9, gray);
+    rect(x - 13, py + 33, 6, 4, dark);
+    rect(x + 7, py + 33, 6, 4, dark);
+    rect(x - 15, py + 39, 5, 2, bone);
+    rect(x + 10, py + 39, 5, 2, bone);
+
+    rect(x - 11, py + 38, 9, 6, white);
+    rect(x + 2, py + 38, 9, 6, white);
+    rect(x - 9, py + 39, 6, 5, dark);
+    rect(x + 3, py + 39, 6, 5, dark);
+    rect(x - 8, py + 44, 4, 4, bone);
+    rect(x + 4, py + 44, 4, 4, bone);
+    rect(x - 13, py + 47, 10, 3, white);
+    rect(x + 3, py + 47, 11, 3, white);
+    rect(x - 11, py + 48, 7, 2, dark);
+    rect(x + 6, py + 48, 7, 2, dark);
   }
 
   function levelMaxHp(level) {
@@ -439,7 +440,7 @@
       }
       if (stage !== 10) drawEnemyHealth(enemy);
       if (index === dodgeEnemy && dodgeElapsed >= 0 && dodgeElapsed < 900) {
-        text('MISS', enemy.x + 29, 30, 11, '#fff');
+        text('MISS', stage === 10 ? enemy.x : enemy.x + 29, stage === 10 ? 18 : 30, 11, '#fff', stage === 10 ? 'center' : 'left');
       }
     }
 
@@ -477,6 +478,34 @@
     text(hp + ' / ' + maxHp, sansLayout ? 186 : 202, y, 8);
   }
 
+  function drawPixelMenuIcon(index, x, y, color) {
+    if (index === 0) {
+      for (let p = 0; p < 7; p++) rect(x + p, y + 8 - p, 2, 2, color);
+      rect(x + 1, y + 8, 7, 2, color);
+      rect(x + 2, y + 10, 2, 2, color);
+      rect(x + 8, y, 2, 3, color);
+    } else if (index === 1) {
+      rect(x, y + 4, 2, 5, color);
+      rect(x + 2, y + 3, 2, 7, color);
+      rect(x + 5, y + 4, 1, 1, color);
+      rect(x + 6, y + 3, 1, 3, color);
+      rect(x + 6, y + 8, 1, 2, color);
+      rect(x + 8, y + 2, 1, 9, color);
+    } else if (index === 2) {
+      rect(x + 3, y + 1, 5, 2, color);
+      rect(x + 2, y + 3, 7, 2, color);
+      rect(x + 1, y + 5, 9, 6, color);
+      rect(x + 3, y + 7, 2, 2, '#000');
+      rect(x + 6, y + 7, 2, 2, '#000');
+      rect(x + 4, y + 10, 3, 2, color);
+    } else {
+      for (let p = 0; p < 8; p++) {
+        rect(x + p, y + 2 + p, 2, 2, color);
+        rect(x + 7 - p, y + 2 + p, 2, 2, color);
+      }
+    }
+  }
+
   function drawMenu() {
     const sansLayout = stage === 10;
     const boxes = sansLayout ? [[43, 51], [104, 51], [165, 51], [230, 51]] : menuBoxes;
@@ -484,22 +513,11 @@
     for (let i = 0; i < boxes.length; i++) {
       const [x, w] = boxes[i];
       const selected = state === 'command' && menu === i;
-      frameBox(x, menuY, w, 16, selected ? '#ffff00' : '#ff7518', 1);
+      const color = selected ? '#ffff00' : '#ff7518';
+      frameBox(x, menuY, w, 16, color, 1);
       if (selected) heartShape(x + 6, menuY + 6, '#f5222d');
-      if (i === 0) {
-        line(x + 7, menuY + 12, x + 13, menuY + 3, '#ff7518');
-        line(x + 9, menuY + 13, x + 15, menuY + 3, '#ff7518');
-      } else if (i === 1) {
-        rect(x + 7, menuY + 5, 2, 7, '#ff7518');
-        rect(x + 10, menuY + 4, 2, 8, '#ff7518');
-      } else if (i === 2) {
-        rect(x + 7, menuY + 4, 7, 3, '#ff7518');
-        rect(x + 9, menuY + 7, 4, 6, '#ff7518');
-      } else {
-        line(x + 7, menuY + 4, x + 14, menuY + 12, '#ff7518');
-        line(x + 14, menuY + 4, x + 7, menuY + 12, '#ff7518');
-      }
-      text(menuLabels[i], x + 17, menuY + 3, 8, '#ff7518');
+      else drawPixelMenuIcon(i, x + 5, menuY + 2, color);
+      text(menuLabels[i], x + 17, menuY + 3, 8, color);
     }
   }
 
@@ -1228,6 +1246,19 @@
     if (lines) message = lines;
   }
 
+  function scalePatternsForStage(patterns, stageNumber) {
+    const depth = Math.max(0, Math.min(9, stageNumber - 1));
+    return patterns.map(pattern => ({
+      ...pattern,
+      speed: pattern.speed * (1 + depth * .065),
+      interval: Math.max(90, Math.round(pattern.interval * (1 - depth * .048))),
+      burst: Math.min(7, pattern.burst + Math.floor(depth / 3)),
+      wave: pattern.wave + depth * 1.15,
+      damage: pattern.damage + Math.floor(depth / 3),
+      duration: pattern.duration + depth * 120
+    }));
+  }
+
   function startStage(number) {
     stage = number;
     const template = STAGES[stage - 1];
@@ -1237,7 +1268,10 @@
       spared: false,
       mood: 0,
       x: template.length === 1 ? 160 : (index === 0 ? 112 : 207),
-      patterns: createAttackPatterns(enemy.type, number * 7 + index * 11)
+      patterns: scalePatternsForStage(
+        createAttackPatterns(enemy.type, number * 7 + index * 11),
+        number
+      )
     }));
     hp = maxHp;
     menu = 0;
@@ -1745,9 +1779,10 @@
       } else {
         hit = Math.abs(bullet.x - heart.x) < 6 && Math.abs(bullet.y - heart.y) < 7;
       }
+      const routeWidth = Math.max(2.4, 6.4 - (stage - 1) * .44);
       const inGuaranteedLane = safeLaneAxis === 'y'
-        ? Math.abs(heart.y - safeLaneValue) < 5
-        : Math.abs(heart.x - safeLaneValue) < 6;
+        ? Math.abs(heart.y - safeLaneValue) < routeWidth
+        : Math.abs(heart.x - safeLaneValue) < routeWidth + .8;
       if (inGuaranteedLane) hit = false;
       if (invincible <= 0 && hit) {
         hp = Math.max(0, hp - pattern.damage);
