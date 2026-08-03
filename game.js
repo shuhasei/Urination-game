@@ -154,6 +154,7 @@
   let heart = { x: 160, y: 117, vy: 0 };
   let bullets = [];
   let spawnAt = 0;
+  let volleyCount = 0;
   let invincible = 0;
   let turnCount = 0;
   let stage = 1;
@@ -1587,14 +1588,19 @@
     if (attacker.type === 'sans') {
       const sequenceIndex = sansTurn % SANS_ATTACK_SEQUENCE.length;
       const sansPhase = SANS_ATTACK_SEQUENCE[sequenceIndex];
+      const phaseIntervals = [760, 820, 1180, 1120, 900, 980, 1160, 1320];
+      const phaseSpeeds = [48, 42, 0, 0, 36, 45, 43, 0];
       attackPattern = {
         ...attackPattern,
         sansPhase,
         finalSpecial: sequenceIndex >= SANS_ATTACK_SEQUENCE.length - 2,
         gravity: [0, 1, 4, 5, 6].includes(sansPhase),
+        interval: phaseIntervals[sansPhase],
+        speed: phaseSpeeds[sansPhase],
+        damage: 1,
         duration: sequenceIndex >= SANS_ATTACK_SEQUENCE.length - 2
-          ? (sequenceIndex === SANS_ATTACK_SEQUENCE.length - 1 ? 7800 : 9800)
-          : 4300 + sequenceIndex * 95
+          ? (sequenceIndex === SANS_ATTACK_SEQUENCE.length - 1 ? 7200 : 8200)
+          : 3900 + Math.min(sequenceIndex, 12) * 70
       };
       safeLaneAxis = sansPhase % 2 === 0 ? 'y' : 'x';
       safeLaneValue = safeLaneAxis === 'y'
@@ -1631,6 +1637,7 @@
     heart.vy = 0;
     bullets = [];
     spawnAt = 0;
+    volleyCount = 0;
     invincible = 0;
     setState('enemyTurn');
   }
@@ -1696,84 +1703,115 @@
     const phase = pattern.sansPhase ?? ((pattern.id - 1) % 8);
     const speed = pattern.speed;
     const left = 79, right = 291, top = 96, bottom = 140;
+    const shot = volleyCount;
+    const fromRight = shot % 2 === 1;
+    const direction = fromRight ? -1 : 1;
+    const startX = fromRight ? right + 4 : left - 4;
+
+    const movingBoneGate = (gapCenter, gapSize, velocity = speed) => {
+      const gapTop = gapCenter - gapSize / 2;
+      const gapBottom = gapCenter + gapSize / 2;
+      addProjectile('bone', startX, top, direction * velocity, 0, {
+        h: Math.max(5, gapTop - top),
+        fromTop: true
+      });
+      addProjectile('bone', startX, bottom, direction * velocity, 0, {
+        h: Math.max(5, bottom - gapBottom)
+      });
+    };
 
     if (phase === 0) {
-      const gap = 2 + (turnCount % 3);
-      for (let lane = 0; lane < 7; lane++) {
-        if (lane === gap || lane === gap + 1) continue;
-        const fromRight = (lane + turnCount) % 2 === 0;
-        const fromTop = lane % 2 === 0;
-        addProjectile('bone', fromRight ? right : left, fromTop ? top : bottom, fromRight ? -speed : speed, 0, {
-          h: 8 + lane * 4,
-          fromTop,
-          blue: lane % 3 === 0,
-          curve: lane % 2 ? .08 : -.08
-        });
-      }
+      // A readable moving corridor: both bones share one continuous opening.
+      const corridor = [108, 118, 128, 118][shot % 4];
+      movingBoneGate(corridor, 17);
     } else if (phase === 1) {
-      for (let i = 0; i < 8; i++) {
-        if (i === (turnCount * 3) % 8) continue;
-        addProjectile('bone', 88 + i * 27, bottom + 6, 0, -speed * .72, {
-          h: 12 + (i % 3) * 6,
-          blue: i % 4 === 1
-        });
+      // One moving comb with two adjacent missing teeth.
+      const safeStart = 1 + (shot % 5);
+      const fromCeiling = shot % 2 === 0;
+      for (let lane = 0; lane < 8; lane++) {
+        if (lane === safeStart || lane === safeStart + 1) continue;
+        addProjectile('bone', 91 + lane * 27, fromCeiling ? top - 20 : bottom + 20,
+          (lane % 2 ? 4 : -4), fromCeiling ? speed : -speed, {
+            h: 13,
+            fromTop: fromCeiling,
+            blue: lane === (safeStart + 3) % 8
+          });
       }
     } else if (phase === 2) {
-      const safe = 1 + turnCount % 3;
+      // Horizontal blasters fire as a single warned set, never on top of the next set.
+      const safe = shot % 3;
       for (let lane = 0; lane < 4; lane++) {
-        if (lane === safe) continue;
-        addProjectile('beam', left, 103 + lane * 10, 0, 0, {
-          orientation: 'horizontal', length: right - left, warning: .42, life: .78, side: turnCount % 2 ? 'right' : 'left'
+        if (lane === safe || lane === safe + 1) continue;
+        addProjectile('beam', left, 102 + lane * 11, 0, 0, {
+          orientation: 'horizontal',
+          length: right - left,
+          warning: .48,
+          life: .82,
+          side: fromRight ? 'right' : 'left'
         });
       }
     } else if (phase === 3) {
-      const safe = 1 + turnCount % 4;
+      // Vertical blasters always leave two neighboring columns open.
+      const safe = shot % 5;
       for (let lane = 0; lane < 6; lane++) {
         if (lane === safe || lane === safe + 1) continue;
-        addProjectile('beam', 91 + lane * 37, top, 0, 0, {
-          orientation: 'vertical', length: bottom - top, warning: .38, life: .76, side: turnCount % 2 ? 'bottom' : 'top'
+        addProjectile('beam', 91 + lane * 38, top, 0, 0, {
+          orientation: 'vertical',
+          length: bottom - top,
+          warning: .46,
+          life: .80,
+          side: shot % 2 ? 'bottom' : 'top'
         });
       }
     } else if (phase === 4) {
-      for (let i = 0; i < 10; i++) {
-        const angle = now / 320 + i * Math.PI * 2 / 10;
-        addProjectile('bone', 185 + Math.cos(angle) * 106, 117 + Math.sin(angle) * 31,
-          -Math.cos(angle) * speed, -Math.sin(angle) * speed * .55,
-          { h: 8 + i % 4, curve: i % 2 ? .45 : -.45 });
+      // A five-bone arc closes slowly; the missing sector rotates one step at a time.
+      const openSector = shot % 6;
+      for (let i = 0; i < 6; i++) {
+        if (i === openSector || i === (openSector + 1) % 6) continue;
+        const angle = now / 720 + i * Math.PI / 3;
+        addProjectile('bone',
+          185 + Math.cos(angle) * 108,
+          117 + Math.sin(angle) * 32,
+          -Math.cos(angle) * speed,
+          -Math.sin(angle) * speed * .52,
+          { h: 10, curve: i % 2 ? .12 : -.12 });
       }
     } else if (phase === 5) {
-      const gapX = 105 + (turnCount * 31) % 130;
-      for (let x = 86; x < 291; x += 17) {
-        if (Math.abs(x - gapX) < 20) continue;
-        addProjectile('bone', x, bottom + 5, 0, -speed * .45, { h: 18 + (x % 4) * 3 });
-      }
-      addProjectile('beam', left, top + 8 + turnCount % 3 * 11, 0, 0, {
-        orientation: 'horizontal', length: right - left, warning: .55, life: .9, side: turnCount % 2 ? 'right' : 'left'
+      // Alternating corridor heights teach the jump timing without sealing the box.
+      const corridor = shot % 2 ? 111 : 126;
+      movingBoneGate(corridor, 18, speed);
+      const cyanY = corridor + (shot % 2 ? 10 : -10);
+      addProjectile('bone', startX + direction * 20, cyanY, direction * speed, 0, {
+        h: 7,
+        fromTop: true,
+        blue: true
       });
     } else if (phase === 6) {
-      for (let i = 0; i < 5; i++) {
-        const fromTop = i % 2 === 0;
-        addProjectile('bone', i % 2 ? left : right, fromTop ? top : bottom, i % 2 ? speed : -speed, 0, {
-          h: 9 + i * 6,
-          fromTop,
-          blue: i === 2
-        });
-      }
-      addProjectile('beam', 185, top, 0, 0, {
-        orientation: 'vertical', length: bottom - top, warning: .48, life: .84, side: turnCount % 2 ? 'bottom' : 'top'
+      // Bone corridor plus one warned column; its side alternates predictably.
+      const corridor = [109, 125, 117][shot % 3];
+      movingBoneGate(corridor, 18, speed);
+      const beamX = shot % 2 ? 250 : 116;
+      addProjectile('beam', beamX, top, 0, 0, {
+        orientation: 'vertical',
+        length: bottom - top,
+        warning: .55,
+        life: .86,
+        side: shot % 2 ? 'bottom' : 'top'
       });
     } else {
-      addProjectile('beam', left, 106, 0, 0, {
-        orientation: 'horizontal', length: right - left, warning: .48, life: .78
+      // Final cross has a permanent central rectangle; only its offset changes.
+      const dx = shot % 2 ? 7 : -7;
+      addProjectile('beam', left, 104, 0, 0, {
+        orientation: 'horizontal', length: right - left, warning: .58, life: .88
       });
-      addProjectile('beam', left, 130, 0, 0, {
-        orientation: 'horizontal', length: right - left, warning: .48, life: .78
+      addProjectile('beam', left, 132, 0, 0, {
+        orientation: 'horizontal', length: right - left, warning: .58, life: .88
       });
-      addProjectile('beam', 138, top, 0, 0, {
-        orientation: 'vertical', length: bottom - top, warning: .6, life: .9
+      addProjectile('beam', 132 + dx, top, 0, 0, {
+        orientation: 'vertical', length: bottom - top, warning: .58, life: .88
       });
-      addProjectile('beam', 232, top, 0, 0, {
-        orientation: 'vertical', length: bottom - top, warning: .6, life: .9
+      addProjectile('beam', 238 + dx, top, 0, 0, {
+        orientation: 'vertical', length: bottom - top, warning: .58, life: .88
       });
     }
   }
@@ -1942,6 +1980,7 @@
 
     if (now >= spawnAt) {
       spawnPatternVolley(pattern, now);
+      volleyCount++;
       spawnAt = now + pattern.interval;
     }
 
