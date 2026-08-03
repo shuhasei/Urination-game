@@ -70,6 +70,9 @@
   let turnCount = 0;
   let stage = 1;
   let sansDodges = 0;
+  let reviveItems = 1;
+  let dodgeAt = -10000;
+  let dodgeEnemy = -1;
   let lastTrack = '';
   let synthTimer = null;
   let audio = null;
@@ -91,12 +94,18 @@
   }
 
   function text(value, x, y, size = 8, color = '#fff', align = 'left') {
-    g.fillStyle = color;
-    g.font = 'bold ' + size + 'px "MS Gothic","Yu Gothic",monospace';
+    const readableSize = Math.max(8, size);
+    g.font = '900 ' + readableSize + 'px "MS Gothic","Yu Gothic",monospace';
     g.textAlign = align;
     g.textBaseline = 'top';
     for (const [i, row] of String(value).split('\n').entries()) {
-      g.fillText(row, Math.round(x), Math.round(y + i * (size + 3)));
+      const tx = Math.round(x);
+      const ty = Math.round(y + i * (readableSize + 3));
+      g.strokeStyle = '#000';
+      g.lineWidth = 2;
+      g.strokeText(row, tx, ty);
+      g.fillStyle = color;
+      g.fillText(row, tx, ty);
     }
   }
 
@@ -167,8 +176,6 @@
   }
 
   function drawSans(x, y, t) {
-    const dodge = state === 'result' && message.some(row => row.includes('よけた'));
-    x += dodge ? Math.round(Math.sin(t / 45) * 18) : 0;
     const c = '#fff', shade = '#cfcfcf', dark = '#000';
     rect(x - 10, y - 21, 20, 3, c);
     rect(x - 15, y - 18, 30, 18, c);
@@ -201,13 +208,23 @@
   }
 
   function drawEnemies(now) {
-    for (const enemy of enemies) {
+    const dodgeElapsed = now - dodgeAt;
+    for (const [index, enemy] of enemies.entries()) {
       if (enemy.hp <= 0 || enemy.spared) continue;
-      if (enemy.type === 'eye') drawEyeComet(enemy.x, 50, now);
-      else if (enemy.type === 'jelly') drawJellySage(enemy.x, 51, now);
-      else drawSans(enemy.x, 45, now);
+      let drawX = enemy.x;
+      if (index === dodgeEnemy && dodgeElapsed >= 0 && dodgeElapsed < 650) {
+        const progress = dodgeElapsed / 650;
+        drawX += Math.sin(progress * Math.PI) * 34;
+      }
+      if (enemy.type === 'eye') drawEyeComet(drawX, 50, now);
+      else if (enemy.type === 'jelly') drawJellySage(drawX, 51, now);
+      else drawSans(drawX, 45, now);
+      if (index === dodgeEnemy && dodgeElapsed >= 0 && dodgeElapsed < 900) {
+        text('MISS', enemy.x + 27, 31, 10, '#fff');
+      }
     }
-    text('STAGE ' + stage + ' / 10', 70, 14, 6, '#62d98c');
+    text('STAGE ' + stage + ' / 10', 70, 14, 7, '#62d98c');
+    text('REVIVE ' + reviveItems, 298, 14, 7, reviveItems ? '#fff000' : '#777', 'right');
     if (state === 'target') {
       const selected = aliveEnemies()[target];
       if (selected) heartShape(selected.enemy.x, 79, '#f5222d');
@@ -242,14 +259,14 @@
         line(x + 7, 166, x + 14, 174, '#ff7518');
         line(x + 14, 166, x + 7, 174, '#ff7518');
       }
-      text(menuLabels[i], x + 18, 166, 7, '#ff7518');
+      text(menuLabels[i], x + 17, 165, 8, '#ff7518');
     }
   }
 
   function drawMessageBox() {
     rect(73, 91, 224, 53, '#fff');
     rect(76, 94, 218, 47, '#000');
-    message.slice(0, 3).forEach((row, index) => text(row, 84, 99 + index * 12, 8));
+    message.slice(0, 3).forEach((row, index) => text(row, 84, 98 + index * 13, 9));
   }
 
   function drawAttackGauge() {
@@ -398,9 +415,15 @@
       drawOpening(now);
     } else if (state === 'victory' || state === 'defeat' || state === 'stageClear') {
       if (state === 'stageClear') {
-        rect(0, 0, W, H, '#000');
-        text('STAGE ' + stage + ' CLEAR', 160, 60, 14, '#fff000', 'center');
-        text('ENTER / Z で つぎのたたかいへ', 160, 96, 8, '#fff', 'center');
+        rect(0, 0, W, H, '#050505');
+        rect(45, 38, 230, 102, '#3d3c49');
+        rect(57, 50, 206, 78, '#111');
+        frameBox(57, 50, 206, 78, '#77768a', 2);
+        text('STAGE ' + stage + ' CLEAR', 160, 58, 14, '#fff000', 'center');
+        text('HP　　　　　　MAX', 160, 82, 9, '#fff', 'center');
+        text('ケーキ　　　　3こ', 160, 97, 9, '#fff', 'center');
+        text('ふっかつのしずく　1こ', 160, 112, 9, '#62e8ff', 'center');
+        text('ENTER / Z　NEXT STAGE', 160, 151, 9, '#fff', 'center');
       } else drawEnding(state === 'victory');
     } else {
       rect(0, 0, W, H, '#000');
@@ -506,6 +529,8 @@
     target = 0;
     bullets = [];
     sansDodges = 0;
+    dodgeAt = -10000;
+    dodgeEnemy = -1;
     setState('intro', [
       '＊ STAGE ' + stage + ' / 10',
       '＊ ' + enemies.map(enemy => enemy.name).join('と') + 'が あらわれた。'
@@ -516,6 +541,7 @@
   function resetGame() {
     hp = maxHp;
     items = 3;
+    reviveItems = 1;
     turnCount = 0;
     lastTrack = '';
     startStage(1);
@@ -579,8 +605,10 @@
     const accuracy = Math.max(0, 1 - Math.abs(attackX - center) / 80);
     if (stage === 10 && sansDodges < 2) {
       sansDodges++;
+      dodgeAt = performance.now();
+      dodgeEnemy = attackTarget;
       beep(760, .07);
-      setState('result', ['＊ サンズは こうげきを よけた。', '＊ まだ こちらを みている。']);
+      setState('result', ['＊ サンズは こうげきを よけた。', '＊ よこに MISS の文字が うかんだ。']);
       return;
     }
     const damage = stage === 10 ? 1 : Math.max(4, Math.round(8 + accuracy * 25));
@@ -606,8 +634,12 @@
 
   function finishVictory() {
     if (spotifyController) spotifyController.pause();
-    if (stage < 10) setState('stageClear');
-    else setState('victory');
+    if (stage < 10) {
+      hp = maxHp;
+      items = 3;
+      reviveItems = 1;
+      setState('stageClear');
+    } else setState('victory');
   }
 
   function finishDefeat() {
@@ -669,8 +701,18 @@
     }
     bullets = bullets.filter(b => b.x > 74 && b.x < 239 && b.y > 88 && b.y < 150);
     invincible -= dt;
-    if (hp <= 0) finishDefeat();
-    else if (now - stateAt > (stage === 10 ? 6000 : 3600 + stage * 120)) setState('command', ['＊ どうする？']);
+    if (hp <= 0) {
+      if (reviveItems > 0) {
+        reviveItems--;
+        hp = maxHp;
+        bullets = [];
+        heart.x = 160;
+        heart.y = 117;
+        heart.vy = 0;
+        beep(880, .18);
+        setState('result', ['＊ ふっかつのしずくが かがやいた！', '＊ HPが ぜんかいした。']);
+      } else finishDefeat();
+    } else if (now - stateAt > (stage === 10 ? 6000 : 3600 + stage * 120)) setState('command', ['＊ どうする？']);
   }
 
   function confirm() {
