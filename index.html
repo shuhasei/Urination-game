@@ -43,40 +43,20 @@
     }
 
 
-    /* Spotify audio controller (kept off-screen so the title image stays unchanged) */
-    #spotify-embed {
-      position: fixed;
-      left: -10000px;
-      top: 0;
-      width: 1px;
-      height: 1px;
-      overflow: hidden;
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .music-hint {
-      position: fixed;
-      left: 50%;
-      bottom: max(18px, env(safe-area-inset-bottom));
-      transform: translateX(-50%);
-      z-index: 10;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      font-size: clamp(12px, 1.5vw, 16px);
-      letter-spacing: 0.08em;
-      text-shadow: 0 2px 4px #000;
-      cursor: pointer;
-      user-select: none;
-      opacity: 0.9;
-      background: rgba(0, 0, 0, 0.55);
-      border: 1px solid rgba(255, 255, 255, 0.45);
-      padding: 8px 12px;
-    }
-
-    .music-hint:focus-visible {
-      outline: 2px solid #fff;
-      outline-offset: 3px;
+    /* Spotifyの操作パネルを完全に見えない状態にする */
+    #spotify-embed,
+    #spotify-embed iframe {
+      position: fixed !important;
+      left: 0 !important;
+      bottom: 0 !important;
+      width: 1px !important;
+      height: 1px !important;
+      overflow: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      border: 0 !important;
+      clip-path: inset(50%) !important;
+      z-index: -1 !important;
     }
   </style>
 </head>
@@ -91,58 +71,78 @@
 
 
   <div id="spotify-embed" aria-hidden="true"></div>
-  <button id="musicHint" class="music-hint" type="button">
-    クリックして音楽を再生
-  </button>
 
   <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
   <script>
     const TRACK_URI = "spotify:track:3T6YlBv3O3CHw01Xy0fX8R";
-    const musicHint = document.getElementById("musicHint");
 
     let spotifyController = null;
-    let isPlaying = false;
     let playRequested = false;
+    let loopInProgress = false;
+
+    function requestPlayback() {
+      playRequested = true;
+
+      if (spotifyController) {
+        spotifyController.play();
+      }
+    }
 
     window.onSpotifyIframeApiReady = (IFrameAPI) => {
       const element = document.getElementById("spotify-embed");
       const options = {
-        width: "1",
-        height: "1",
+        width: 300,
+        height: 152,
         uri: TRACK_URI
       };
 
       IFrameAPI.createController(element, options, (controller) => {
         spotifyController = controller;
 
+        controller.addListener("ready", () => {
+          /* 自動再生を試す。ブラウザに止められた場合は画面クリックで開始する */
+          requestPlayback();
+        });
+
+        controller.addListener("playback_started", () => {
+          playRequested = true;
+          loopInProgress = false;
+        });
+
         controller.addListener("playback_update", (event) => {
-          isPlaying = !event.data.isPaused;
-          musicHint.textContent = isPlaying
-            ? "クリックで一時停止"
-            : "クリックして音楽を再生";
+          const { duration, position, isPaused, isBuffering } = event.data;
+          const reachedEnd =
+            duration > 0 &&
+            position >= duration - 900 &&
+            !isBuffering;
+
+          if (reachedEnd && !loopInProgress) {
+            loopInProgress = true;
+            controller.restart();
+
+            /* restart後に一時停止状態になる環境への対策 */
+            setTimeout(() => {
+              controller.play();
+              loopInProgress = false;
+            }, 150);
+          } else if (isPaused && position < duration - 900) {
+            loopInProgress = false;
+          }
         });
 
         if (playRequested) {
-          spotifyController.play();
+          controller.play();
         }
       });
     };
 
-    function toggleMusic() {
-      if (!spotifyController) {
-        playRequested = true;
-        musicHint.textContent = "音楽を読み込み中…";
-        return;
+    /* 画面上には操作ボタンを表示しない。最初のクリックは再生開始だけに使う */
+    document.addEventListener("pointerdown", requestPlayback, { passive: true });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        requestPlayback();
       }
-
-      if (isPlaying) {
-        spotifyController.pause();
-      } else {
-        spotifyController.play();
-      }
-    }
-
-    musicHint.addEventListener("click", toggleMusic);
+    });
   </script>
 
 </body>
