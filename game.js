@@ -516,79 +516,83 @@
   }
 
   function drawAttackGauge() {
-    rect(72, 90, 226, 55, '#fff');
-    rect(75, 93, 220, 49, '#050505');
+    rect(49, 88, 204, 57, '#fff');
+    rect(52, 91, 198, 51, '#030303');
 
-    const left = 82;
-    const right = 288;
-    const center = 183;
-    const top = 103;
-    const bottom = 136;
-    const gradient = g.createLinearGradient(left, 0, right, 0);
-    gradient.addColorStop(0, '#9fd81c');
-    gradient.addColorStop(.14, '#d8e624');
-    gradient.addColorStop(.28, '#eb252f');
-    gradient.addColorStop(.41, '#ffd928');
-    gradient.addColorStop(.48, '#52d35a');
-    gradient.addColorStop(.5, '#27b99e');
-    gradient.addColorStop(.52, '#52d35a');
-    gradient.addColorStop(.59, '#ffd928');
-    gradient.addColorStop(.72, '#eb252f');
-    gradient.addColorStop(.86, '#d8e624');
-    gradient.addColorStop(1, '#9fd81c');
+    const left = 72;
+    const right = 230;
+    const center = 151;
+    const top = 101;
+    const bottom = 135;
 
     g.save();
     g.beginPath();
-    g.moveTo(left, 119);
-    g.lineTo(left + 22, top + 5);
+    g.moveTo(left, 118);
+    g.lineTo(left + 15, 108);
+    g.lineTo(left + 43, 102);
     g.lineTo(center - 22, top);
     g.lineTo(center + 22, top);
-    g.lineTo(right - 22, top + 5);
-    g.lineTo(right, 119);
-    g.lineTo(right - 22, bottom - 5);
+    g.lineTo(right - 43, 102);
+    g.lineTo(right - 15, 108);
+    g.lineTo(right, 118);
+    g.lineTo(right - 15, 128);
+    g.lineTo(right - 43, 134);
     g.lineTo(center + 22, bottom);
     g.lineTo(center - 22, bottom);
-    g.lineTo(left + 22, bottom - 5);
+    g.lineTo(left + 43, 134);
+    g.lineTo(left + 15, 128);
     g.closePath();
+    g.fillStyle = '#b8ef21';
+    g.fill();
     g.clip();
-    g.fillStyle = gradient;
-    g.fillRect(left, top, right - left, bottom - top);
-    rect(left + 6, top + 9, right - left - 12, bottom - top - 18, '#070707');
 
-    for (let xx = left + 11; xx < right - 8; xx += 10) {
-      const distance = Math.abs(xx - center);
-      const color = distance < 22 ? '#54dc62' : distance < 58 ? '#f3da26' : '#e92a35';
-      rect(xx, top + 12, 5, 2, color);
-      rect(xx + 1, top + 19, 4, 2, color);
+    rect(left + 5, top + 4, right - left - 10, bottom - top - 8, '#050505');
+    rect(left + 9, 111, right - left - 18, 15, '#090909');
+
+    rect(left + 18, 106, 4, 25, '#f32232');
+    rect(right - 22, 106, 4, 25, '#f32232');
+    rect(left + 47, 102, 4, 33, '#f5dd26');
+    rect(right - 51, 102, 4, 33, '#f5dd26');
+    rect(center - 13, 100, 26, 37, '#88d931');
+    rect(center - 8, 100, 16, 37, '#28b87d');
+    rect(center - 4, 99, 8, 39, '#063e36');
+    rect(center - 2, 99, 4, 39, '#58f6bd');
+
+    for (let i = 0; i < 8; i++) {
+      const lx = left + 27 + i * 7;
+      const rx = right - 27 - i * 7;
+      const color = i < 3 ? '#e82a35' : i < 6 ? '#e4d72a' : '#57d85a';
+      rect(lx, 109 + (i % 2) * 7, 4, 2, color);
+      rect(rx - 4, 109 + (i % 2) * 7, 4, 2, color);
+      rect(lx + 1, 123 - (i % 3) * 5, 3, 1, color);
+      rect(rx - 4, 123 - (i % 3) * 5, 3, 1, color);
+    }
+
+    for (let x = left + 8; x < right - 8; x += 8) {
+      rect(x, top + 2, 4, 1, '#9ecb1c');
+      rect(x + 2, bottom - 3, 4, 1, '#9ecb1c');
     }
     g.restore();
 
-    g.strokeStyle = '#a7df1d';
-    g.lineWidth = 1;
-    g.beginPath();
-    g.moveTo(left, 119);
-    g.lineTo(left + 22, top + 5);
-    g.lineTo(center - 22, top);
-    g.lineTo(center + 22, top);
-    g.lineTo(right - 22, top + 5);
-    g.lineTo(right, 119);
-    g.lineTo(right - 22, bottom - 5);
-    g.lineTo(center + 22, bottom);
-    g.lineTo(center - 22, bottom);
-    g.lineTo(left + 22, bottom - 5);
-    g.closePath();
-    g.stroke();
+    line(left, 118, left + 15, 108, '#d8ff38');
+    line(left + 15, 108, left + 43, 102, '#d8ff38');
+    line(left + 43, 102, center - 22, top, '#d8ff38');
+    line(center + 22, top, right - 43, 102, '#d8ff38');
+    line(right - 43, 102, right - 15, 108, '#d8ff38');
+    line(right - 15, 108, right, 118, '#d8ff38');
+    line(left, 118, left + 15, 128, '#8fc315');
+    line(left + 15, 128, left + 43, 134, '#8fc315');
+    line(left + 43, 134, center - 22, bottom, '#8fc315');
+    line(center + 22, bottom, right - 43, 134, '#8fc315');
+    line(right - 43, 134, right - 15, 128, '#8fc315');
+    line(right - 15, 128, right, 118, '#8fc315');
 
-    for (const offset of [-68, -32, 32, 68]) {
-      rect(center + offset - 1, top + 3, 3, bottom - top - 6, Math.abs(offset) < 40 ? '#f5e82b' : '#ef3038');
-    }
-    rect(center - 7, top - 1, 14, bottom - top + 2, '#56d85e');
-    rect(center - 3, top - 3, 6, bottom - top + 6, '#174f40');
-    rect(center - 1, top - 3, 2, bottom - top + 6, '#8dfff0');
-
-    rect(attackX - 3, top - 5, 7, bottom - top + 10, '#555');
-    rect(attackX - 2, top - 5, 5, bottom - top + 10, '#fff');
-    rect(attackX - 1, top - 5, 2, bottom - top + 10, '#d9ffff');
+    const gaugeX = left + (attackX - 82) / (284 - 82) * (right - left);
+    rect(gaugeX - 5, top - 4, 11, bottom - top + 8, 'rgba(255,255,255,.18)');
+    rect(gaugeX - 3, top - 5, 7, bottom - top + 10, '#595959');
+    rect(gaugeX - 2, top - 5, 5, bottom - top + 10, '#fff');
+    rect(gaugeX - 1, top - 5, 2, bottom - top + 10, '#d8ffff');
+    rect(gaugeX, top - 3, 1, bottom - top + 6, '#fff');
   }
 
   function drawBlasterHead(bullet, active) {
@@ -661,6 +665,55 @@
     }
   }
 
+  function drawOpeningHero(now) {
+    const x = Math.round(openingPlayer.x);
+    const y = Math.round(openingPlayer.y);
+    const frame = openingPlayer.moving ? Math.floor(now / 105) % 4 : 0;
+    const stride = frame === 1 ? 1 : frame === 3 ? -1 : 0;
+    const bob = openingPlayer.moving && (frame === 1 || frame === 3) ? -1 : 0;
+    const facingLeft = openingPlayer.direction === 'left';
+    const facingUp = openingPlayer.direction === 'up';
+
+    if (heroImage.complete && heroImage.naturalWidth) {
+      const sourceBodyHeight = Math.floor(heroImage.naturalHeight * .78);
+      g.save();
+      g.translate(x, y);
+      if (facingLeft) g.scale(-1, 1);
+      g.drawImage(
+        heroImage,
+        0, 0, heroImage.naturalWidth, sourceBodyHeight,
+        -6, -14 + bob, 12, 16
+      );
+      g.restore();
+
+      if (facingUp) {
+        rect(x - 4, y - 12 + bob, 8, 5, '#5c2633');
+        rect(x - 5, y - 10 + bob, 2, 4, '#5c2633');
+        rect(x + 3, y - 10 + bob, 2, 4, '#5c2633');
+      }
+    } else {
+      rect(x - 4, y - 10 + bob, 8, 7, '#5c2633');
+      rect(x - 4, y - 3 + bob, 8, 6, '#394d85');
+      rect(x - 4, y - 1 + bob, 8, 2, '#bf4dc8');
+    }
+
+    const rearLeg = openingPlayer.direction === 'right' || openingPlayer.direction === 'left';
+    const leftStride = rearLeg ? stride : -stride;
+    const rightStride = -leftStride;
+    rect(x - 4 + leftStride, y + 2 + bob, 3, 4 + (stride < 0 ? 1 : 0), '#2b2029');
+    rect(x + 1 + rightStride, y + 2 + bob, 3, 4 + (stride > 0 ? 1 : 0), '#2b2029');
+    rect(x - 5 + leftStride, y + 6 + bob + (stride < 0 ? 1 : 0), 4, 2, '#1a1118');
+    rect(x + 1 + rightStride, y + 6 + bob + (stride > 0 ? 1 : 0), 4, 2, '#1a1118');
+
+    if (openingPlayer.moving && frame % 2) {
+      rect(x - 5, y - 3 + bob, 1, 4, '#f0be55');
+      rect(x + 4, y - 2 + bob, 1, 4, '#f0be55');
+    } else {
+      rect(x - 5, y - 2 + bob, 1, 4, '#f0be55');
+      rect(x + 4, y - 3 + bob, 1, 4, '#f0be55');
+    }
+  }
+
   function drawOpening(now) {
     rect(0, 0, W, H, '#050505');
 
@@ -709,16 +762,7 @@
       }
     }
 
-    const bob = openingPlayer.moving && Math.floor(now / 130) % 2 ? 1 : 0;
-    if (heroImage.complete && heroImage.naturalWidth) {
-      g.drawImage(heroImage, Math.round(openingPlayer.x - 6), Math.round(openingPlayer.y - 14 + bob), 12, 20);
-    } else {
-      rect(openingPlayer.x - 4, openingPlayer.y - 10 + bob, 8, 7, '#5c2633');
-      rect(openingPlayer.x - 4, openingPlayer.y - 3 + bob, 8, 6, '#394d85');
-      rect(openingPlayer.x - 4, openingPlayer.y - 1 + bob, 8, 2, '#bf4dc8');
-      rect(openingPlayer.x - 3, openingPlayer.y + 3 + bob, 3, 5, '#2b2029');
-      rect(openingPlayer.x + 1, openingPlayer.y + 3 + bob, 3, 5, '#2b2029');
-    }
+    drawOpeningHero(now);
 
     rect(304, 96, 16, 2, '#555463');
     rect(304, 124, 16, 2, '#31303c');
