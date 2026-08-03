@@ -51,20 +51,23 @@
   ];
   const MEGALOVANIA = 'spotify:track:1J03Vp93ybKIxfzYI4YJtL';
   function createAttackPatterns(type, seed) {
-    return Array.from({ length: 20 }, (_, index) => {
-      const level = index + 1;
-      const typeOffset = type === 'eye' ? 0 : type === 'jelly' ? 1 : 2;
+    return Array.from({ length: 60 }, (_, index) => {
+      const level = Math.floor(index / 3) + 1;
+      const variant = index % 3;
+      const typeOffset = type === 'eye' ? 0 : type === 'jelly' ? 5 : 11;
       return {
-        id: level,
+        id: index + 1,
+        level,
+        variant,
+        formation: (level * 3 + variant * 7 + seed + typeOffset) % 20,
         kind: type === 'eye' ? 'star' : type === 'jelly' ? 'drop' : 'bone',
-        route: (index + seed + typeOffset) % 4,
-        speed: (type === 'sans' ? 62 : 34) + level * (type === 'sans' ? 2.8 : 2.1) + seed % 5,
-        interval: Math.max(type === 'sans' ? 115 : 190, (type === 'sans' ? 330 : 570) - level * (type === 'sans' ? 10 : 16) - seed % 20),
-        burst: 1 + Math.floor((level - 1) / 5),
-        wave: 5 + level * 1.2 + seed % 4,
+        speed: (type === 'sans' ? 58 : 31) + level * (type === 'sans' ? 2.6 : 1.9) + variant * 6 + seed % 5,
+        interval: Math.max(type === 'sans' ? 105 : 175, (type === 'sans' ? 350 : 600) - level * (type === 'sans' ? 9 : 15) - variant * 35 - seed % 20),
+        burst: 1 + Math.floor((level - 1) / 6) + (variant === 2 ? 1 : 0),
+        wave: 5 + level * 1.1 + variant * 3 + seed % 4,
         damage: type === 'sans' ? 3 + Math.floor(level / 6) : 2 + Math.floor(level / 5),
-        gravity: type === 'sans' && index % 3 !== 1,
-        duration: 3300 + Math.min(2500, level * 105)
+        gravity: type === 'sans' && (level + variant) % 3 !== 1,
+        duration: 3400 + Math.min(2500, level * 95 + variant * 180)
       };
     });
   }
@@ -286,7 +289,7 @@
     }
 
     text('STAGE ' + stage + ' / 10', 70, 13, 7, '#62d98c');
-    text('PATTERN ' + playerLevel, 160, 13, 7, '#fff', 'center');
+    text('PATTERN ' + (attackPattern ? attackPattern.id : (playerLevel - 1) * 3 + 1) + ' / 60', 160, 13, 7, '#fff', 'center');
     text('REVIVE ' + reviveItems, 298, 13, 7, reviveItems ? '#fff000' : '#777', 'right');
     if (state === 'target') {
       const selected = aliveEnemies()[target];
@@ -876,7 +879,8 @@
     turnCount++;
     const attackers = aliveEnemies();
     const attacker = attackers[(turnCount - 1) % attackers.length].enemy;
-    attackPattern = attacker.patterns[playerLevel - 1];
+    const patternIndex = (playerLevel - 1) * 3 + ((turnCount - 1) % 3);
+    attackPattern = attacker.patterns[patternIndex];
     heart.x = 160;
     heart.y = 117;
     heart.vy = 0;
@@ -917,12 +921,167 @@
     playDefeatSound();
   }
 
-  function updateEnemyTurn(dt, now) {
-    const pattern = attackPattern || createAttackPatterns(enemies[0].type, stage)[playerLevel - 1];
-    const speed = pattern.gravity ? 86 : 72;
+  function addProjectile(kind, x, y, vx, vy, extras = {}) {
+    bullets.push({
+      kind,
+      x,
+      y,
+      vx,
+      vy,
+      h: extras.h || 0,
+      curve: extras.curve || 0,
+      homing: extras.homing || 0,
+      age: 0
+    });
+  }
 
-    if (keys.has('ArrowLeft')) heart.x -= speed * dt;
-    if (keys.has('ArrowRight')) heart.x += speed * dt;
+  function aimedVelocity(x, y, speed, angleOffset = 0) {
+    const angle = Math.atan2(heart.y - y, heart.x - x) + angleOffset;
+    return { vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed };
+  }
+
+  function spawnPatternVolley(pattern, now) {
+    const kind = pattern.kind;
+    const speed = pattern.speed;
+    const formation = pattern.formation;
+    const left = 79, right = 291, top = 96, bottom = 140;
+    const centerX = 185, centerY = 117;
+    const count = Math.min(7, pattern.burst + (formation % 3));
+    const lane = 12;
+
+    const sideShot = (fromRight, y, extras = {}) => {
+      addProjectile(kind, fromRight ? right : left, y, fromRight ? -speed : speed, extras.vy || 0, extras);
+    };
+    const verticalShot = (fromBottom, x, extras = {}) => {
+      addProjectile(kind, x, fromBottom ? bottom : top, extras.vx || 0, fromBottom ? -speed : speed, extras);
+    };
+    const aimedShot = (x, y, offset = 0, extras = {}) => {
+      const velocity = aimedVelocity(x, y, speed, offset);
+      addProjectile(kind, x, y, velocity.vx, velocity.vy, extras);
+    };
+
+    switch (formation) {
+      case 0:
+        for (let i = 0; i < count; i++) sideShot(false, centerY + (i - (count - 1) / 2) * lane);
+        break;
+      case 1:
+        for (let i = 0; i < count; i++) sideShot(true, centerY + (i - (count - 1) / 2) * lane);
+        break;
+      case 2:
+        for (let i = 0; i < count + 1; i++) verticalShot(false, 90 + i * 190 / count);
+        break;
+      case 3:
+        for (let i = 0; i < count + 1; i++) verticalShot(true, 90 + i * 190 / count);
+        break;
+      case 4:
+        for (let i = 0; i < count; i++) {
+          const y = 102 + i * 31 / Math.max(1, count - 1);
+          sideShot(false, y);
+          sideShot(true, bottom - (y - top));
+        }
+        break;
+      case 5:
+        for (let i = 0; i < count + 1; i++) {
+          addProjectile(kind, 88 + i * 195 / count, top, speed * .45, speed, { curve: .22 });
+        }
+        break;
+      case 6:
+        for (let i = 0; i < count; i++) {
+          sideShot(i % 2 === 1, 101 + i * 34 / Math.max(1, count - 1), { vy: (i % 2 ? -1 : 1) * pattern.wave, curve: (i % 2 ? 1 : -1) * .35 });
+        }
+        break;
+      case 7: {
+        const safeLane = (pattern.id + turnCount) % 5;
+        for (let laneIndex = 0; laneIndex < 5; laneIndex++) {
+          if (laneIndex === safeLane) continue;
+          sideShot(turnCount % 2 === 0, 101 + laneIndex * 8);
+        }
+        break;
+      }
+      case 8:
+        for (let i = 0; i < 8; i++) {
+          const angle = Math.PI * 2 * i / 8 + now / 900;
+          addProjectile(kind, centerX + Math.cos(angle) * 96, centerY + Math.sin(angle) * 28, -Math.cos(angle) * speed, -Math.sin(angle) * speed);
+        }
+        break;
+      case 9:
+        for (let i = 0; i < count; i++) aimedShot(i % 2 ? right : left, 101 + i * 31 / Math.max(1, count - 1), (i - (count - 1) / 2) * .055, { homing: .16 });
+        break;
+      case 10: {
+        const gap = 1 + (pattern.id + turnCount) % 4;
+        for (let i = 0; i < 6; i++) {
+          if (i === gap || i === gap + 1) continue;
+          sideShot(turnCount % 2 === 0, 97 + i * 8.2);
+        }
+        break;
+      }
+      case 11:
+        for (let i = 0; i < count; i++) {
+          sideShot(i % 2 === 0, centerY + (i - count / 2) * 7);
+          verticalShot(i % 2 === 1, centerX + (i - count / 2) * 16);
+        }
+        break;
+      case 12:
+        for (let i = 0; i < 10; i++) {
+          const angle = now / 370 + i * Math.PI * 2 / 10;
+          addProjectile(kind, centerX, centerY, Math.cos(angle) * speed, Math.sin(angle) * speed * .55, { curve: .45 });
+        }
+        break;
+      case 13:
+        for (let i = 0; i < 7; i++) {
+          if ((i + turnCount) % 2 === 0) verticalShot(turnCount % 2 === 0, 89 + i * 31);
+        }
+        break;
+      case 14:
+        for (let i = 0; i < count + 2; i++) {
+          addProjectile(kind, left + i * 205 / (count + 1), top, speed * .18, speed, { curve: -.18 });
+        }
+        break;
+      case 15:
+        for (let i = 0; i < count + 2; i++) {
+          addProjectile(kind, right - i * 205 / (count + 1), bottom, -speed * .18, -speed, { curve: .18 });
+        }
+        break;
+      case 16:
+        aimedShot(left, top, 0);
+        aimedShot(right, top, 0);
+        aimedShot(left, bottom, 0);
+        aimedShot(right, bottom, 0);
+        if (count > 3) {
+          aimedShot(left, centerY, .12);
+          aimedShot(right, centerY, -.12);
+        }
+        break;
+      case 17:
+        for (let i = 0; i < 6; i++) {
+          const angle = now / 280 + i * Math.PI / 3;
+          const x = centerX + Math.cos(angle) * 103;
+          const y = centerY + Math.sin(angle) * 30;
+          addProjectile(kind, x, y, -Math.cos(angle) * speed, -Math.sin(angle) * speed, { curve: i % 2 ? .6 : -.6 });
+        }
+        break;
+      case 18:
+        for (let i = -3; i <= 3; i++) aimedShot(turnCount % 2 ? right : left, centerY, i * .11);
+        break;
+      case 19:
+        for (let i = 0; i < count + 2; i++) {
+          const edge = (i + turnCount) % 4;
+          if (edge === 0) sideShot(false, 100 + Math.random() * 34, { curve: .3 });
+          else if (edge === 1) sideShot(true, 100 + Math.random() * 34, { curve: -.3 });
+          else if (edge === 2) verticalShot(false, 88 + Math.random() * 194, { homing: .1 });
+          else verticalShot(true, 88 + Math.random() * 194, { homing: .1 });
+        }
+        break;
+    }
+  }
+
+  function updateEnemyTurn(dt, now) {
+    const fallbackIndex = (playerLevel - 1) * 3;
+    const pattern = attackPattern || enemies[0].patterns[fallbackIndex];
+    const moveSpeed = pattern.gravity ? 86 : 72;
+
+    if (keys.has('ArrowLeft')) heart.x -= moveSpeed * dt;
+    if (keys.has('ArrowRight')) heart.x += moveSpeed * dt;
     if (pattern.gravity) {
       heart.vy += 190 * dt;
       if (keys.has('ArrowUp') && heart.y >= 133) heart.vy = -92;
@@ -930,54 +1089,44 @@
       if (heart.y > 135) { heart.y = 135; heart.vy = 0; }
       if (heart.y < 99) { heart.y = 99; heart.vy = 0; }
     } else {
-      if (keys.has('ArrowUp')) heart.y -= speed * dt;
-      if (keys.has('ArrowDown')) heart.y += speed * dt;
+      if (keys.has('ArrowUp')) heart.y -= moveSpeed * dt;
+      if (keys.has('ArrowDown')) heart.y += moveSpeed * dt;
     }
-    heart.x = Math.max(81, Math.min(231, heart.x));
+    heart.x = Math.max(81, Math.min(289, heart.x));
     heart.y = Math.max(99, Math.min(135, heart.y));
 
     if (now >= spawnAt) {
-      for (let shot = 0; shot < pattern.burst; shot++) {
-        const offset = (shot - (pattern.burst - 1) / 2) * 9;
-        if (pattern.kind === 'bone') {
-          const horizontal = pattern.route === 0 || pattern.route === 2;
-          const reverse = pattern.route >= 2;
-          bullets.push({
-            kind: 'bone',
-            x: horizontal ? (reverse ? 79 : 233) : 90 + Math.random() * 140,
-            y: horizontal ? 138 + offset * .15 : (reverse ? 96 : 145),
-            vx: horizontal ? (reverse ? 1 : -1) * pattern.speed : 0,
-            vy: horizontal ? 0 : (reverse ? 1 : -1) * pattern.speed,
-            h: 9 + ((playerLevel * 3 + shot * 7) % 22)
-          });
-        } else {
-          const route = pattern.route;
-          const fromHorizontal = route === 0 || route === 2;
-          const reverse = route >= 2;
-          let x = fromHorizontal ? (reverse ? 233 : 79) : 88 + Math.random() * 144;
-          let y = fromHorizontal ? 116 + offset : (reverse ? 139 : 96);
-          let vx = fromHorizontal ? (reverse ? -1 : 1) * pattern.speed : Math.sin((now + shot * 80) / 180) * pattern.wave;
-          let vy = fromHorizontal ? Math.sin((now + shot * 120) / 210) * pattern.wave : (reverse ? -1 : 1) * pattern.speed;
-          bullets.push({ kind: pattern.kind, x, y, vx, vy, h: 0 });
-        }
-      }
+      spawnPatternVolley(pattern, now);
       spawnAt = now + pattern.interval;
     }
 
     for (const bullet of bullets) {
+      bullet.age += dt;
+      if (bullet.homing > 0 && bullet.age < .85) {
+        const desired = aimedVelocity(bullet.x, bullet.y, pattern.speed, 0);
+        bullet.vx += (desired.vx - bullet.vx) * bullet.homing;
+        bullet.vy += (desired.vy - bullet.vy) * bullet.homing;
+      }
+      if (bullet.curve) {
+        const angle = bullet.curve * dt;
+        const vx = bullet.vx;
+        bullet.vx = bullet.vx * Math.cos(angle) - bullet.vy * Math.sin(angle);
+        bullet.vy = vx * Math.sin(angle) + bullet.vy * Math.cos(angle);
+      }
       bullet.x += bullet.vx * dt;
       bullet.y += bullet.vy * dt;
+
       const hit = bullet.kind === 'bone'
         ? Math.abs(bullet.x - heart.x) < 6 && heart.y > bullet.y - bullet.h - 4 && heart.y < bullet.y + 5
         : Math.abs(bullet.x - heart.x) < 6 && Math.abs(bullet.y - heart.y) < 7;
       if (invincible <= 0 && hit) {
         hp = Math.max(0, hp - pattern.damage);
-        invincible = pattern.kind === 'bone' ? .34 : .58;
+        invincible = bullet.kind === 'bone' ? .34 : .58;
         beep(110, .1);
       }
     }
 
-    bullets = bullets.filter(bullet => bullet.x > 70 && bullet.x < 242 && bullet.y > 86 && bullet.y < 153);
+    bullets = bullets.filter(bullet => bullet.x > 68 && bullet.x < 302 && bullet.y > 84 && bullet.y < 155);
     invincible -= dt;
     if (hp <= 0) {
       if (reviveItems > 0) {
