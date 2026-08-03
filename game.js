@@ -535,11 +535,15 @@
       setState('target', ['＊ こうげきする あいてを えらんでください。']);
     } else if (menu === 1) {
       const chosen = alive[turnCount % alive.length];
-      chosen.enemy.mood++;
-      if (chosen.enemy.mood >= 2) {
-        setState('result', ['＊ ' + chosen.enemy.name + 'を ほめた。', '＊ たたかう きもちが なくなったようだ。']);
+      if (stage === 10) {
+        setState('result', ['＊ サンズの ようすを みた。', '＊ こちらの うごきを よんでいる。']);
       } else {
-        setState('result', ['＊ ' + chosen.enemy.name + 'の ひかりを ほめた。', '＊ すこし てれている。']);
+        chosen.enemy.mood++;
+        if (chosen.enemy.mood >= 2) {
+          setState('result', ['＊ ' + chosen.enemy.name + 'を ほめた。', '＊ たたかう きもちが なくなったようだ。']);
+        } else {
+          setState('result', ['＊ ' + chosen.enemy.name + 'の ひかりを ほめた。', '＊ すこし てれている。']);
+        }
       }
     } else if (menu === 2) {
       if (items > 0) {
@@ -551,7 +555,7 @@
         setState('command', ['＊ アイテムは もう のこっていない。']);
       }
     } else {
-      const spareable = alive.filter(({ enemy }) => enemy.mood >= 2 || enemy.hp <= 10);
+      const spareable = stage === 10 ? [] : alive.filter(({ enemy }) => enemy.mood >= 2 || enemy.hp <= 10);
       if (spareable.length) {
         spareable.forEach(({ enemy }) => enemy.spared = true);
         setState('result', ['＊ ' + spareable.map(({ enemy }) => enemy.name).join('と') + 'を みのがした。']);
