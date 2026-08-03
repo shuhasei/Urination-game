@@ -2358,4 +2358,4 @@
 
   hint.classList.add('visible');
   requestAnimationFrame(loop);
-})
+})();
