@@ -925,19 +925,26 @@
     if (!audio || audio.state !== 'running') return;
     const visualPitch = {
       comet: 390, jelly: 280, lantern: 330, moon: 245, moth: 460,
-      mirror: 360, clock: 510, crown: 205, sun: 430, star: 475, sans: 165
+      mirror: 360, clock: 510, crown: 205, sun: 430, star: 475, sans: 152
     };
     const base = visualPitch[speakingEnemy?.visual] || 320;
-    const oscillator = audio.createOscillator();
-    const gain = audio.createGain();
-    oscillator.type = speakingEnemy?.visual === 'sans' ? 'square' : 'triangle';
-    oscillator.frequency.setValueAtTime(base + (Math.floor(speechChars) % 3) * 12, audio.currentTime);
-    gain.gain.setValueAtTime(speakingEnemy?.visual === 'sans' ? .032 : .022, audio.currentTime);
-    gain.gain.exponentialRampToValueAtTime(.001, audio.currentTime + .032);
-    oscillator.connect(gain);
-    gain.connect(audio.destination);
-    oscillator.start();
-    oscillator.stop(audio.currentTime + .036);
+    const isSans = speakingEnemy?.visual === 'sans';
+    const frequencies = isSans ? [base, base * .74] : [base + (Math.floor(speechChars) % 3) * 13];
+
+    frequencies.forEach((frequency, index) => {
+      const oscillator = audio.createOscillator();
+      const gain = audio.createGain();
+      oscillator.type = isSans ? 'square' : (index % 2 ? 'sawtooth' : 'triangle');
+      oscillator.frequency.setValueAtTime(frequency, audio.currentTime);
+      oscillator.detune.setValueAtTime((Math.floor(speechChars) % 5 - 2) * 7, audio.currentTime);
+      const volume = isSans ? (index === 0 ? .07 : .035) : .045;
+      gain.gain.setValueAtTime(volume, audio.currentTime);
+      gain.gain.exponentialRampToValueAtTime(.001, audio.currentTime + (isSans ? .052 : .04));
+      oscillator.connect(gain);
+      gain.connect(audio.destination);
+      oscillator.start();
+      oscillator.stop(audio.currentTime + (isSans ? .058 : .045));
+    });
   }
 
   function updateEnemySpeech(dt) {
@@ -948,7 +955,7 @@
     const current = Math.floor(speechChars);
     for (let index = previous; index < current; index++) {
       const character = fullText[index];
-      if (character && !/\s|[。、！？」＊：]/.test(character) && index % 2 === 0) speechBlip();
+      if (character && !/\s|[。、！？」＊：]/.test(character)) speechBlip();
     }
   }
 
@@ -1119,6 +1126,7 @@
     }
     speakingEnemy = attacker;
     speechChars = 0;
+    if (spotifyController) spotifyController.pause();
     setState('enemySpeak', [
       '＊ ' + attacker.name + '「' + enemyBattleQuote(attacker) + '」',
       '＊ 攻略：' + attackHint(attackPattern)
@@ -1126,6 +1134,7 @@
   }
 
   function startEnemyAttack() {
+    if (spotifyController) spotifyController.play();
     heart.x = 160;
     heart.y = 117;
     heart.vy = 0;
