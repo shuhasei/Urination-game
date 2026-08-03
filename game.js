@@ -18,11 +18,11 @@
   const titleImage = new Image();
   titleImage.src = 'assets/title.png';
   const heroImage = new Image();
-  heroImage.src = 'assets/hero.png';
+  heroImage.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAADZSURBVFhH7ZO9DcIwEEYzAQUD0LECBfOyBz01Q7BFkIuTrKcz9+MDKShP+prYfvdFcZZlZ2tcD8fVCs+UwmFaeKYEDvGEjjQUR0JXGAozoTMEZZnQGYKyTOh0QUmf9XEehnvTJSjwDP9Ugn4TCijnUG3tPwtE8vUCkXX6TTwFrEwVEFjEKsO9U8MblP28gECpJ3RMIdLL7WWmvECT3U/PcMpK7AX6i8XvraX8IjaR/GYcpqWdkV+SrhR9gf7tRun30pWGQzyhYwrKPaGjBA7RwjOljIZpzzbBG0L0Ks+y7LTkAAAAAElFTkSuQmCC';
   const flowersImage = new Image();
   flowersImage.src = 'assets/flowers.png';
   const heroSideImage = new Image();
-  heroSideImage.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAYAAACinX6EAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAGZSURBVGhD7ZNLagMxEAV9g4DXWeUe9lFznJzB61zExiYtROkz3dLThJApeGBPrFetHnI6HRwcRLi8ne+e8JwCOnrhWRkUtcJzCujohWclUOIJO0ZhryfsmILlkbArCvsiYdcwLI6EXVHYFw37QrBsJOyMwK6RsNMNi7Zy//p4hc/Z64Ednij9L1jUi8ltgPwzez2w3xP67Tm73VDQS74ALoO9HtjfS835rxcw605QVJPyOzM6BH01t/XTOetOUNwagtL876ND0Bdx22/sM7vdUEyBN+z1QN+oe2oBBgeIDsK+CHRG/ZIFPKHcO4hiAPr2dBe05BzMwvMjsLM1A6PyF3AI9YVb0LXH8gus/PZ+S7l+fqcsE//ASzL8vRxevpZVA1lnvnBG7SzwLkD9P2iXp4tZtfyEvYHem1AvwHt5W4DSXZALKF/1FrgALnzl8gu8C+C5GXJnz2vu5Qt4hpvnW+C5GcyZu3nxfAFqf4KDtMJzSmwBrSz186Jb4XkFdNTCM1Jakj2GoGMrPC9jaXmH1gX5/Lfm+5M8AKUEdhRLRx1CAAAAAElFTkSuQmCC';
+  heroSideImage.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAYAAACinX6EAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAGFSURBVGhD7ZXBTQMxEEVTAQcKyI0WOFAvfXDnTBF0EZRVvJo8xuvxzNi+7JO+IN71f1+REJfLyclJDx8vrzdLeC8LemrhvTQoqoX3sqCnFt4LQ4El7IjAbkvY4YbFPWGXB3b2hF3dsNATdvbALk/Y2QXLPGFnD+zyhJ1dsMwTdvbALk/YaYIllty+3/ZEB7Dbkkx/9wAplyPYa4X9rdAd9bsHyM+RAexvJdu/fAD7W8n2NwdImRwgExlAHzPabxrQSmQAfQxdWiL+5oDWiPIOe63QpYXOTP8OpbMH0Dnbvw0oPxlKmYwBq/3/4Iij8G4GdByFd1O4F79//m4povJZnvFeFsv8pfjr+rNHO5PP2BFBc2lno/zLB2gu7WyUf/kAzaWdjfLvA7S/t9ozdkSoOWb5DweUfzt8xg4vxXP/nY4Z/g1+2zLy/+6IAfILoHuGf4PS2gAZdniRfXTM8D9BSS28lwU9tfBeGAosYYcX9moOnvN5mFYxn2vveLH28r2jd08e/AGixGLG1uN67wAAAABJRU5ErkJggg==';
   const sansReferenceImage = new Image();
   sansReferenceImage.src = 'data:image/png;base64,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';
   const boneProjectileImage = new Image();
@@ -1013,14 +1013,14 @@
       g.restore();
       return;
     } else if (heroImage.complete && heroImage.naturalWidth) {
-      const sourceBodyHeight = Math.floor(heroImage.naturalHeight * .82);
       g.save();
       g.translate(x, y);
       if (facingLeft) g.scale(-1, 1);
+      g.imageSmoothingEnabled = false;
       g.drawImage(
         heroImage,
-        0, 0, heroImage.naturalWidth, sourceBodyHeight,
-        -7, -15 + bob, 14, 18
+        0, 0, heroImage.naturalWidth, heroImage.naturalHeight,
+        -10, -16 + bob, 20, 20
       );
       g.restore();
 
@@ -1029,6 +1029,7 @@
         rect(x - 6, y - 11 + bob, 2, 5, '#5c2633');
         rect(x + 4, y - 11 + bob, 2, 5, '#5c2633');
       }
+      return;
     } else {
       rect(x - 5, y - 11 + bob, 10, 8, '#5c2633');
       rect(x - 5, y - 3 + bob, 10, 6, '#394d85');
@@ -2233,15 +2234,18 @@
         });
       } else {
         const corridor = specialStep === 2 ? 110 : 128;
-        movingBoneGate(corridor, 18, 34);
+        movingBoneGate(corridor, 20, 180);
+
+        // Keep the orbiting bone on gate-only beats. Combining it with a
+        // full-axis laser could close the laser's only remaining safe lane.
+        const orbitAngle = now / 900 + shot * .7;
+        addProjectile('bone',
+          185 + Math.cos(orbitAngle) * 106,
+          117 + Math.sin(orbitAngle) * 31,
+          -Math.cos(orbitAngle) * 34,
+          -Math.sin(orbitAngle) * 18,
+          { h: 8, curve: shot % 2 ? .08 : -.08 });
       }
-      const orbitAngle = now / 900 + shot * .7;
-      addProjectile('bone',
-        185 + Math.cos(orbitAngle) * 106,
-        117 + Math.sin(orbitAngle) * 31,
-        -Math.cos(orbitAngle) * 34,
-        -Math.sin(orbitAngle) * 18,
-        { h: 9, curve: shot % 2 ? .1 : -.1 });
     }
     projectileTransform = null;
   }
