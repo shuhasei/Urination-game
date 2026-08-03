@@ -25,10 +25,31 @@
   const pressed = new Set();
   const menuLabels = ['たたかう', 'こうどう', 'アイテム', 'みのがす'];
   const menuBoxes = [[73, 55], [132, 55], [191, 55], [250, 55]];
-  const enemies = [
-    { name: 'ヒカリメ', hp: 48, maxHp: 48, spared: false, x: 112, mood: 0 },
-    { name: 'クラゲン', hp: 54, maxHp: 54, spared: false, x: 207, mood: 0 }
+  const STAGES = [
+    [{ name: 'ヒカリメ', type: 'eye', maxHp: 26 }],
+    [{ name: 'クラゲン', type: 'jelly', maxHp: 30 }],
+    [{ name: 'ヒカリメ', type: 'eye', maxHp: 32 }, { name: 'クラゲン', type: 'jelly', maxHp: 34 }],
+    [{ name: 'ホシノコ', type: 'eye', maxHp: 40 }],
+    [{ name: 'ミズクラゲ', type: 'jelly', maxHp: 44 }],
+    [{ name: 'ヒカリメ改', type: 'eye', maxHp: 46 }, { name: 'ミズクラゲ', type: 'jelly', maxHp: 42 }],
+    [{ name: 'セキガン', type: 'eye', maxHp: 58 }],
+    [{ name: 'オオクラゲ', type: 'jelly', maxHp: 62 }],
+    [{ name: '記念祭の双星', type: 'eye', maxHp: 58 }, { name: '記念祭の賢者', type: 'jelly', maxHp: 64 }],
+    [{ name: 'サンズ', type: 'sans', maxHp: 1 }]
   ];
+  const BATTLE_TRACKS = [
+    'spotify:track:5iOTHhi2C3mHSn007Neqcg',
+    'spotify:track:2bvbLvGD7YnS4Nhf9E4hUl',
+    'spotify:track:2AtC6i0b8TjpjhWBZYLprX',
+    'spotify:track:0wae8KoprNjfrXWjYYHGy9',
+    'spotify:track:0ROETpoLOKjq61LjwxNz92',
+    'spotify:track:3aiGshuqYhdBBBhHqRf6jn',
+    'spotify:track:7BGZ27yeaKR5OZOIxyegZi',
+    'spotify:track:0ybMBs8mKdAP9WSnFTiZvs',
+    'spotify:track:6YnPqvc66bdYGGOJIlDEz1'
+  ];
+  const MEGALOVANIA = 'spotify:track:1J03Vp93ybKIxfzYI4YJtL';
+  let enemies = [];
 
   let state = 'title';
   let menu = 0;
@@ -42,11 +63,14 @@
   let attackTarget = 0;
   let stateAt = performance.now();
   let last = stateAt;
-  let heart = { x: 160, y: 117 };
+  let heart = { x: 160, y: 117, vy: 0 };
   let bullets = [];
   let spawnAt = 0;
   let invincible = 0;
   let turnCount = 0;
+  let stage = 1;
+  let sansDodges = 0;
+  let lastTrack = '';
   let synthTimer = null;
   let audio = null;
   let spotifyController = null;
@@ -142,16 +166,51 @@
     line(x + 27, y + 6, x + 31, y + 2, c);
   }
 
+  function drawSans(x, y, t) {
+    const dodge = state === 'result' && message.some(row => row.includes('よけた'));
+    x += dodge ? Math.round(Math.sin(t / 45) * 18) : 0;
+    const c = '#fff', shade = '#cfcfcf', dark = '#000';
+    rect(x - 10, y - 21, 20, 3, c);
+    rect(x - 15, y - 18, 30, 18, c);
+    rect(x - 12, y, 24, 5, c);
+    rect(x - 10, y - 15, 8, 9, dark);
+    rect(x + 3, y - 15, 8, 9, dark);
+    rect(x - 7, y - 12, 3, 4, c);
+    rect(x + 6, y - 12, 3, 4, stage === 10 && Math.floor(t / 180) % 2 ? '#45eaff' : c);
+    rect(x - 2, y - 7, 4, 4, dark);
+    rect(x - 9, y - 3, 18, 2, dark);
+    for(let tooth=-7;tooth<=7;tooth+=4) rect(x + tooth, y - 2, 2, 3, dark);
+    rect(x - 18, y + 5, 36, 18, c);
+    rect(x - 14, y + 7, 28, 15, dark);
+    rect(x - 8, y + 8, 16, 12, shade);
+    rect(x - 5, y + 10, 10, 10, dark);
+    rect(x - 18, y + 12, 5, 17, c);
+    rect(x + 14, y + 12, 5, 17, c);
+    rect(x - 12, y + 22, 10, 13, c);
+    rect(x + 3, y + 22, 10, 13, c);
+    rect(x - 10, y + 23, 7, 10, dark);
+    rect(x + 4, y + 23, 7, 10, dark);
+    rect(x - 15, y + 34, 14, 4, c);
+    rect(x + 2, y + 34, 14, 4, c);
+    rect(x - 14, y + 35, 8, 2, dark);
+    rect(x + 7, y + 35, 8, 2, dark);
+  }
+
   function aliveEnemies() {
     return enemies.map((enemy, index) => ({ enemy, index })).filter(({ enemy }) => enemy.hp > 0 && !enemy.spared);
   }
 
   function drawEnemies(now) {
-    if (enemies[0].hp > 0 && !enemies[0].spared) drawEyeComet(enemies[0].x, 50, now);
-    if (enemies[1].hp > 0 && !enemies[1].spared) drawJellySage(enemies[1].x, 51, now);
+    for (const enemy of enemies) {
+      if (enemy.hp <= 0 || enemy.spared) continue;
+      if (enemy.type === 'eye') drawEyeComet(enemy.x, 50, now);
+      else if (enemy.type === 'jelly') drawJellySage(enemy.x, 51, now);
+      else drawSans(enemy.x, 45, now);
+    }
+    text('STAGE ' + stage + ' / 10', 70, 14, 6, '#62d98c');
     if (state === 'target') {
       const selected = aliveEnemies()[target];
-      if (selected) heartShape(selected.enemy.x, 75, '#f5222d');
+      if (selected) heartShape(selected.enemy.x, 79, '#f5222d');
     }
   }
 
@@ -213,10 +272,16 @@
   function drawEnemyTurn() {
     rect(73, 91, 224, 53, '#fff');
     rect(76, 94, 218, 47, '#000');
-    heartShape(heart.x, heart.y);
+    heartShape(heart.x, heart.y, stage === 10 ? '#168bff' : '#f5222d');
     for (const bullet of bullets) {
-      rect(bullet.x - 3, bullet.y - 3, 7, 7, '#fff');
-      rect(bullet.x - 1, bullet.y - 1, 3, 3, '#000');
+      if (bullet.kind === 'bone') {
+        rect(bullet.x - 2, bullet.y - bullet.h, 5, bullet.h, '#fff');
+        rect(bullet.x - 4, bullet.y - bullet.h, 9, 3, '#fff');
+        rect(bullet.x - 4, bullet.y - 3, 9, 3, '#fff');
+      } else {
+        rect(bullet.x - 3, bullet.y - 3, 7, 7, '#fff');
+        rect(bullet.x - 1, bullet.y - 1, 3, 3, '#000');
+      }
     }
   }
 
@@ -331,8 +396,12 @@
       drawTitle(now);
     } else if (state === 'opening') {
       drawOpening(now);
-    } else if (state === 'victory' || state === 'defeat') {
-      drawEnding(state === 'victory');
+    } else if (state === 'victory' || state === 'defeat' || state === 'stageClear') {
+      if (state === 'stageClear') {
+        rect(0, 0, W, H, '#000');
+        text('STAGE ' + stage + ' CLEAR', 160, 60, 14, '#fff000', 'center');
+        text('ENTER / Z で つぎのたたかいへ', 160, 96, 8, '#fff', 'center');
+      } else drawEnding(state === 'victory');
     } else {
       rect(0, 0, W, H, '#000');
       drawGrid();
@@ -355,7 +424,7 @@
     let step = 0;
     const melody = [64, 67, 71, 72, 71, 67, 64, 59, 62, 66, 69, 71, 69, 66, 62, 59];
     synthTimer = setInterval(() => {
-      if (!audio || audio.state !== 'running' || state === 'title') return;
+      if (!audio || audio.state !== 'running' || state === 'title' || spotifyController) return;
       const oscillator = audio.createOscillator();
       const gain = audio.createGain();
       oscillator.type = step % 4 === 0 ? 'square' : 'triangle';
@@ -384,10 +453,24 @@
     oscillator.stop(audio.currentTime + duration);
   }
 
+  function stageTrack() {
+    if (stage === 10) return MEGALOVANIA;
+    const choices = BATTLE_TRACKS.filter(track => track !== lastTrack);
+    lastTrack = choices[Math.floor(Math.random() * choices.length)];
+    return lastTrack;
+  }
+
+  function playStageMusic() {
+    if (!spotifyController || state === 'opening' || state === 'title') return;
+    const uri = stage === 10 ? MEGALOVANIA : stageTrack();
+    spotifyController.loadUri(uri);
+    spotifyController.play();
+  }
+
   window.onSpotifyIframeApiReady = (IFrameAPI) => {
     const element = document.getElementById('spotify-embed');
     IFrameAPI.createController(element, {
-      uri: 'spotify:track:3T6YlBv3O3CHw01Xy0fX8R',
+      uri: BATTLE_TRACKS[0],
       width: 1,
       height: 1
     }, controller => {
@@ -398,6 +481,7 @@
           controller.play();
         }
       });
+      if (!['title', 'opening'].includes(state)) playStageMusic();
     });
   };
 
@@ -407,19 +491,34 @@
     if (lines) message = lines;
   }
 
-  function resetGame() {
-    enemies[0].hp = enemies[0].maxHp;
-    enemies[0].spared = false;
-    enemies[0].mood = 0;
-    enemies[1].hp = enemies[1].maxHp;
-    enemies[1].spared = false;
-    enemies[1].mood = 0;
-    hp = maxHp;
-    items = 2;
+  function startStage(number) {
+    stage = number;
+    const template = STAGES[stage - 1];
+    enemies = template.map((enemy, index) => ({
+      ...enemy,
+      hp: enemy.maxHp,
+      spared: false,
+      mood: 0,
+      x: template.length === 1 ? 160 : (index === 0 ? 112 : 207)
+    }));
+    if (stage > 1) hp = Math.min(maxHp, hp + 12);
     menu = 0;
-    turnCount = 0;
+    target = 0;
     bullets = [];
-    setState('intro', ['＊ 10しゅうねんの よる。', '＊ ヒカリメと クラゲンが あらわれた。']);
+    sansDodges = 0;
+    setState('intro', [
+      '＊ STAGE ' + stage + ' / 10',
+      '＊ ' + enemies.map(enemy => enemy.name).join('と') + 'が あらわれた。'
+    ]);
+    playStageMusic();
+  }
+
+  function resetGame() {
+    hp = maxHp;
+    items = 3;
+    turnCount = 0;
+    lastTrack = '';
+    startStage(1);
   }
 
   function nextAliveTarget(direction) {
@@ -474,7 +573,13 @@
   function resolveAttack() {
     const center = 160;
     const accuracy = Math.max(0, 1 - Math.abs(attackX - center) / 80);
-    const damage = Math.max(4, Math.round(8 + accuracy * 25));
+    if (stage === 10 && sansDodges < 2) {
+      sansDodges++;
+      beep(760, .07);
+      setState('result', ['＊ サンズは こうげきを よけた。', '＊ まだ こちらを みている。']);
+      return;
+    }
+    const damage = stage === 10 ? 1 : Math.max(4, Math.round(8 + accuracy * 25));
     enemies[attackTarget].hp = Math.max(0, enemies[attackTarget].hp - damage);
     beep(150 + accuracy * 500, .12);
     const defeated = enemies[attackTarget].hp <= 0;
@@ -497,7 +602,8 @@
 
   function finishVictory() {
     if (spotifyController) spotifyController.pause();
-    setState('victory');
+    if (stage < 10) setState('stageClear');
+    else setState('victory');
   }
 
   function finishDefeat() {
@@ -506,36 +612,61 @@
   }
 
   function updateEnemyTurn(dt, now) {
-    const speed = 72;
+    const speed = stage === 10 ? 86 : 72;
     if (keys.has('ArrowLeft')) heart.x -= speed * dt;
     if (keys.has('ArrowRight')) heart.x += speed * dt;
-    if (keys.has('ArrowUp')) heart.y -= speed * dt;
-    if (keys.has('ArrowDown')) heart.y += speed * dt;
+    if (stage === 10) {
+      heart.vy += 190 * dt;
+      if (keys.has('ArrowUp') && heart.y >= 133) heart.vy = -92;
+      heart.y += heart.vy * dt;
+      if (heart.y > 135) { heart.y = 135; heart.vy = 0; }
+      if (heart.y < 99) { heart.y = 99; heart.vy = 0; }
+    } else {
+      if (keys.has('ArrowUp')) heart.y -= speed * dt;
+      if (keys.has('ArrowDown')) heart.y += speed * dt;
+    }
     heart.x = Math.max(81, Math.min(231, heart.x));
     heart.y = Math.max(99, Math.min(135, heart.y));
     if (now >= spawnAt) {
-      const fromLeft = Math.random() > .5;
-      bullets.push({
-        x: fromLeft ? 79 : 233,
-        y: 101 + Math.random() * 32,
-        vx: (fromLeft ? 1 : -1) * (35 + Math.random() * 25),
-        vy: (Math.random() - .5) * 14
-      });
-      spawnAt = now + Math.max(230, 520 - turnCount * 20);
+      if (stage === 10) {
+        const fromSide = Math.random() > .35;
+        bullets.push({
+          kind: 'bone',
+          x: fromSide ? 233 : 82 + Math.random() * 148,
+          y: fromSide ? 138 : 145,
+          vx: fromSide ? -(68 + Math.random() * 28) : 0,
+          vy: fromSide ? 0 : -(45 + Math.random() * 20),
+          h: 9 + Math.random() * 20
+        });
+        spawnAt = now + 190;
+      } else {
+        const fromLeft = Math.random() > .5;
+        bullets.push({
+          kind: 'orb',
+          x: fromLeft ? 79 : 233,
+          y: 101 + Math.random() * 32,
+          vx: (fromLeft ? 1 : -1) * (38 + stage * 3 + Math.random() * 22),
+          vy: (Math.random() - .5) * (12 + stage)
+        });
+        spawnAt = now + Math.max(210, 520 - stage * 24);
+      }
     }
     for (const bullet of bullets) {
       bullet.x += bullet.vx * dt;
       bullet.y += bullet.vy * dt;
-      if (invincible <= 0 && Math.abs(bullet.x - heart.x) < 6 && Math.abs(bullet.y - heart.y) < 7) {
-        hp = Math.max(0, hp - 5);
-        invincible = .7;
+      const hit = bullet.kind === 'bone'
+        ? Math.abs(bullet.x - heart.x) < 6 && heart.y > bullet.y - bullet.h - 4 && heart.y < bullet.y + 5
+        : Math.abs(bullet.x - heart.x) < 6 && Math.abs(bullet.y - heart.y) < 7;
+      if (invincible <= 0 && hit) {
+        hp = Math.max(0, hp - (stage === 10 ? 4 : 3 + Math.ceil(stage / 3)));
+        invincible = stage === 10 ? .35 : .65;
         beep(110, .1);
       }
     }
-    bullets = bullets.filter(b => b.x > 75 && b.x < 237 && b.y > 94 && b.y < 141);
+    bullets = bullets.filter(b => b.x > 74 && b.x < 239 && b.y > 88 && b.y < 150);
     invincible -= dt;
     if (hp <= 0) finishDefeat();
-    else if (now - stateAt > 4300) setState('command', ['＊ どうする？']);
+    else if (now - stateAt > (stage === 10 ? 6000 : 3600 + stage * 120)) setState('command', ['＊ どうする？']);
   }
 
   function confirm() {
@@ -571,7 +702,12 @@
       else beginEnemyTurn();
       return;
     }
+    if (state === 'stageClear') {
+      startStage(stage + 1);
+      return;
+    }
     if (state === 'victory' || state === 'defeat') {
+      if (spotifyController) spotifyController.pause();
       setState('title');
       hint.classList.add('visible');
     }
