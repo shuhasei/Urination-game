@@ -1152,77 +1152,140 @@
   function drawOpening(now) {
     const roomIndex = Math.max(0, Math.min(9, pendingStage - 1));
     const theme = ROOM_THEMES[roomIndex];
+    const bedroom = roomIndex % 2 === 0;
+    const wall = roomIndex === 9 ? '#3b3038' : '#64323b';
+    const wallDark = roomIndex === 9 ? '#241f25' : '#3a1c25';
+    const trim = roomIndex === 9 ? '#a59775' : '#bb5c22';
+    const carpet = roomIndex === 9 ? '#4c4d57' : '#505979';
+    const carpetWave = roomIndex === 9 ? '#73747d' : '#4a8593';
     rect(0, 0, W, H, '#050505');
 
-    // Asymmetric connected interior: main room, side hall, and a lower alcove.
-    rect(18, 29, 254, 113, theme.floor);
-    rect(0, 91, 320, 40, theme.corridor);
-    rect(96, 128, 128, 31, theme.floor);
-    rect(18, 29, 254, 4, theme.light);
-    rect(18, 29, 4, 63, '#18171d');
-    rect(268, 29, 4, 63, '#18171d');
-    rect(0, 88, 118, 4, theme.light);
-    rect(144, 88, 176, 4, theme.light);
-    rect(0, 130, 96, 4, '#17171b');
-    rect(224, 130, 96, 4, '#17171b');
-    rect(96, 156, 128, 4, '#17171b');
+    // Stepped room silhouette with a side passage and a lower doorway.
+    rect(14, 13, 292, 146, wall);
+    rect(0, 88, 320, 43, carpet);
+    rect(39, 50, 267, 109, carpet);
+    rect(104, 156, 112, 24, carpet);
+    rect(14, 13, 292, 4, trim);
+    rect(14, 13, 4, 75, wallDark);
+    rect(302, 13, 4, 75, wallDark);
+    rect(0, 85, 112, 4, trim);
+    rect(142, 85, 178, 4, trim);
+    rect(0, 131, 39, 4, wallDark);
+    rect(306, 131, 14, 4, wallDark);
+    rect(39, 159, 65, 4, wallDark);
+    rect(216, 159, 90, 4, wallDark);
 
-    // Wallpaper and a wavy runner make the rooms read as a lived-in interior.
-    for (let tx = 27; tx < 263; tx += 14) {
-      rect(tx, 37, 1, 49, theme.light);
-      rect(tx + 5, 39, 1, 45, '#2a2931');
-    }
-    for (let tx = 0; tx < 320; tx += 12) {
-      const offset = (tx / 12) % 2 ? 3 : -3;
-      line(tx, 98, tx + 6, 104 + offset, theme.light, 1);
-      line(tx + 6, 104 + offset, tx + 12, 110, theme.light, 1);
-      line(tx, 116, tx + 6, 122 - offset, '#2a2931', 1);
-      line(tx + 6, 122 - offset, tx + 12, 128, '#2a2931', 1);
-    }
-
-    rect(116, 27, 28, 32, theme.glow);
-    rect(119, 30, 22, 29, '#050505');
-    rect(122, 34, 16, 25, '#111116');
-    rect(126, 39, 8, 14, theme.center);
-    rect(128, 42, 4, 8, theme.accent);
-    rect(113, 56, 34, 4, theme.light);
-
-    // Shelf, stairs, rug, sofa, and table are kept outside the main walking lane.
-    rect(27, 38, 45, 17, '#241319');
-    for (let shelf = 0; shelf < 2; shelf++) {
-      rect(30, 41 + shelf * 7, 39, 2, theme.accent);
-      for (let book = 0; book < 7; book++) {
-        rect(32 + book * 5, 43 + shelf * 7, 3, 5, book % 2 ? theme.glow : theme.center);
+    // Dense wavy carpet pattern, clipped to the walkable floor bands.
+    for (let y = 56; y < 156; y += 8) {
+      for (let x = 42; x < 303; x += 12) {
+        const wave = ((x + y) / 4) % 2 ? 2 : -2;
+        line(x, y, x + 3, y + wave, carpetWave, 1);
+        line(x + 3, y + wave, x + 6, y, carpetWave, 1);
+        line(x + 6, y, x + 9, y - wave, carpetWave, 1);
       }
     }
-    for (let step = 0; step < 6; step++) {
-      rect(27, 61 + step * 5, 48 - step * 5, 3, step % 2 ? theme.light : '#241319');
+    for (let x = 0; x < 320; x += 12) {
+      line(x, 96, x + 4, 100, carpetWave, 1);
+      line(x + 4, 100, x + 8, 96, carpetWave, 1);
+      line(x + 8, 96, x + 12, 100, carpetWave, 1);
+      line(x, 116, x + 4, 120, carpetWave, 1);
+      line(x + 4, 120, x + 8, 116, carpetWave, 1);
     }
-    rect(74, 71, 112, 53, theme.light);
-    rect(78, 75, 104, 45, theme.glow);
-    rect(83, 79, 94, 37, theme.center);
-    rect(91, 84, 78, 27, theme.floor);
-    rect(105, 137, 52, 14, '#26351f');
-    rect(101, 134, 60, 7, theme.center);
-    rect(106, 131, 19, 6, theme.accent);
-    rect(137, 131, 19, 6, theme.accent);
-    rect(232, 61, 25, 61, '#321d18');
-    rect(235, 64, 19, 55, theme.center);
-    rect(239, 86, 3, 3, theme.accent);
-    rect(236, 133, 49, 14, '#352018');
-    rect(240, 136, 41, 8, theme.light);
 
-    drawRoomCenter(roomIndex, theme, now);
+    // Framed picture and the battle door on the upper wall.
+    rect(142, 22, 49, 28, '#351c18');
+    rect(145, 25, 43, 22, trim);
+    rect(148, 28, 37, 16, '#b9c69e');
+    rect(157, 33, 18, 7, '#e7e8d3');
+    rect(161, 31, 10, 3, '#f4f4e5');
+    rect(265, 18, 28, 39, '#442218');
+    rect(269, 22, 20, 35, '#8c4017');
+    rect(272, 25, 14, 29, '#9f4b19');
+    rect(284, 38, 2, 3, theme.accent);
+    rect(262, 55, 34, 4, trim);
+    rect(270, 58, 18, 2, theme.accent);
+
+    if (bedroom) {
+      // Bookcase with individually colored book spines.
+      rect(25, 23, 51, 31, '#321b17');
+      rect(29, 27, 43, 23, '#7c381c');
+      for (let shelf = 0; shelf < 3; shelf++) {
+        rect(30, 33 + shelf * 8, 41, 2, '#321711');
+        for (let book = 0; book < 8; book++) {
+          const colors = ['#e0a62c', '#b94931', '#6f9c88', '#d6d1b8'];
+          rect(32 + book * 5, 27 + shelf * 8, 3, 6, colors[(book + shelf + roomIndex) % colors.length]);
+        }
+      }
+      // Desk, papers, lamp, and drawers.
+      rect(205, 25, 45, 25, '#71351b');
+      rect(202, 46, 52, 5, '#3c1c15');
+      rect(208, 29, 17, 13, '#9a4a20');
+      rect(229, 29, 17, 13, '#9a4a20');
+      rect(233, 31, 10, 6, '#ebe5c8');
+      rect(235, 38, 8, 2, '#d6caa6');
+      rect(211, 33, 3, 3, theme.accent);
+      // Bed with posts, pillow, blanket, and visible wooden frame.
+      rect(24, 111, 57, 33, '#351c17');
+      rect(28, 108, 49, 31, '#9b4b22');
+      rect(32, 111, 41, 24, '#8b665a');
+      rect(34, 113, 19, 8, '#ddd6c7');
+      rect(32, 123, 41, 12, theme.center);
+      rect(24, 107, 5, 39, '#5c2819');
+      rect(76, 107, 5, 39, '#5c2819');
+      // Central bordered rug reserved for each room's stage emblem.
+      rect(88, 68, 92, 55, '#9a4a22');
+      rect(92, 72, 84, 47, theme.glow);
+      rect(96, 76, 76, 39, theme.floor);
+      drawRoomCenter(roomIndex, theme, now);
+    } else {
+      // Left staircase with rails and individual wooden treads.
+      rect(20, 60, 61, 48, '#321b20');
+      rect(23, 62, 5, 44, trim);
+      for (let step = 0; step < 6; step++) {
+        rect(29, 65 + step * 7, 48, 4, step % 2 ? '#87401f' : '#a44e22');
+        rect(29, 69 + step * 7, 48, 2, '#3b1c1a');
+      }
+      // Television, stand, controls, and cable.
+      rect(112, 91, 62, 34, '#2a1d25');
+      rect(116, 95, 54, 26, '#4b3541');
+      rect(120, 99, 46, 18, '#17161b');
+      rect(139, 121, 8, 4, '#2a1a18');
+      rect(119, 126, 48, 9, '#6e361e');
+      rect(124, 129, 7, 3, '#c46625');
+      rect(154, 129, 7, 3, '#c46625');
+      line(143, 124, 150, 130, '#21141a', 1);
+      // Green sofa assembled from back, cushions, arms, and feet.
+      rect(101, 141, 82, 17, '#29421d');
+      rect(105, 133, 74, 20, '#638d2d');
+      rect(109, 137, 31, 11, '#79a73c');
+      rect(143, 137, 31, 11, '#79a73c');
+      rect(99, 136, 10, 19, '#557d2a');
+      rect(175, 136, 10, 19, '#557d2a');
+      rect(107, 155, 5, 4, '#321d17');
+      rect(172, 155, 5, 4, '#321d17');
+      // Long table and plate on the right.
+      rect(238, 91, 55, 61, '#3a211a');
+      rect(242, 94, 47, 55, '#8d431d');
+      rect(247, 101, 37, 3, '#a95a27');
+      rect(247, 138, 37, 3, '#6e3219');
+      g.fillStyle = '#d8d7cb';
+      g.beginPath(); g.arc(265, 116, 7, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#6e6d67';
+      g.beginPath(); g.arc(265, 116, 4, 0, Math.PI * 2); g.fill();
+      rect(241, 149, 5, 10, '#442118');
+      rect(285, 149, 5, 10, '#442118');
+      // Round side table at the lower left.
+      rect(44, 142, 22, 12, '#45231a');
+      g.fillStyle = '#a55223';
+      g.beginPath(); g.arc(55, 140, 12, 0, Math.PI * 2); g.fill();
+      rect(51, 151, 8, 8, '#4b261b');
+    }
+
     drawOpeningHero(now);
 
-    rect(0, 96, 18, 2, theme.glow);
-    rect(0, 126, 18, 2, '#27272d');
-    rect(302, 96, 18, 2, theme.glow);
-    rect(302, 126, 18, 2, '#27272d');
-
-    text('ROOM ' + String(pendingStage).padStart(2, '0'), 292, 41, 7, theme.glow, 'right');
-    text('STAGE ' + pendingStage, 292, 53, 8, theme.accent, 'right');
-    text(theme.name, 292, 64, 6, '#fff', 'right');
+    text('ROOM ' + String(pendingStage).padStart(2, '0'), 202, 25, 6, theme.glow, 'left');
+    text('STAGE ' + pendingStage, 202, 36, 7, theme.accent, 'left');
+    text(theme.name, 202, 46, 5, '#fff', 'left');
     text(pendingStage > 1 ? '◀' : '', 10, 107, 8, theme.glow, 'center');
     text(pendingStage < 10 ? '▶' : '', 310, 107, 8, theme.glow, 'center');
   }
@@ -1242,17 +1305,25 @@
 
     const nextX = openingPlayer.x + dx;
     const nextY = openingPlayer.y + dy;
-    const inChamber = nextX >= 21 && nextX <= 269 && nextY >= 32 && nextY <= 145;
-    const inHorizontalCorridor = nextX >= -6 && nextX <= 326 && nextY >= 91 && nextY <= 131;
-    const inLowerAlcove = nextX >= 96 && nextX <= 224 && nextY >= 128 && nextY <= 159;
-    const inBattleDoor = nextX >= 117 && nextX <= 143 && nextY >= 28 && nextY <= 65;
-    if (inChamber || inHorizontalCorridor || inLowerAlcove || inBattleDoor) {
+    const bedroom = (pendingStage - 1) % 2 === 0;
+    const inChamber = nextX >= 39 && nextX <= 305 && nextY >= 50 && nextY <= 159;
+    const inHorizontalCorridor = nextX >= -6 && nextX <= 326 && nextY >= 88 && nextY <= 131;
+    const inLowerAlcove = nextX >= 104 && nextX <= 216 && nextY >= 156 && nextY <= 184;
+    const inBattleDoor = nextX >= 265 && nextX <= 293 && nextY >= 18 && nextY <= 68;
+    const obstacle = (x, y, w, h) => nextX >= x - 4 && nextX <= x + w + 4
+      && nextY >= y - 4 && nextY <= y + h + 4;
+    const blocked = bedroom
+      ? obstacle(25, 23, 51, 31) || obstacle(202, 25, 52, 27) || obstacle(24, 107, 57, 39)
+      : obstacle(20, 60, 61, 43) || obstacle(112, 91, 62, 44)
+        || obstacle(99, 133, 86, 26) || obstacle(238, 91, 55, 68)
+        || obstacle(43, 128, 24, 31);
+    if ((inChamber || inHorizontalCorridor || inLowerAlcove || inBattleDoor) && !blocked) {
       openingPlayer.x = nextX;
       openingPlayer.y = nextY;
     }
 
-    if (openingPlayer.y < 34 && openingPlayer.x >= 117 && openingPlayer.x <= 143) {
-      openingPlayer.y = 62;
+    if (openingPlayer.y < 25 && openingPlayer.x >= 267 && openingPlayer.x <= 291) {
+      openingPlayer.y = 64;
       startStage(pendingStage);
       return;
     }
@@ -2537,7 +2608,7 @@
         return;
       }
       pendingStage = stage;
-      openingPlayer.x = 130;
+      openingPlayer.x = stage % 2 === 0 ? 198 : 130;
       openingPlayer.y = 112;
       openingPlayer.direction = 'down';
       openingPlayer.moving = false;
