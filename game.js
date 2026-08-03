@@ -86,6 +86,8 @@
   let attackPattern = null;
   let defeatAt = -10000;
   let defeatFragments = [];
+  let speechChars = 0;
+  let speakingEnemy = null;
   let message = ['＊ 10しゅうねんの よる。', '＊ ふたりの ちょうせんしゃが あらわれた。'];
   let attackX = 82;
   let attackDirection = 1;
@@ -305,6 +307,30 @@
     return list[(turnCount - 1) % list.length];
   }
 
+  function attackHint(pattern) {
+    if (pattern.kind === 'bone') {
+      const hints = [
+        '上下の広い隙間へ移動。',
+        '床の空いた場所で待つ。',
+        '予告線のない段へ移動。',
+        '縦の予告線から離れる。',
+        '円の回転と同じ向きへ。',
+        '床の隙間から横へ逃げる。',
+        '低い骨をジャンプ。',
+        '線が光る前に中央から離れる。'
+      ];
+      return hints[(pattern.id - 1) % hints.length];
+    }
+    const hints = [
+      '右側へ抜ける。', '左側へ抜ける。', '弾の間を横移動。', '空いた床へ移動。',
+      '中央の隙間を探す。', '斜め後ろへ下がる。', '波と逆方向へ動く。', '空いた一列で待つ。',
+      '外周へ逃げる。', '止まらず横へ動く。', '壁の切れ目を通る。', '十字の間へ移動。',
+      '円を描くように動く。', '弾のない交互マスへ。', '端から反対側へ移動。', '下から離れて待つ。',
+      '四隅の対角へ逃げる。', '回転と同じ向きへ進む。', '扇の外側へ回り込む。', '発射元と反対の端へ。'
+    ];
+    return hints[pattern.formation];
+  }
+
   function drawSans(x, y, t) {
     const c = '#fff', shade = '#cfcfcf', dark = '#000';
     rect(x - 10, y - 21, 20, 3, c);
@@ -424,10 +450,24 @@
     }
   }
 
+  function visibleSpeechRows() {
+    if (state !== 'enemySpeak') return message.slice(0, 3);
+    let remaining = Math.floor(speechChars);
+    return message.slice(0, 3).map(row => {
+      if (remaining <= 0) return '';
+      const visible = row.slice(0, remaining);
+      remaining -= row.length;
+      return visible;
+    });
+  }
+
   function drawMessageBox() {
     rect(73, 91, 224, 53, '#fff');
     rect(76, 94, 218, 47, '#000');
-    message.slice(0, 3).forEach((row, index) => text(row, 84, 98 + index * 13, 9));
+    visibleSpeechRows().forEach((row, index) => text(row, 84, 97 + index * 13, 8));
+    if (state === 'enemySpeak' && speechChars >= message.join('').length) {
+      text('▼', 285, 129, 8, '#fff', 'center');
+    }
   }
 
   function drawAttackGauge() {
@@ -880,6 +920,38 @@
     spotifyController.play();
   }
 
+  function speechBlip() {
+    startAudio();
+    if (!audio || audio.state !== 'running') return;
+    const visualPitch = {
+      comet: 390, jelly: 280, lantern: 330, moon: 245, moth: 460,
+      mirror: 360, clock: 510, crown: 205, sun: 430, star: 475, sans: 165
+    };
+    const base = visualPitch[speakingEnemy?.visual] || 320;
+    const oscillator = audio.createOscillator();
+    const gain = audio.createGain();
+    oscillator.type = speakingEnemy?.visual === 'sans' ? 'square' : 'triangle';
+    oscillator.frequency.setValueAtTime(base + (Math.floor(speechChars) % 3) * 12, audio.currentTime);
+    gain.gain.setValueAtTime(speakingEnemy?.visual === 'sans' ? .032 : .022, audio.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.001, audio.currentTime + .032);
+    oscillator.connect(gain);
+    gain.connect(audio.destination);
+    oscillator.start();
+    oscillator.stop(audio.currentTime + .036);
+  }
+
+  function updateEnemySpeech(dt) {
+    if (state !== 'enemySpeak') return;
+    const fullText = message.join('');
+    const previous = Math.floor(speechChars);
+    speechChars = Math.min(fullText.length, speechChars + dt * (speakingEnemy?.visual === 'sans' ? 24 : 30));
+    const current = Math.floor(speechChars);
+    for (let index = previous; index < current; index++) {
+      const character = fullText[index];
+      if (character && !/\s|[。、！？」＊：]/.test(character) && index % 2 === 0) speechBlip();
+    }
+  }
+
   window.onSpotifyIframeApiReady = (IFrameAPI) => {
     const element = document.getElementById('spotify-embed');
     IFrameAPI.createController(element, {
@@ -1045,7 +1117,12 @@
     if (attacker.type === 'sans') {
       attackPattern = { ...attackPattern, gravity: attackPattern.id % 4 !== 2 };
     }
-    setState('enemySpeak', ['＊ ' + attacker.name + '「' + enemyBattleQuote(attacker) + '」', '＊ PATTERN ' + attackPattern.id + ' が はじまる。']);
+    speakingEnemy = attacker;
+    speechChars = 0;
+    setState('enemySpeak', [
+      '＊ ' + attacker.name + '「' + enemyBattleQuote(attacker) + '」',
+      '＊ 攻略：' + attackHint(attackPattern)
+    ]);
   }
 
   function startEnemyAttack() {
@@ -1431,7 +1508,12 @@
       return;
     }
     if (state === 'enemySpeak') {
-      startEnemyAttack();
+      const fullLength = message.join('').length;
+      if (speechChars < fullLength) {
+        speechChars = fullLength;
+      } else {
+        startEnemyAttack();
+      }
       return;
     }
     if (state === 'command') {
@@ -1533,6 +1615,7 @@
   function loop(now) {
     const dt = Math.min(.035, (now - last) / 1000);
     last = now;
+    updateEnemySpeech(dt);
     handlePressed();
     if (state === 'opening') {
       updateOpening(dt);
