@@ -1,602 +1,551 @@
 (() => {
-    'use strict';
-    const canvas = document.getElementById('game');
-    const ctx = canvas.getContext('2d', { alpha: false });
-    const hint = document.getElementById('start-hint');
-    const touch = document.getElementById('touch');
-    ctx.imageSmoothingEnabled = false;
+  'use strict';
 
-    const W = 320, H = 180, SCALE = 2;
-    const off = document.createElement('canvas');
-    off.width = W; off.height = H;
-    const g = off.getContext('2d');
-    g.imageSmoothingEnabled = false;
-    const titleImage = new Image();
-    titleImage.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAoAAAAFoCAYAAADHMkpRAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAABjpSURBVHhe7d3djhzHeQZgUTl2giAQBcRyDmRTQixdm6wrsGzRhCWAVBL5XiyfytbPtcSynRNDCWCLG/RKTS7f2t6ebVX1bFc9L/DAZnGmvv56eoefdmd2XnrppZcuAAAYSrEAAEDfigUAAPpWLAAA0LdiAQCAvhULAAD0rVgAAKBvxQIAAH0rFgAA6FuxAABA34oFAAD6ViwAANC3YgEAgL4VCwAA9K1YAACgb8UCAAB9KxYAAOhbsQAAQN+KBQAA+lYsAADQt2IBAIC+FQsAAPStWAAAoG/FAgAAfSsWAADoW7EAAEDfigUAAPpWLAAA0LdiAQCAvhULAAD0rVgAAKBvxQIAAH0rFgAA6FuxAABA34oFAAD6ViwAANC3YgEAgL4VCwAA9K1YAACgb8UCAAB9KxYAAOhbsQAAQN+KBQAA+lYsAADQt2IBAIC+FQsAAPStWAAAoG/FAgAAfSsWAADoW7EAAEDfigUAAPpWLAAA0LdiAQCAvhULAAD0rVgAAKBvxQIAAH0rFgAA6FuxAABA34oFAAD6ViwAANCze/fulYsAAPTrBz/4QbkIAECXLr/5ZwAEABiMARAAYDAGQACAwRgAAQAGYwAEABiMARAAYDAGQACAwRgAAQAGYwAEABiMARAAYDAGQACAwRgAAQAGYwAEABiMARAAYDAGQACAwRgAAQAGYwAEABiMARAAYDAGQACAwRgAAQAGYwAEABiMARAAYDAGQACAwRgAAQAGYwAEABiMARAAYDAGQACAwRgAAQAGYwAEABiMARAAYDAGQACAwRgAAQAGYwAEABiMARAAYDAGQACAwRgAAQAGYwAEABiMARAAYDAGQACAwRgAAQAGYwAEABiMARAAYDAGQACAwRgAAQAGYwAEABiMARAAYDAGQACAwRgAAQAGYwAEABiMARAAYDAGQACAwRgAAQAGYwAEABiMARAAYDAGQACAwRgAAQAGYwAEABiMARAAYDAGQACAwRgAAQAGYwAEABiMARAAYDAGQACAwRgAAQAGYwAEABiMARAAYDAGQACAwRgAAQAGYwAEABiMARAAYDAGQACAwRgAAQAGYwAEABiMARAAYDAGQACAwRgAAQAGYwAEABiMARAAYDAGQACAwRgAAQAGYwAEABiMARAAYDAGQACAwRgAAQAGYwAEABiMARAAYDAGQACAwRgAAQAGYwAEABiMARAAYDC9DIBvvPHGCx48eHDx6quvXvziF7/43n75y18W9dbkHrVlvdl7771X3LaWI52HvB4m9+/fv+wh97iLsp812WvN67+1m66rvG0v3nzzzeIxe/vtt4v+e3h8t8j+J/fu3bvsPc/d9HWd9z+Sm67/fMyn/33llVeKPbbKenvJ63l+HI/+/Jy3y9tf9+/zdT3nvs30MgB+8MEHF7/61a9e8LOf/eyiVrLemqdPn+YWVZP1Zi0z9ZT11rTKfH6z3uzDDz8srod33nknt7mzyX7WtL7+Wyf7mfWa6fF59OjRC4/X48ePL3ueBp08D0d/fG+b7H/pPDx8+LCL85B9Xu03r5N33333e//7svb82Vqvz89LWfv7KfNjsuXf2c16GACnJ8yWTwxbHpD5fq2S9a7WbZmsd5PpcWmdrDnr9QnmOq2v/9ZZ+vra4/o5V6bHZ3L1MXvy5ElxDnp4fLckz8HsuoHoSF/X12Xp+p/7zeexmo971ttLr8/P83f45n/78zt6c6bv+k23nTPdZvrz7oN5DwPg5K59obRO1jt33SWtk/Vmra+H1sl+1vTab6/Jx2qyNAD28PjeNtl/7+ch+9yr36y3l9Z9tU72k5Zul+trf27OAHhast6a1sl65667pHWy3qz19dA62c+aXvvtNflYTQyAz5P9934ess+9+s16e2ndV+tkP2npdrm+9ufmDICnJeutaZ2sd+66S1on681aXw+tk/2s6bXfXpOP1cQA+DzZf+/nIfvcq9+st5fWfbVO9pOWbpfra39urpcB8LPPPrv4/e9//8wf/vCHi08++eTZCf2+yXprWifr7VU334U3vTPtrbfeKo5jr+PJerPPP//88hq4ek3UvB5aJ98VNr9bLPuctb7+Wyf7mfWa6fH59NNPX3jMvvjii8uer3sTyNEf39sm+5/l13Qv5yH7XHrcp2tm6nd6rViN15hnvb0c/fk5+0lLt8v1tT8318sA2DpZb03rZL096k5POPlfbZObvnPROllvr7qts/Tknn320m/200tft83U83UD4GjJ/ufzkln6Ojlaste9+s2aezl6sp+0dLtc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';
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d', { alpha: false });
+  const hint = document.getElementById('start-hint');
+  const touch = document.getElementById('touch');
+  const W = 320;
+  const H = 180;
+  const view = document.createElement('canvas');
+  view.width = W;
+  view.height = H;
+  const g = view.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  g.imageSmoothingEnabled = false;
 
-    const heroImage = new Image();
-    heroImage.src = 'assets/hero.png';
-    const referenceHeroImage = heroImage;
+  const keys = new Set();
+  const pressed = new Set();
+  const menuLabels = ['たたかう', 'こうどう', 'アイテム', 'みのがす'];
+  const menuBoxes = [[73, 55], [132, 55], [191, 55], [250, 55]];
+  const enemies = [
+    { name: 'ヒカリメ', hp: 48, maxHp: 48, spared: false, x: 112, mood: 0 },
+    { name: 'クラゲン', hp: 54, maxHp: 54, spared: false, x: 207, mood: 0 }
+  ];
 
-    const lyingHeroImage = new Image();
-    lyingHeroImage.src = 'assets/hero-lying.png';
+  let state = 'title';
+  let menu = 0;
+  let target = 0;
+  let hp = 60;
+  let maxHp = 60;
+  let items = 2;
+  let message = ['＊ 10しゅうねんの よる。', '＊ ふたりの ちょうせんしゃが あらわれた。'];
+  let attackX = 82;
+  let attackDirection = 1;
+  let attackTarget = 0;
+  let stateAt = performance.now();
+  let last = stateAt;
+  let heart = { x: 160, y: 117 };
+  let bullets = [];
+  let spawnAt = 0;
+  let invincible = 0;
+  let turnCount = 0;
+  let synthTimer = null;
+  let audio = null;
+  let spotifyController = null;
 
-    const sceneAssets = {};
-    for (const [name, path] of Object.entries({
-      flowey: 'assets/flowey.png',
-      ruins: 'assets/ruins.png',
-      flowers: 'assets/flowers.png'
-    })) {
-      const image = new Image();
-      image.src = path;
-      sceneAssets[name] = image;
+  function rect(x, y, w, h, color) {
+    g.fillStyle = color;
+    g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+  }
+
+  function line(x1, y1, x2, y2, color, width = 1) {
+    g.strokeStyle = color;
+    g.lineWidth = width;
+    g.beginPath();
+    g.moveTo(Math.round(x1) + .5, Math.round(y1) + .5);
+    g.lineTo(Math.round(x2) + .5, Math.round(y2) + .5);
+    g.stroke();
+  }
+
+  function text(value, x, y, size = 8, color = '#fff', align = 'left') {
+    g.fillStyle = color;
+    g.font = 'bold ' + size + 'px "MS Gothic","Yu Gothic",monospace';
+    g.textAlign = align;
+    g.textBaseline = 'top';
+    for (const [i, row] of String(value).split('\n').entries()) {
+      g.fillText(row, Math.round(x), Math.round(y + i * (size + 3)));
     }
+  }
 
-    const keys = new Set();
-    const pressed = new Set();
-    let state = 'title';
-    let stateAt = performance.now();
-    let last = performance.now();
-    let cursor = 0;
-    let name = '';
-    let confirmChoice = 0;
-    let flash = 0;
-    let room = 1;
-    let awake = false;
-    let dialogueIndex = 0;
-    let dialogueChars = 0;
-    let dialogueAt = 0;
-    let eventStarted = false;
-    let flowerTime = 0;
-    let footstepAt = 0;
-    let floweyPhase = 0;
-    let phaseAt = 0;
-    let encounterType = '';
-    let encounterStep = 0;
-    let ruinsText = '';
-    let openingMessage = false;
-    let roomEventDone = new Set();
-    let endingAt = 0;
-    const player = { x: 135, y: 105, dir: 'down', frame: 0, moving: false };
+  function frameBox(x, y, w, h, color = '#fff', width = 2) {
+    g.strokeStyle = color;
+    g.lineWidth = width;
+    g.strokeRect(x, y, w, h);
+  }
 
-    let spotifyController = null;
-    let spotifyWanted = true;
-    let spotifyLooping = false;
-    window.onSpotifyIframeApiReady = IFrameAPI => {
-      IFrameAPI.createController(document.getElementById('spotify-embed'), {
-        width: 300,
-        height: 152,
-        uri: 'spotify:track:3T6YlBv3O3CHw01Xy0fX8R'
-      }, controller => {
-        spotifyController = controller;
-        controller.addListener('ready', () => { if (spotifyWanted) controller.play(); });
-        controller.addListener('playback_update', event => {
-          const data = event.data || {};
-          if (spotifyWanted && data.duration > 0 && data.position >= data.duration - 850 && !data.isBuffering && !spotifyLooping) {
-            spotifyLooping = true;
-            controller.restart();
-            setTimeout(() => { if (spotifyWanted) controller.play(); spotifyLooping = false; }, 160);
-          }
-        });
-      });
-    };
-    function playSpotify() { spotifyWanted = true; if (spotifyController) spotifyController.play(); }
-    function stopSpotify() { spotifyWanted = false; if (spotifyController) spotifyController.pause(); }
+  function heartShape(x, y, color = '#f5222d') {
+    rect(x - 3, y - 2, 3, 3, color);
+    rect(x, y - 2, 3, 3, color);
+    rect(x - 4, y, 8, 3, color);
+    rect(x - 3, y + 3, 6, 2, color);
+    rect(x - 1, y + 5, 2, 2, color);
+  }
 
-    const chars = [
-      'あ','い','う','え','お','か','き','く','け','こ',
-      'さ','し','す','せ','そ','た','ち','つ','て','と',
-      'な','に','ぬ','ね','の','は','ひ','ふ','へ','ほ',
-      'ま','み','む','め','も','や','ゆ','よ','ら','り',
-      'る','れ','ろ','わ','を','ん','ー','゛','けす','おわり'
-    ];
-    const dialogue = [
-      'ハロー！',
-      'ぼくは フルル。\nちていに さいた お花さ！',
-      'ここへ来るのは はじめてだね？\nぼくが みちあんないしてあげる。'
-    ];
-    const roomLines = {
-      3: 'わたしは セラ。\nこの遺跡の 管理人です。\nこちらへ ついてきてください。',
-      4: 'この部屋では スイッチを押すと\n道がひらきます。',
-      6: 'トゲの上には 安全な道が\nかくされています。',
-      9: '岩にも それぞれ性格があるのです。',
-      11: 'よく ここまで来ましたね。\nこの先に わたしの家があります。'
-    };
+  function drawGrid() {
+    const x = 67, y = 11, w = 236, h = 78;
+    frameBox(x, y, w, h, '#008a45', 1);
+    for (let xx = x + 39; xx < x + w; xx += 39) line(xx, y, xx, y + h, '#008a45');
+    line(x, y + 39, x + w, y + 39, '#008a45');
+  }
 
-    function setState(next) {
-      state = next;
-      stateAt = performance.now();
-      if (next === 'name') { hint.classList.remove('visible'); playSpotify(); }
-      if (next === 'room') { music.stop(); stopSpotify(); touch.classList.add('show'); hint.classList.toggle('visible', !awake); }
-      if (next === 'dialogue') { music.startFriend(); touch.classList.add('show'); dialogueAt = performance.now(); }
+  function drawEyeComet(x, y, t) {
+    const bob = Math.round(Math.sin(t / 260) * 2);
+    y += bob;
+    const c = '#fff';
+    line(x - 18, y + 7, x - 10, y - 20, c);
+    line(x - 10, y - 20, x - 4, y - 4, c);
+    line(x - 4, y - 4, x + 1, y - 28, c);
+    line(x + 1, y - 28, x + 8, y - 5, c);
+    line(x + 8, y - 5, x + 18, y - 15, c);
+    line(x + 18, y - 15, x + 13, y + 7, c);
+    line(x + 13, y + 7, x + 5, y + 13, c);
+    line(x + 5, y + 13, x - 8, y + 12, c);
+    line(x - 8, y + 12, x - 18, y + 7, c);
+    rect(x - 8, y + 1, 17, 10, c);
+    rect(x - 6, y + 3, 13, 6, '#000');
+    rect(x - 2, y + 4, 5, 4, c);
+    rect(x, y + 5, 2, 2, '#000');
+    rect(x - 6, y + 14, 12, 2, c);
+    rect(x - 3, y + 17, 6, 2, c);
+  }
+
+  function drawJellySage(x, y, t) {
+    const bob = Math.round(Math.sin(t / 300 + 1) * 2);
+    y += bob;
+    const c = '#fff';
+    rect(x - 12, y - 10, 24, 3, c);
+    rect(x - 16, y - 7, 32, 12, c);
+    rect(x - 19, y - 3, 38, 6, c);
+    rect(x - 14, y + 5, 28, 3, c);
+    rect(x - 12, y - 5, 24, 10, '#000');
+    rect(x - 8, y - 2, 3, 3, c);
+    rect(x + 5, y - 2, 3, 3, c);
+    rect(x - 2, y + 2, 2, 2, c);
+    rect(x + 2, y + 2, 2, 2, c);
+    line(x - 2, y - 11, x - 4, y - 17, c);
+    line(x + 3, y - 11, x + 5, y - 17, c);
+    rect(x - 5, y - 18, 3, 3, c);
+    rect(x + 4, y - 18, 3, 3, c);
+    for (let i = -10; i <= 10; i += 5) line(x + i, y + 8, x + i + Math.sin(t / 230 + i) * 3, y + 17, c);
+    line(x - 19, y, x - 27, y + 6, c);
+    line(x - 27, y + 6, x - 31, y + 2, c);
+    line(x + 19, y, x + 27, y + 6, c);
+    line(x + 27, y + 6, x + 31, y + 2, c);
+  }
+
+  function aliveEnemies() {
+    return enemies.map((enemy, index) => ({ enemy, index })).filter(({ enemy }) => enemy.hp > 0 && !enemy.spared);
+  }
+
+  function drawEnemies(now) {
+    if (enemies[0].hp > 0 && !enemies[0].spared) drawEyeComet(enemies[0].x, 50, now);
+    if (enemies[1].hp > 0 && !enemies[1].spared) drawJellySage(enemies[1].x, 51, now);
+    if (state === 'target') {
+      const selected = aliveEnemies()[target];
+      if (selected) heartShape(selected.enemy.x, 75, '#f5222d');
     }
+  }
 
-    const music = (() => {
-      let ac = null, master = null, timer = null, step = 0, mode = '';
-      const menuA = [64,67,71,67,62,66,69,66,60,64,67,71,69,67,64,62];
-      const menuB = [48,null,55,null,50,null,57,null,45,null,52,null,47,null,54,null];
-      const friendA = [72,76,79,76,74,77,81,77,72,76,79,83,81,79,76,74];
-      function init() {
-        if (ac) { if (ac.state === 'suspended') ac.resume(); return; }
-        ac = new (window.AudioContext || window.webkitAudioContext)();
-        master = ac.createGain(); master.gain.value = .095; master.connect(ac.destination);
-      }
-      function tone(midi, duration=.09, type='square', volume=.5, when=0) {
-        if (!ac || midi == null) return;
-        const o = ac.createOscillator(), gain = ac.createGain();
-        o.type = type; o.frequency.value = 440 * Math.pow(2, (midi - 69) / 12);
-        gain.gain.setValueAtTime(volume, ac.currentTime + when);
-        gain.gain.exponentialRampToValueAtTime(.001, ac.currentTime + when + duration);
-        o.connect(gain); gain.connect(master); o.start(ac.currentTime + when); o.stop(ac.currentTime + when + duration + .02);
-      }
-      function tick() {
-        if (!ac || ac.state !== 'running') return;
-        if (mode === 'menu') {
-          tone(menuA[step % 16], .13, 'square', .38);
-          if (step % 2 === 0) tone(menuB[step % 16], .22, 'triangle', .32);
-        } else if (mode === 'friend') {
-          tone(friendA[step % 16], .09, 'square', .46);
-          tone(friendA[(step + 4) % 16] - 12, .07, 'square', .18, .055);
-          if (step % 4 === 0) tone(48 + ((step / 4) % 2) * 5, .18, 'triangle', .38);
-        }
-        step++;
-      }
-      function begin(next, rate) { init(); if (mode === next) return; stop(); mode = next; step = 0; tick(); timer = setInterval(tick, rate); }
-      function stop() { if (timer) clearInterval(timer); timer = null; mode = ''; }
-      function select() { init(); tone(78, .045, 'square', .35); }
-      function accept() { init(); tone(76,.07,'square',.5); tone(88,.18,'square',.6,.055); }
-      function stepSound() { init(); tone(42 + (player.frame % 2) * 2, .025, 'square', .16); }
-      return { startFriend:()=>begin('friend',110), stop, select, accept, step:stepSound, init };
-    })();
+  function drawStatus() {
+    text('すけ', 74, 148, 7);
+    text('LV 10', 96, 148, 8);
+    text('HP', 155, 149, 6);
+    rect(168, 149, 29, 8, '#5e1d24');
+    rect(168, 149, Math.max(0, 29 * hp / maxHp), 8, '#fff000');
+    text(hp + ' / ' + maxHp, 202, 148, 8);
+  }
 
-    function pixelText(text, x, y, size=10, color='#fff', align='left') {
-      g.save();
-      g.fillStyle = color;
-      g.font = `${size}px "MS Gothic", "Yu Gothic", monospace`;
-      g.textAlign = align; g.textBaseline = 'top';
-      const lines = String(text).split('\n');
-      lines.forEach((line, i) => g.fillText(line, x, y + i * (size + 4)));
-      g.restore();
-    }
-
-    function rect(x,y,w,h,c) { g.fillStyle=c; g.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h)); }
-    function line(x1,y1,x2,y2,c,w=1) { g.strokeStyle=c; g.lineWidth=w; g.beginPath(); g.moveTo(x1,y1); g.lineTo(x2,y2); g.stroke(); }
-
-    function drawName() {
-      rect(0,0,W,H,'#000');
-      pixelText('おちた ニんげんに', 160, 12, 11, '#fff', 'center');
-      pixelText('なまえを つけてあげてね。', 160, 27, 11, '#fff', 'center');
-      g.strokeStyle='#fff'; g.lineWidth=2; g.strokeRect(103,47,114,24);
-      pixelText(name || ' ',160,52,13,'#fff','center');
-
-      for (let i=0;i<chars.length;i++) {
-        const col=i%10,row=Math.floor(i/10), x=25+col*30, y=83+row*17;
-        const label=chars[i];
-        pixelText(label, x+9, y+2, label.length>2?7:10, '#fff', 'center');
-        if (i===cursor) { g.strokeStyle='#fff'; g.lineWidth=1; g.strokeRect(x,y,19,14); }
-      }
-      pixelText('方向キー：えらぶ　　Z / ENTER：決定',160,169,7,'#888','center');
-    }
-
-    function drawTitle(now) {
-      rect(0,0,W,H,'#000');
-      if(titleImage.complete) {
-        g.drawImage(titleImage,0,0,W,H);
-        rect(291,70,29,24,'#000');
-      }
-    }
-
-    function drawConfirm() {
-      drawName();
-      rect(35,47,250,90,'#000');
-      g.strokeStyle='#fff'; g.lineWidth=2; g.strokeRect(35,47,250,90);
-      pixelText(name,160,59,14,'#fff','center');
-      pixelText('この なまえで 決定する？',160,83,10,'#fff','center');
-      const labels=['はい','いいえ'];
-      labels.forEach((v,i)=>{
-        const x=112+i*88;
-        if (confirmChoice===i) { pixelText('◆',x-23,111,8,'#fff'); }
-        pixelText(v,x,108,10,'#fff','center');
-      });
-    }
-
-    function stoneBackdrop(which) {
-      rect(0,0,W,H,'#000');
-      const wall = which===1 ? '#302638' : '#292139';
-      const edge = which===1 ? '#4b3a54' : '#443654';
-      if (which===1) {
-        rect(70,5,180,142,wall); rect(62,19,8,128,edge); rect(250,19,8,128,edge);
-        rect(70,5,180,8,edge); rect(70,141,180,8,'#211927');
-        for(let y=18;y<139;y+=18){ line(70,y,250,y,'#3b2e44'); for(let x=78+(y%36?0:14);x<246;x+=28) line(x,y-5,x,y+5,'#3b2e44'); }
-        rect(238,108,20,31,'#000');
+  function drawMenu() {
+    for (let i = 0; i < menuBoxes.length; i++) {
+      const [x, w] = menuBoxes[i];
+      const selected = state === 'command' && menu === i;
+      frameBox(x, 162, w, 16, selected ? '#ffff00' : '#ff7518', 1);
+      if (selected) heartShape(x + 6, 168, '#f5222d');
+      if (i === 0) {
+        line(x + 7, 174, x + 13, 165, '#ff7518');
+        line(x + 9, 175, x + 15, 165, '#ff7518');
+      } else if (i === 1) {
+        rect(x + 7, 167, 2, 7, '#ff7518');
+        rect(x + 10, 166, 2, 8, '#ff7518');
+      } else if (i === 2) {
+        rect(x + 7, 166, 7, 3, '#ff7518');
+        rect(x + 9, 169, 4, 6, '#ff7518');
       } else {
-        rect(20,14,280,142,wall); rect(20,14,280,7,edge); rect(20,149,280,8,'#17121e');
-        rect(20,21,7,128,edge); rect(293,21,7,128,edge);
-        for(let y=27;y<147;y+=18){ line(27,y,293,y,'#382c47'); for(let x=34+(y%36?12:0);x<288;x+=30) line(x,y-5,x,y+5,'#382c47'); }
+        line(x + 7, 166, x + 14, 174, '#ff7518');
+        line(x + 14, 166, x + 7, 174, '#ff7518');
       }
+      text(menuLabels[i], x + 18, 166, 7, '#ff7518');
     }
+  }
 
-    function spotlight(cx, top, bottom, half) {
-      g.save();
-      const grad=g.createLinearGradient(0,top,0,bottom);
-      grad.addColorStop(0,'rgba(255,249,190,.24)'); grad.addColorStop(1,'rgba(255,245,160,.07)');
-      g.fillStyle=grad; g.beginPath(); g.moveTo(cx-5,top); g.lineTo(cx+5,top); g.lineTo(cx+half,bottom); g.lineTo(cx-half,bottom); g.closePath(); g.fill();
-      g.restore();
+  function drawMessageBox() {
+    rect(73, 91, 224, 53, '#fff');
+    rect(76, 94, 218, 47, '#000');
+    message.slice(0, 3).forEach((row, index) => text(row, 84, 99 + index * 12, 8));
+  }
+
+  function drawAttackGauge() {
+    rect(73, 91, 224, 53, '#fff');
+    rect(76, 94, 218, 47, '#000');
+    const left = 82, top = 104, width = 202;
+    const colors = ['#a8d51d', '#e8e61c', '#d92131', '#d92131', '#e8e61c', '#a8d51d'];
+    const spans = [30, 33, 20, 20, 33, 30];
+    let x = left;
+    for (let i = 0; i < spans.length; i++) {
+      rect(x, top + 7, spans[i], 20, colors[i]);
+      x += spans[i] + 1;
     }
+    rect(154, top + 2, 12, 30, '#42b95a');
+    rect(158, top, 4, 34, '#113d2a');
+    for (let xx = left + 8; xx < left + width; xx += 15) rect(xx, top + 15, 5, 2, '#111');
+    rect(attackX - 2, top - 2, 4, 37, '#fff');
+  }
 
-    function drawFlowerBed() {
-      g.fillStyle='#21aa58';g.beginPath();g.ellipse(160,111,43,25,0,0,Math.PI*2);g.fill();
-      const flowers=[
-        [132,94],[140,92],[149,94],[158,91],[167,94],[176,92],[185,96],
-        [128,101],[137,100],[145,103],[154,99],[164,102],[173,99],[182,103],[191,101],
-        [127,109],[136,108],[146,111],[154,107],[164,110],[174,107],[183,111],[192,109],
-        [129,117],[138,116],[147,120],[156,115],[165,119],[175,116],[184,120],[190,117],
-        [134,125],[143,123],[152,127],[161,123],[170,126],[179,123],[186,126],
-        [142,132],[151,130],[160,133],[169,130],[178,132]
-      ];
-      for(const [x,y] of flowers){
-        rect(x-3,y-1,3,3,'#e1a900');rect(x+2,y-1,3,3,'#e1a900');rect(x-1,y-3,3,3,'#ffd928');rect(x-1,y+2,3,3,'#c98c00');rect(x,y,2,2,'#664000');
-      }
+  function drawEnemyTurn() {
+    rect(73, 91, 224, 53, '#fff');
+    rect(76, 94, 218, 47, '#000');
+    heartShape(heart.x, heart.y);
+    for (const bullet of bullets) {
+      rect(bullet.x - 3, bullet.y - 3, 7, 7, '#fff');
+      rect(bullet.x - 1, bullet.y - 1, 3, 3, '#000');
     }
+  }
 
-    function drawOpeningChamber() {
-      rect(0,0,W,H,'#000');
-      rect(0,53,258,77,'#3d3c49');rect(36,40,182,90,'#3d3c49');rect(41,36,172,98,'#3d3c49');
-      rect(210,96,110,36,'#3d3c49');rect(244,91,76,46,'#3d3c49');
-      rect(0,130,306,12,'#3d3c49');rect(18,142,288,8,'#3d3c49');
-      rect(36,88,178,27,'#68677c');rect(42,83,166,37,'#68677c');
-      rect(56,86,140,32,'#d8d5e4');rect(63,82,126,39,'#d8d5e4');
-      rect(79,84,96,35,'#20bd50');rect(85,80,84,43,'#20bd50');
-      drawSquareFlowerPatch();
-      rect(174,96,146,30,'#3d3c49');
-      rect(174,101,146,20,'#474656');
-      drawMiniPlayer(player.x,player.y,!awake);
-      if(openingMessage){
-        rect(14,121,292,55,'#fff');rect(17,124,286,49,'#000');
-        pixelText('＊（きんいろの　はなだ）',29,132,10,'#fff');
-        pixelText('＊（はなが　クッションになって',29,149,10,'#fff');
-        pixelText('　　たすかったらしい）',43,163,10,'#fff');
-      }
+  function drawTitle(now) {
+    rect(0, 0, W, H, '#000');
+    text('ちていのものがたり', 160, 45, 18, '#fff', 'center');
+    heartShape(160, 75);
+    text('10th ANNIVERSARY BATTLE', 160, 94, 9, '#4edc77', 'center');
+    if (Math.floor(now / 500) % 2 === 0) text('ENTER / Z', 160, 130, 9, '#fff', 'center');
+  }
+
+  function drawEnding(victory) {
+    rect(0, 0, W, H, '#000');
+    text(victory ? 'BATTLE COMPLETE' : 'GAME OVER', 160, 58, 15, victory ? '#fff000' : '#f5222d', 'center');
+    text(victory ? '10しゅうねんの しょうり！' : 'もういちど ちょうせん', 160, 88, 9, '#fff', 'center');
+    text('ENTER / Z', 160, 125, 8, '#aaa', 'center');
+  }
+
+  function draw(now) {
+    if (state === 'title') {
+      drawTitle(now);
+    } else if (state === 'victory' || state === 'defeat') {
+      drawEnding(state === 'victory');
+    } else {
+      rect(0, 0, W, H, '#000');
+      drawGrid();
+      drawEnemies(now);
+      if (state === 'attack') drawAttackGauge();
+      else if (state === 'enemyTurn') drawEnemyTurn();
+      else drawMessageBox();
+      drawStatus();
+      drawMenu();
     }
+    ctx.drawImage(view, 0, 0, canvas.width, canvas.height);
+  }
 
-    function drawSquareFlowerPatch(){
-      const cells=[
-        '001111111100','011111111110','111111111111','111111111111',
-        '111111111111','111111111111','111111111111','011111111110','001111111100'
-      ];
-      for(let row=0;row<cells.length;row++)for(let col=0;col<cells[row].length;col++)if(cells[row][col]==='1'){
-        const x=98+col*5,y=85+row*4;
-        rect(x,y,4,3,(row+col)%3===0?'#e4a900':'#ffe523');rect(x+1,y+1,2,1,'#6f4b00');
-      }
+  function startAudio() {
+    if (audio) {
+      if (audio.state === 'suspended') audio.resume();
+      return;
     }
+    audio = new (window.AudioContext || window.webkitAudioContext)();
+    let step = 0;
+    const melody = [64, 67, 71, 72, 71, 67, 64, 59, 62, 66, 69, 71, 69, 66, 62, 59];
+    synthTimer = setInterval(() => {
+      if (!audio || audio.state !== 'running' || state === 'title') return;
+      const oscillator = audio.createOscillator();
+      const gain = audio.createGain();
+      oscillator.type = step % 4 === 0 ? 'square' : 'triangle';
+      oscillator.frequency.value = 440 * Math.pow(2, (melody[step % melody.length] - 69) / 12);
+      gain.gain.setValueAtTime(.035, audio.currentTime);
+      gain.gain.exponentialRampToValueAtTime(.001, audio.currentTime + .13);
+      oscillator.connect(gain);
+      gain.connect(audio.destination);
+      oscillator.start();
+      oscillator.stop(audio.currentTime + .14);
+      step++;
+    }, 145);
+  }
 
-    function drawMiniPlayer(x,y,lying){
-      const px=Math.round(x),py=Math.round(y);
-      if(referenceHeroImage.complete){
-        const bob=player.moving&&player.frame%2?1:0;
-        if(lying && lyingHeroImage.complete && lyingHeroImage.naturalWidth){
-          g.drawImage(lyingHeroImage,px-10,py-6,20,12);
-        }else if(lying){
-          g.save();g.translate(px,py);g.rotate(Math.PI/2);g.drawImage(referenceHeroImage,-6,-10,12,20);g.restore();
-        }else g.drawImage(referenceHeroImage,px-6,py-14+bob,12,20);
-        return;
-      }
-      if(lying){rect(px-7,py-3,5,4,'#4a2028');rect(px-2,py-3,7,4,'#246a86');rect(px,py-1,4,1,'#b64b78');rect(px+5,py-2,5,3,'#241820');return;}
-      if(heroImage.complete){
-        const frame=player.dir==='left'?0:player.dir==='right'?2:player.dir==='up'?3:1;
-        const bob=player.moving&&player.frame%2?1:0;
-        g.drawImage(heroImage,frame*19,0,19,29,px-6,py-12+bob,12,18);
-        return;
-      }
-      if(player.dir==='left'){
-        rect(px-3,py-10,7,6,'#4a2028');rect(px-3,py-8,3,4,'#d99a69');rect(px-2,py-7,1,1,'#21151b');
-      }else if(player.dir==='right'){
-        rect(px-3,py-10,7,6,'#4a2028');rect(px+1,py-8,3,4,'#d99a69');rect(px+2,py-7,1,1,'#21151b');
-      }else if(player.dir==='up')rect(px-3,py-10,7,6,'#4a2028');
-      else{rect(px-3,py-10,7,6,'#4a2028');rect(px-2,py-8,5,4,'#d99a69');rect(px-1,py-7,1,1,'#21151b');rect(px+2,py-7,1,1,'#21151b');}
-      rect(px-3,py-4,7,5,'#244b61');rect(px-3,py-3,7,1,'#20a997');rect(px-3,py-1,7,1,'#bd4f7a');
-      const step=player.moving&&player.frame%2?1:0;rect(px-2-step,py+1,2,4,'#241820');rect(px+2+step,py+1,2,4,'#241820');
-    }
+  function beep(frequency = 660, duration = .06) {
+    startAudio();
+    const oscillator = audio.createOscillator();
+    const gain = audio.createGain();
+    oscillator.type = 'square';
+    oscillator.frequency.value = frequency;
+    gain.gain.setValueAtTime(.055, audio.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.001, audio.currentTime + duration);
+    oscillator.connect(gain);
+    gain.connect(audio.destination);
+    oscillator.start();
+    oscillator.stop(audio.currentTime + duration);
+  }
 
-    function drawPlayer(x,y,lying=false) {
-      const px=Math.round(x), py=Math.round(y);
-      if (lying) {
-        rect(px-11,py-5,3,7,'#3d202a');rect(px-9,py-7,7,9,'#61323d');
-        rect(px-6,py-4,3,4,'#c7835f');rect(px-9,py-3,3,3,'#4b2733');
-        rect(px-2,py-5,10,7,'#6b3b8a');rect(px-2,py-3,10,2,'#477da5');rect(px-2,py,10,2,'#684087');
-        rect(px-3,py+2,4,3,'#c7835f');rect(px+8,py-4,6,3,'#342233');rect(px+8,py,7,3,'#342233');
-        rect(px+13,py-4,3,3,'#211720');rect(px+14,py,3,3,'#211720');
-        return;
-      }
-      const bob = player.moving && player.frame%2 ? 1 : 0;
-      if(player.dir==='up'){
-        rect(px-7,py-18+bob,15,3,'#4a2028');rect(px-9,py-15+bob,19,10,'#4a2028');rect(px-7,py-5+bob,4,3,'#4a2028');rect(px+4,py-5+bob,4,3,'#4a2028');
-      }else if(player.dir==='left'){
-        rect(px-7,py-18+bob,13,3,'#4a2028');rect(px-9,py-15+bob,17,10,'#4a2028');rect(px-7,py-13+bob,9,9,'#d99a69');rect(px-8,py-10+bob,3,3,'#d99a69');
-        rect(px-6,py-11+bob,2,3,'#241318');rect(px+1,py-6+bob,7,3,'#4a2028');
-      }else if(player.dir==='right'){
-        rect(px-6,py-18+bob,13,3,'#4a2028');rect(px-7,py-15+bob,17,10,'#4a2028');rect(px-1,py-13+bob,9,9,'#d99a69');rect(px+6,py-10+bob,3,3,'#d99a69');
-        rect(px+4,py-11+bob,2,3,'#241318');rect(px-7,py-6+bob,7,3,'#4a2028');
-      }else{
-        rect(px-7,py-18+bob,15,3,'#4a2028');rect(px-9,py-15+bob,19,7,'#4a2028');
-        rect(px-6,py-13+bob,13,10,'#d99a69');rect(px-8,py-11+bob,3,6,'#4a2028');rect(px+6,py-11+bob,3,6,'#4a2028');
-        rect(px-4,py-10+bob,2,4,'#261419');rect(px+3,py-10+bob,2,4,'#261419');rect(px-2,py-5+bob,5,2,'#4a2028');
-      }
-      rect(px-2,py-3+bob,5,3,'#d99a69');
-      rect(px-7,py+bob,15,9,'#263f56');rect(px-9,py+1+bob,3,7,'#263f56');rect(px+8,py+1+bob,3,7,'#263f56');
-      rect(px-7,py+2+bob,15,2,'#27b7a2');rect(px-7,py+5+bob,15,2,'#c84c77');
-      rect(px-10,py+3+bob,3,4,'#d99a69');rect(px+11,py+3+bob,3,4,'#d99a69');
-      rect(px-6,py+9,13,4,'#2c202b');
-      const stride = player.moving ? (player.frame%2?2:-2) : 0;
-      rect(px-5+stride,py+13,5,6,'#2c202b');rect(px+2-stride,py+13,5,6,'#2c202b');
-      rect(px-6+stride,py+18,6,2,'#171117');rect(px+2-stride,py+18,6,2,'#171117');
-    }
-
-    function drawFlowey(x,y,t) {
-      const sway=Math.round(Math.sin(t/270));
-      const sx=x+sway;
-      rect(sx-2,y+4,5,17,'#101010');rect(sx,y+5,2,15,'#43cf48');
-      rect(sx-7,y+12,7,5,'#101010');rect(sx-6,y+13,6,3,'#43cf48');
-      rect(sx+2,y+9,7,5,'#101010');rect(sx+2,y+10,6,3,'#43cf48');
-      const petals=[
-        [sx-4,y-11,9,7],[sx-11,y-7,8,9],[sx+4,y-7,8,9],
-        [sx-10,y+1,8,8],[sx+3,y+1,8,8],[sx-4,y+5,9,7]
-      ];
-      for(const [px,py,pw,ph] of petals){rect(px,py,pw,ph,'#101010');rect(px+1,py+1,pw-2,ph-2,'#ffe51f');}
-      rect(sx-6,y-6,13,13,'#101010');rect(sx-5,y-5,11,11,'#fffde4');
-      const face = state === 'dialogue' ? dialogueIndex : 0;
-      if (face === 0) {
-        rect(sx-3,y-2,2,3,'#101010');rect(sx+2,y-2,2,3,'#101010');
-        rect(sx-3,y+2,7,1,'#101010');rect(sx-2,y+3,5,2,'#101010');
-      } else if (face === 1) {
-        rect(sx-4,y-1,4,1,'#101010');rect(sx+1,y-1,4,1,'#101010');
-        rect(sx-4,y+1,9,1,'#101010');rect(sx-3,y+2,7,3,'#101010');
-      } else {
-        rect(sx-3,y-2,2,2,'#101010');rect(sx+2,y-2,2,2,'#101010');
-        rect(sx-2,y+2,5,1,'#101010');rect(sx-4,y+1,1,1,'#e49870');rect(sx+4,y+1,1,1,'#e49870');
-      }
-    }
-
-    function drawRoom() {
-      if(room>=3){drawRuins(room);return;}
-      if(room===1){drawOpeningChamber();if(!awake)pixelText('・',160,153,10,'#aaa','center');return;}
-      stoneBackdrop(room);
-      if (room===2) {
-        rect(20,105,20,35,'#000');rect(0,111,40,24,'#292139');
-        spotlight(236,19,112,29);
-        rect(215,111,42,9,'#263c29');
-        drawFlowey(236,99,flowerTime);
-        drawMiniPlayer(player.x,player.y,false);
-      }
-    }
-
-    function drawDialogue() {
-      drawRoom();
-      rect(13,127,294,45,'#000'); g.strokeStyle='#fff'; g.lineWidth=2; g.strokeRect(13,127,294,45);
-      const full=dialogue[dialogueIndex];
-      const shown=full.slice(0,Math.floor(dialogueChars));
-      pixelText('＊ '+shown,25,137,9,'#fff');
-      if (dialogueChars>=full.length) pixelText('▼',294,159,7,'#fff','center');
-    }
-
-    function drawGuide(x,y) {
-      const px=Math.round(x),py=Math.round(y);
-      rect(px-5,py-16,11,9,'#f5f2e7'); rect(px-7,py-18,3,8,'#f5f2e7'); rect(px+5,py-18,3,8,'#f5f2e7');
-      rect(px-3,py-13,2,2,'#9e3858'); rect(px+2,py-13,2,2,'#9e3858'); rect(px-2,py-9,5,1,'#5b2745');
-      rect(px-7,py-7,15,15,'#49334f'); rect(px-5,py-6,11,12,'#111');
-      rect(px-2,py-4,5,6,'#dfe0d6'); rect(px-1,py-3,3,4,'#7e566d');
-    }
-
-    function drawRuins(n) {
-      rect(0,0,W,H,'#000');
-      rect(35,12,250,153,'#51226e'); rect(42,19,236,139,'#8c3cb0');
-      for(let y=24;y<155;y+=16){line(42,y,278,y,'#71308e');for(let x=50+(y%32?12:0);x<276;x+=24)line(x,y-5,x,y+5,'#71308e');}
-      rect(145,12,30,10,'#000'); rect(145,155,30,10,'#000');
-      if(n===3){ rect(95,38,130,72,'#a948c3'); rect(105,48,110,52,'#9b42b8'); drawGuide(160,76); }
-      if(n===4){ rect(62,28,24,112,'#6ed6d2');rect(234,28,24,112,'#6ed6d2');rect(92,52,12,9,'#c8e36d');rect(216,52,12,9,'#c8e36d');drawGuide(160,42); }
-      if(n===5){ for(let a=0;a<8;a++){const ang=a*Math.PI/4;rect(160+Math.cos(ang)*42-4,91+Math.sin(ang)*25-4,8,8,'#b45ac8');} rect(157,74,7,18,'#e2d8ca');rect(153,70,15,7,'#6b4b6c'); }
-      if(n===6){ for(let yy=46;yy<138;yy+=13)for(let xx=78;xx<245;xx+=13)rect(xx,yy,4,4,'#d6bfdc'); rect(86,70,148,8,'#ad6bc2');rect(86,112,148,8,'#ad6bc2'); }
-      if(n===7){ rect(60,53,200,68,'#75408f');for(let xx=68;xx<255;xx+=10){rect(xx,62,4,4,'#d95375');rect(xx,108,4,4,'#d95375');} }
-      if(n===8){ for(const x of [91,160,229]){rect(x-8,80,16,13,'#714d79');rect(x-5,76,10,5,'#86608e');} rect(58,111,204,12,'#6f348d'); }
-      if(n===9){ rect(78,35,164,94,'#a44abc');for(let y=40;y<125;y+=12){rect(83,y,12,7,'#d05561');rect(225,y,12,7,'#d05561');} rect(135,85,50,34,'#6d2d87'); }
-      if(n===10){ rect(48,55,224,75,'#6f318e');for(let i=0;i<7;i++)rect(70+i*28,72+(i%2)*28,8,8,'#b559c9'); rect(250,45,13,25,'#72d4d4'); }
-      if(n===11){ rect(58,45,45,62,'#d15b51');rect(217,45,45,62,'#d15b51');rect(141,22,38,28,'#25152e');drawGuide(160,73); }
-      drawMiniPlayer(player.x,player.y,false);
-    }
-
-    function drawBattleGrid() {
-      for(let x=8;x<=312;x+=51) line(x,4,x,95,'#08a34a');
-      for(let y=4;y<=95;y+=47) line(8,y,312,y,'#08a34a');
-    }
-
-    function drawWispMage(x,y) {
-      const c='#fff', sway=Math.round(Math.sin(flowerTime/260)); x+=sway;
-      line(x-17,y-7,x-8,y-15,c);line(x-8,y-15,x-13,y-22,c);line(x-13,y-22,x-7,y-28,c);
-      line(x-7,y-28,x+1,y-27,c);line(x+1,y-27,x+7,y-18,c);line(x+7,y-18,x+18,y-17,c);
-      line(x+18,y-17,x+12,y-10,c);line(x+12,y-10,x-17,y-7,c);
-      line(x-13,y-4,x+13,y-4,c);line(x-9,y,x+9,y,c);line(x-5,y+2,x+5,y+2,c);
-      rect(x-14,y-1,3,2,c);rect(x+11,y-1,3,2,c);
-      line(x-3,y+3,x-3,y+13,c);line(x+3,y+3,x+3,y+13,c);line(x-3,y+7,x+3,y+7,c);
-      line(x-3,y+13,x-13,y+19,c);line(x+3,y+13,x+13,y+19,c);
-      line(x-13,y+19,x-20,y+12,c);line(x+13,y+19,x+20,y+12,c);
-      line(x-20,y+12,x-24,y+16,c);line(x+20,y+12,x+24,y+16,c);
-      line(x-24,y+16,x-20,y+22,c);line(x+24,y+16,x+20,y+22,c);
-      line(x-20,y+22,x-12,y+17,c);line(x+20,y+22,x+12,y+17,c);
-      rect(x-1,y-36,2,3,c);rect(x+5,y-43,2,3,'#777');rect(x+6,y-49,2,3,'#555');
-    }
-
-    function drawHeart(x,y) {
-      rect(x-3,y-2,3,3,'#f5222d');rect(x,y-2,3,3,'#f5222d');
-      rect(x-4,y,8,3,'#f5222d');rect(x-3,y+3,6,2,'#f5222d');rect(x-1,y+5,2,2,'#f5222d');
-    }
-
-    function drawBattleMenu() {
-      const items=[['たたかう',16,55],['こうどう',76,61],['アイテム',142,72],['みのがす',219,85]];
-      for(let i=0;i<items.length;i++){
-        const [label,x,w]=items[i];g.strokeStyle='#ff7518';g.lineWidth=1;g.strokeRect(x,163,w,15);
-        if(i===0){line(x+7,174,x+13,166,'#ff7518');line(x+9,175,x+15,166,'#ff7518');}
-        if(i===1){rect(x+7,168,2,5,'#ff7518');rect(x+10,167,2,7,'#ff7518');}
-        if(i===2){rect(x+7,166,6,3,'#ff7518');rect(x+8,169,4,6,'#ff7518');}
-        if(i===3){line(x+7,167,x+13,174,'#ff7518');line(x+13,167,x+7,174,'#ff7518');}
-        pixelText(label,x+w/2+5,167,7,'#ff7518','center');
-      }
-    }
-
-    function drawBattle() {
-      rect(0,0,W,H,'#000');
-      drawBattleGrid();
-      if(state==='floweyBattle') drawFlowey(160,48,flowerTime);
-      else drawWispMage(160,48);
-
-      rect(81,83,158,65,'#fff');rect(84,86,152,59,'#000');
-      if(state==='floweyBattle' && floweyPhase===0) pixelText('＊ ハートを 動かしてみて。',91,101,8,'#fff');
-      else if(state==='floweyBattle' && floweyPhase===2) pixelText('＊ 光のタネが 近づいてくる！',88,101,8,'#fff');
-      else if(state==='floweyBattle' && floweyPhase>2){pixelText('＊ そこまでです！',111,104,8,'#fff');drawGuide(218,115);}
-      else {
-        const hx=state==='floweyBattle'?player.x:162,hy=state==='floweyBattle'?player.y:117;
-        drawHeart(hx,hy);
-        const orbit=flowerTime/520;
-        for(let i=0;i<3;i++){
-          const a=orbit+i*Math.PI*2/3, bx=160+Math.cos(a)*43, by=116+Math.sin(a)*16;
-          rect(bx-3,by-3,7,7,'#fff');rect(bx-1,by-1,3,3,'#000');
+  window.onSpotifyIframeApiReady = (IFrameAPI) => {
+    const element = document.getElementById('spotify-embed');
+    IFrameAPI.createController(element, {
+      uri: 'spotify:track:3T6YlBv3O3CHw01Xy0fX8R',
+      width: 1,
+      height: 1
+    }, controller => {
+      spotifyController = controller;
+      controller.addListener('playback_update', event => {
+        if (event.data && event.data.duration && event.data.position >= event.data.duration - 900) {
+          controller.seek(0);
+          controller.play();
         }
-      }
-
-      pixelText(name||'あい',48,151,9,'#fff','center');pixelText('LV 1',83,151,8,'#fff');
-      pixelText('HP',121,151,7,'#fff');rect(137,152,25,8,'#702027');rect(137,152,20,8,'#fff000');
-      pixelText('20 / 20',190,151,8,'#fff');
-      drawBattleMenu();
-    }
-
-    function showRuinsText(text){ruinsText=text;setState('ruinsText');}
-    function beginEncounter(type){encounterType=type;encounterStep=0;setState('encounter');music.select();}
-
-    function moveCursor(dx,dy) {
-      const old=cursor, col=cursor%10,row=Math.floor(cursor/10);
-      cursor=((row+dy+5)%5)*10+((col+dx+10)%10);
-      if(old!==cursor) music.select();
-    }
-
-    function activateName() {
-      const c=chars[cursor];
-      if(c==='けす'){ if(name){name=name.slice(0,-1);music.select();} return; }
-      if(c==='おわり'){ if(name){confirmChoice=0;setState('confirm');music.select();} return; }
-      if(name.length<6){ name+=c; music.select(); }
-    }
-
-    function confirm() {
-      if(confirmChoice===1){setState('name');music.select();return;}
-      music.accept(); music.stop(); stopSpotify(); flash=1; setState('flash');
-    }
-
-    function onPress(key) {
-      music.init();
-      if(state==='title'){ playSpotify(); if(key==='Enter'||key==='z'||key==='Z')setState('name'); return; }
-      if(state==='name'){
-        if(key==='ArrowLeft')moveCursor(-1,0); if(key==='ArrowRight')moveCursor(1,0);
-        if(key==='ArrowUp')moveCursor(0,-1); if(key==='ArrowDown')moveCursor(0,1);
-        if(key==='Enter'||key==='z'||key==='Z')activateName();
-      } else if(state==='confirm'){
-        if(key==='ArrowLeft'||key==='ArrowRight'){confirmChoice=1-confirmChoice;music.select();}
-        if(key==='Enter'||key==='z'||key==='Z')confirm();
-        if(key==='Escape'||key==='x'||key==='X'){setState('name');music.select();}
-      } else if(state==='room'){
-        if(!awake && (key==='Enter'||key==='z'||key==='Z')){
-          awake=true;player.x=160;player.y=99;player.dir='left';openingMessage=true;hint.classList.remove('visible');music.select();
-        }else if(openingMessage && (key==='Enter'||key==='z'||key==='Z')){openingMessage=false;music.select();}
-      } else if(state==='dialogue' && (key==='Enter'||key==='z'||key==='Z')){
-        const full=dialogue[dialogueIndex];
-        if(dialogueChars<full.length){dialogueChars=full.length;}
-        else if(dialogueIndex<dialogue.length-1){dialogueIndex++;dialogueChars=0;dialogueAt=performance.now();music.select();}
-        else { music.stop(); floweyPhase=0; phaseAt=performance.now(); player.x=160; player.y=112; setState('floweyBattle'); }
-      } else if(state==='floweyBattle' && (key==='Enter'||key==='z'||key==='Z')){
-        if(floweyPhase<3){floweyPhase++;phaseAt=performance.now();music.select();}
-        else {room=3;player.x=160;player.y=140;awake=true;showRuinsText(roomLines[3]);}
-      } else if(state==='encounter' && (key==='Enter'||key==='z'||key==='Z')){
-        encounterStep++;
-        if(encounterStep>0){roomEventDone.add('battle'+room);setState('room');music.select();}
-      } else if(state==='ruinsText' && (key==='Enter'||key==='z'||key==='Z')){
-        if(room===11){endingAt=performance.now();setState('ending');}
-        else setState('room');
-      }
-    }
-
-    window.addEventListener('keydown',e=>{
-      const k=e.key===' ' ? 'Enter' : e.key;
-      if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter','z','Z','x','X','Escape'].includes(k))e.preventDefault();
-      if(!keys.has(k)){pressed.add(k);onPress(k);} keys.add(k);
+      });
     });
-    window.addEventListener('keyup',e=>keys.delete(e.key===' '?'Enter':e.key));
-    window.addEventListener('blur',()=>keys.clear());
-    canvas.addEventListener('pointerdown',e=>{
-      canvas.focus(); music.init();
-      const r=canvas.getBoundingClientRect(), x=(e.clientX-r.left)/r.width*W, y=(e.clientY-r.top)/r.height*H;
-      if(state==='black'){onPress('Enter');return;}
-      if(state==='name'&&y>=80&&y<168){const col=Math.max(0,Math.min(9,Math.floor((x-15)/30))),row=Math.max(0,Math.min(4,Math.floor((y-83)/17)));cursor=row*10+col;activateName();}
-      else if(state==='confirm'){confirmChoice=x<160?0:1;confirm();}
-      else onPress('Enter');
-    });
+  };
 
-    document.querySelectorAll('.touch-button').forEach(btn=>{
-      const k=btn.dataset.key;
-      const down=e=>{e.preventDefault();canvas.focus();if(!keys.has(k))onPress(k);keys.add(k);};
-      const up=e=>{e.preventDefault();keys.delete(k);};
-      btn.addEventListener('pointerdown',down); btn.addEventListener('pointerup',up); btn.addEventListener('pointercancel',up); btn.addEventListener('pointerleave',up);
-    });
+  function setState(next, lines) {
+    state = next;
+    stateAt = performance.now();
+    if (lines) message = lines;
+  }
 
-    function update(dt,now) {
-      flowerTime+=dt;
-      if(state==='flash'){
-        const age=now-stateAt;
-        flash=age<170?Math.min(1,age/45):Math.max(0,1-(age-170)/520);
-        if(age>720){room=1;player.x=135;player.y=105;awake=false;setState('room');}
+  function resetGame() {
+    enemies[0].hp = enemies[0].maxHp;
+    enemies[0].spared = false;
+    enemies[0].mood = 0;
+    enemies[1].hp = enemies[1].maxHp;
+    enemies[1].spared = false;
+    enemies[1].mood = 0;
+    hp = maxHp;
+    items = 2;
+    menu = 0;
+    turnCount = 0;
+    bullets = [];
+    setState('intro', ['＊ 10しゅうねんの よる。', '＊ ヒカリメと クラゲンが あらわれた。']);
+  }
+
+  function nextAliveTarget(direction) {
+    const alive = aliveEnemies();
+    if (!alive.length) return;
+    target = (target + direction + alive.length) % alive.length;
+  }
+
+  function commandAction() {
+    const alive = aliveEnemies();
+    if (!alive.length) return finishVictory();
+    if (menu === 0) {
+      target = 0;
+      setState('target', ['＊ こうげきする あいてを えらんでください。']);
+    } else if (menu === 1) {
+      const chosen = alive[turnCount % alive.length];
+      chosen.enemy.mood++;
+      if (chosen.enemy.mood >= 2) {
+        setState('result', ['＊ ' + chosen.enemy.name + 'を ほめた。', '＊ たたかう きもちが なくなったようだ。']);
+      } else {
+        setState('result', ['＊ ' + chosen.enemy.name + 'の ひかりを ほめた。', '＊ すこし てれている。']);
       }
-      if(state==='room'&&awake&&!openingMessage){
-        let dx=0,dy=0; const speed=42*dt/1000;
-        if(keys.has('ArrowLeft'))dx-=speed;if(keys.has('ArrowRight'))dx+=speed;
-        if(keys.has('ArrowUp'))dy-=speed;if(keys.has('ArrowDown'))dy+=speed;
-        player.moving=!!(dx||dy);
-        if(dx||dy){
-          if(Math.abs(dx)>Math.abs(dy))player.dir=dx<0?'left':'right';else player.dir=dy<0?'up':'down';
-          player.x+=dx;player.y+=dy;
-          player.y=Math.max(room===1?30:(room===2?33:18),Math.min(140,player.y));player.x=Math.max(room===1?76:(room===2?30:47),Math.min(room===1?263:(room===2?290:273),player.x));
-          if(now-footstepAt>170){player.frame++;footstepAt=now;}
-          if(room===1&&player.x>252){room=2;player.x=34;player.y=118;}
-          if(room===2&&!eventStarted&&player.x>205&&player.y<132){eventStarted=true;player.moving=false;setState('dialogue');}
-          if(room>=3&&player.y<23){
-            room=Math.min(11,room+1);player.x=160;player.y=140;player.moving=false;
-            if([5,8,10].includes(room)&&!roomEventDone.has('battle'+room))beginEncounter(room===5?'dummy':room===8?'frog':'wisp');
-            else if(roomLines[room]&&!roomEventDone.has('text'+room)){roomEventDone.add('text'+room);showRuinsText(roomLines[room]);}
-          }
-        } else player.moving=false;
+    } else if (menu === 2) {
+      if (items > 0) {
+        items--;
+        const healed = Math.min(18, maxHp - hp);
+        hp += healed;
+        setState('result', ['＊ きねんの ケーキを たべた。', '＊ HPが ' + healed + ' かいふくした。 のこり ' + items + 'こ。']);
+      } else {
+        setState('command', ['＊ アイテムは もう のこっていない。']);
       }
-      if(state==='floweyBattle'&&floweyPhase===1){
-        const s=35*dt/1000;if(keys.has('ArrowLeft'))player.x-=s;if(keys.has('ArrowRight'))player.x+=s;if(keys.has('ArrowUp'))player.y-=s;if(keys.has('ArrowDown'))player.y+=s;
-        player.x=Math.max(82,Math.min(238,player.x));player.y=Math.max(91,Math.min(135,player.y));
+    } else {
+      const spareable = alive.filter(({ enemy }) => enemy.mood >= 2 || enemy.hp <= 10);
+      if (spareable.length) {
+        spareable.forEach(({ enemy }) => enemy.spared = true);
+        setState('result', ['＊ ' + spareable.map(({ enemy }) => enemy.name).join('と') + 'を みのがした。']);
+      } else {
+        setState('result', ['＊ まだ みのがすことは できない。']);
       }
-      if(state==='dialogue') dialogueChars=Math.min(dialogue[dialogueIndex].length,dialogueChars+dt*.025);
-      pressed.clear();
     }
+  }
 
-    function render(now) {
-      if(state==='title')drawTitle(now);
-      else if(state==='name')drawName();
-      else if(state==='confirm')drawConfirm();
-      else if(state==='flash'){
-        drawConfirm(); rect(0,0,W,H,`rgba(255,255,255,${flash})`);
-      } else if(state==='room')drawRoom();
-      else if(state==='dialogue')drawDialogue();
-      else if(state==='floweyBattle'||state==='encounter')drawBattle();
-      else if(state==='ruinsText'){
-        drawRuins(room);rect(13,127,294,45,'#000');g.strokeStyle='#fff';g.lineWidth=2;g.strokeRect(13,127,294,45);pixelText('＊ '+ruinsText,24,136,8,'#fff');pixelText('▼',294,159,7,'#fff','center');
-      } else if(state==='ending'){
-        drawRuins(11);rect(0,0,W,H,`rgba(0,0,0,${Math.min(.75,(now-endingAt)/1500)})`);if(now-endingAt>1200)pixelText('つづく',160,83,12,'#fff','center');
-      }
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      ctx.drawImage(off,0,0,canvas.width,canvas.height);
+  function startAttack() {
+    const alive = aliveEnemies();
+    if (!alive[target]) return;
+    attackTarget = alive[target].index;
+    attackX = 82;
+    attackDirection = 1;
+    setState('attack');
+  }
+
+  function resolveAttack() {
+    const center = 160;
+    const accuracy = Math.max(0, 1 - Math.abs(attackX - center) / 80);
+    const damage = Math.max(4, Math.round(8 + accuracy * 25));
+    enemies[attackTarget].hp = Math.max(0, enemies[attackTarget].hp - damage);
+    beep(150 + accuracy * 500, .12);
+    const defeated = enemies[attackTarget].hp <= 0;
+    setState('result', [
+      '＊ ' + enemies[attackTarget].name + 'に ' + damage + ' ダメージ！',
+      defeated ? '＊ ' + enemies[attackTarget].name + 'は ひかりになった。' : '＊ のこりHP ' + enemies[attackTarget].hp + '。'
+    ]);
+  }
+
+  function beginEnemyTurn() {
+    if (!aliveEnemies().length) return finishVictory();
+    turnCount++;
+    heart.x = 160;
+    heart.y = 117;
+    bullets = [];
+    spawnAt = 0;
+    invincible = 0;
+    setState('enemyTurn');
+  }
+
+  function finishVictory() {
+    if (spotifyController) spotifyController.pause();
+    setState('victory');
+  }
+
+  function finishDefeat() {
+    if (spotifyController) spotifyController.pause();
+    setState('defeat');
+  }
+
+  function updateEnemyTurn(dt, now) {
+    const speed = 72;
+    if (keys.has('ArrowLeft')) heart.x -= speed * dt;
+    if (keys.has('ArrowRight')) heart.x += speed * dt;
+    if (keys.has('ArrowUp')) heart.y -= speed * dt;
+    if (keys.has('ArrowDown')) heart.y += speed * dt;
+    heart.x = Math.max(81, Math.min(231, heart.x));
+    heart.y = Math.max(99, Math.min(135, heart.y));
+    if (now >= spawnAt) {
+      const fromLeft = Math.random() > .5;
+      bullets.push({
+        x: fromLeft ? 79 : 233,
+        y: 101 + Math.random() * 32,
+        vx: (fromLeft ? 1 : -1) * (35 + Math.random() * 25),
+        vy: (Math.random() - .5) * 14
+      });
+      spawnAt = now + Math.max(230, 520 - turnCount * 20);
     }
+    for (const bullet of bullets) {
+      bullet.x += bullet.vx * dt;
+      bullet.y += bullet.vy * dt;
+      if (invincible <= 0 && Math.abs(bullet.x - heart.x) < 6 && Math.abs(bullet.y - heart.y) < 7) {
+        hp = Math.max(0, hp - 5);
+        invincible = .7;
+        beep(110, .1);
+      }
+    }
+    bullets = bullets.filter(b => b.x > 75 && b.x < 237 && b.y > 94 && b.y < 141);
+    invincible -= dt;
+    if (hp <= 0) finishDefeat();
+    else if (now - stateAt > 4300) setState('command', ['＊ どうする？']);
+  }
 
-    function loop(now){const dt=Math.min(34,now-last);last=now;update(dt,now);render(now);requestAnimationFrame(loop);}
-    canvas.focus();
+  function confirm() {
+    startAudio();
+    if (spotifyController && state === 'title') spotifyController.play();
+    if (state === 'title') {
+      resetGame();
+      hint.classList.remove('visible');
+      touch.classList.add('show');
+      return;
+    }
+    if (state === 'intro') {
+      setState('command', ['＊ どうする？']);
+      return;
+    }
+    if (state === 'command') {
+      commandAction();
+      return;
+    }
+    if (state === 'target') {
+      startAttack();
+      return;
+    }
+    if (state === 'attack') {
+      resolveAttack();
+      return;
+    }
+    if (state === 'result') {
+      if (!aliveEnemies().length) finishVictory();
+      else beginEnemyTurn();
+      return;
+    }
+    if (state === 'victory' || state === 'defeat') {
+      setState('title');
+      hint.classList.add('visible');
+    }
+  }
+
+  function keyDown(code) {
+    if (!keys.has(code)) pressed.add(code);
+    keys.add(code);
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(code)) return false;
+    return true;
+  }
+
+  function handlePressed() {
+    if (pressed.has('Enter') || pressed.has('KeyZ') || pressed.has('Space')) confirm();
+    if (state === 'command') {
+      if (pressed.has('ArrowLeft')) {
+        menu = (menu + 3) % 4;
+        beep();
+      }
+      if (pressed.has('ArrowRight')) {
+        menu = (menu + 1) % 4;
+        beep();
+      }
+    } else if (state === 'target') {
+      if (pressed.has('ArrowLeft') || pressed.has('ArrowUp')) {
+        nextAliveTarget(-1);
+        beep();
+      }
+      if (pressed.has('ArrowRight') || pressed.has('ArrowDown')) {
+        nextAliveTarget(1);
+        beep();
+      }
+    }
+    if ((pressed.has('Escape') || pressed.has('KeyX')) && (state === 'target' || state === 'result')) {
+      setState('command', ['＊ どうする？']);
+    }
+    pressed.clear();
+  }
+
+  window.addEventListener('keydown', event => {
+    if (!keyDown(event.code)) event.preventDefault();
+  });
+  window.addEventListener('keyup', event => keys.delete(event.code));
+  canvas.addEventListener('pointerdown', () => {
+    if (state !== 'enemyTurn') confirm();
+  });
+
+  document.querySelectorAll('.touch-button').forEach(button => {
+    const code = button.dataset.key;
+    const down = event => {
+      event.preventDefault();
+      keyDown(code);
+      if (code === 'Enter') confirm();
+    };
+    const up = event => {
+      event.preventDefault();
+      keys.delete(code);
+    };
+    button.addEventListener('pointerdown', down);
+    button.addEventListener('pointerup', up);
+    button.addEventListener('pointercancel', up);
+  });
+
+  function loop(now) {
+    const dt = Math.min(.035, (now - last) / 1000);
+    last = now;
+    handlePressed();
+    if (state === 'attack') {
+      attackX += attackDirection * 125 * dt;
+      if (attackX >= 284) attackDirection = -1;
+      if (attackX <= 82 && attackDirection < 0) resolveAttack();
+    } else if (state === 'enemyTurn') {
+      updateEnemyTurn(dt, now);
+    }
+    draw(now);
     requestAnimationFrame(loop);
-  })();
+  }
+
+  hint.classList.add('visible');
+  requestAnimationFrame(loop);
+})();
