@@ -329,30 +329,6 @@
     return list[(turnCount - 1) % list.length];
   }
 
-  function attackHint(pattern) {
-    if (pattern.kind === 'bone') {
-      const hints = [
-        '上下の広い隙間へ移動。',
-        '床の空いた場所で待つ。',
-        '予告線のない段へ移動。',
-        '縦の予告線から離れる。',
-        '円の回転と同じ向きへ。',
-        '床の隙間から横へ逃げる。',
-        '低い骨をジャンプ。',
-        '線が光る前に中央から離れる。'
-      ];
-      return hints[(pattern.id - 1) % hints.length];
-    }
-    const hints = [
-      '右側へ抜ける。', '左側へ抜ける。', '弾の間を横移動。', '空いた床へ移動。',
-      '中央の隙間を探す。', '斜め後ろへ下がる。', '波と逆方向へ動く。', '空いた一列で待つ。',
-      '外周へ逃げる。', '止まらず横へ動く。', '壁の切れ目を通る。', '十字の間へ移動。',
-      '円を描くように動く。', '弾のない交互マスへ。', '端から反対側へ移動。', '下から離れて待つ。',
-      '四隅の対角へ逃げる。', '回転と同じ向きへ進む。', '扇の外側へ回り込む。', '発射元と反対の端へ。'
-    ];
-    return hints[pattern.formation];
-  }
-
   function drawSans(x, y, t) {
     const talking = state === 'enemySpeak' && speakingEnemy?.visual === 'sans';
     const jaw = talking && Math.floor(speechChars) % 2 ? 2 : 0;
@@ -1140,13 +1116,16 @@
   function resolveAttack() {
     const center = 183;
     const accuracy = Math.max(0, 1 - Math.abs(attackX - center) / 101);
-    if (stage === 10 && sansDodges < 2) {
+    if (stage === 10 && sansTurn < SANS_ATTACK_SEQUENCE.length) {
       sansDodges++;
       dodgeAt = performance.now();
       dodgeEnemy = attackTarget;
       dodgeDirection = sansDodges % 2 ? 1 : -1;
       beep(760, .07);
-      setState('result', ['＊ サンズは こうげきを よけた。', '＊ よこに MISS の文字が うかんだ。']);
+      setState('result', [
+        '＊ サンズは 笑ったまま 身をかわした。',
+        '＊ MISS の文字だけが のこった。'
+      ]);
       return;
     }
 
