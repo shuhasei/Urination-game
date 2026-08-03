@@ -84,6 +84,8 @@
   let clearChoice = 1;
   let pendingStage = 1;
   let attackPattern = null;
+  let safeLaneAxis = 'y';
+  let safeLaneValue = 117;
   let defeatAt = -10000;
   let defeatFragments = [];
   let speechChars = 0;
@@ -332,31 +334,61 @@
   }
 
   function drawSans(x, y, t) {
-    const c = '#fff', shade = '#cfcfcf', dark = '#000';
-    rect(x - 10, y - 21, 20, 3, c);
-    rect(x - 15, y - 18, 30, 18, c);
-    rect(x - 12, y, 24, 5, c);
-    rect(x - 10, y - 15, 8, 9, dark);
-    rect(x + 3, y - 15, 8, 9, dark);
-    rect(x - 7, y - 12, 3, 4, c);
-    rect(x + 6, y - 12, 3, 4, stage === 10 && Math.floor(t / 180) % 2 ? '#45eaff' : c);
-    rect(x - 2, y - 7, 4, 4, dark);
-    rect(x - 9, y - 3, 18, 2, dark);
-    for(let tooth=-7;tooth<=7;tooth+=4) rect(x + tooth, y - 2, 2, 3, dark);
-    rect(x - 18, y + 5, 36, 18, c);
-    rect(x - 14, y + 7, 28, 15, dark);
-    rect(x - 8, y + 8, 16, 12, shade);
-    rect(x - 5, y + 10, 10, 10, dark);
-    rect(x - 18, y + 12, 5, 17, c);
-    rect(x + 14, y + 12, 5, 17, c);
-    rect(x - 12, y + 22, 10, 13, c);
-    rect(x + 3, y + 22, 10, 13, c);
-    rect(x - 10, y + 23, 7, 10, dark);
-    rect(x + 4, y + 23, 7, 10, dark);
-    rect(x - 15, y + 34, 14, 4, c);
-    rect(x + 2, y + 34, 14, 4, c);
-    rect(x - 14, y + 35, 8, 2, dark);
-    rect(x + 7, y + 35, 8, 2, dark);
+    const white = '#ffffff';
+    const bone = '#e8e8e8';
+    const gray = '#aeb4bd';
+    const dark = '#090909';
+    const eyeGlow = Math.floor(t / 170) % 2 ? '#40f4ff' : '#77ff9a';
+
+    g.fillStyle = white;
+    g.beginPath();
+    g.ellipse(x, y - 10, 17, 16, 0, 0, Math.PI * 2);
+    g.fill();
+    rect(x - 15, y - 12, 30, 13, white);
+    rect(x - 12, y + 1, 24, 5, bone);
+
+    g.fillStyle = dark;
+    g.beginPath();
+    g.ellipse(x - 7, y - 13, 6, 7, -.15, 0, Math.PI * 2);
+    g.ellipse(x + 7, y - 13, 6, 7, .15, 0, Math.PI * 2);
+    g.fill();
+    rect(x - 2, y - 7, 4, 5, dark);
+    rect(x - 4, y - 4, 3, 3, dark);
+    rect(x + 2, y - 4, 3, 3, dark);
+    rect(x + 5, y - 14, 3, 4, eyeGlow);
+    rect(x + 6, y - 13, 1, 2, '#fff');
+
+    g.fillStyle = dark;
+    g.beginPath();
+    g.ellipse(x, y, 12, 6, 0, 0, Math.PI);
+    g.fill();
+    rect(x - 11, y - 1, 22, 4, dark);
+    rect(x - 9, y - 1, 18, 3, white);
+    for (let tooth = -7; tooth <= 7; tooth += 3) rect(x + tooth, y - 1, 1, 4, dark);
+    line(x - 9, y + 3, x + 9, y + 3, white);
+
+    rect(x - 4, y + 5, 8, 4, bone);
+    rect(x - 17, y + 8, 34, 20, white);
+    rect(x - 14, y + 10, 28, 17, gray);
+    rect(x - 7, y + 10, 14, 17, dark);
+    line(x - 3, y + 10, x - 3, y + 26, white);
+    rect(x - 17, y + 13, 5, 19, white);
+    rect(x + 13, y + 13, 5, 19, white);
+    line(x - 14, y + 18, x - 7, y + 24, dark, 2);
+    line(x + 14, y + 18, x + 7, y + 24, dark, 2);
+    rect(x - 12, y + 22, 7, 5, dark);
+    rect(x + 6, y + 22, 7, 5, dark);
+
+    rect(x - 12, y + 28, 10, 10, white);
+    rect(x + 3, y + 28, 10, 10, white);
+    rect(x - 10, y + 29, 7, 8, dark);
+    rect(x + 4, y + 29, 7, 8, dark);
+    rect(x - 9, y + 38, 5, 8, bone);
+    rect(x + 5, y + 38, 5, 8, bone);
+    rect(x - 15, y + 44, 13, 4, white);
+    rect(x + 2, y + 44, 14, 4, white);
+    rect(x - 13, y + 45, 8, 2, dark);
+    rect(x + 7, y + 45, 8, 2, dark);
   }
 
   function levelMaxHp(level) {
@@ -580,6 +612,13 @@
   function drawEnemyTurn() {
     rect(73, 91, 224, 53, '#fff');
     rect(76, 94, 218, 47, '#000');
+    if (safeLaneAxis === 'y') {
+      rect(76, safeLaneValue - 2, 4, 5, '#45e884');
+      rect(290, safeLaneValue - 2, 4, 5, '#45e884');
+    } else {
+      rect(safeLaneValue - 2, 94, 5, 4, '#45e884');
+      rect(safeLaneValue - 2, 137, 5, 4, '#45e884');
+    }
     heartShape(heart.x, heart.y, stage === 10 ? '#168bff' : '#f5222d');
     for (const bullet of bullets) {
       if (bullet.kind === 'beam') {
@@ -1121,6 +1160,10 @@
     const attacker = attackers[(turnCount - 1) % attackers.length].enemy;
     const patternIndex = (playerLevel - 1) * 3 + ((turnCount - 1) % 3);
     attackPattern = attacker.patterns[patternIndex];
+    safeLaneAxis = attackPattern.formation % 2 === 0 ? 'y' : 'x';
+    safeLaneValue = safeLaneAxis === 'y'
+      ? 105 + ((attackPattern.id + turnCount) % 3) * 12
+      : 112 + ((attackPattern.id + turnCount) % 4) * 42;
     if (attacker.type === 'sans') {
       attackPattern = { ...attackPattern, gravity: attackPattern.id % 4 !== 2 };
     }
@@ -1287,11 +1330,14 @@
     const centerX = 185, centerY = 117;
     const count = Math.min(7, pattern.burst + (formation % 3));
     const lane = 12;
+    const lanePadding = 8;
 
     const sideShot = (fromRight, y, extras = {}) => {
+      if (safeLaneAxis === 'y' && Math.abs(y - safeLaneValue) < lanePadding) return;
       addProjectile(kind, fromRight ? right : left, y, fromRight ? -speed : speed, extras.vy || 0, extras);
     };
     const verticalShot = (fromBottom, x, extras = {}) => {
+      if (safeLaneAxis === 'x' && Math.abs(x - safeLaneValue) < lanePadding + 2) return;
       addProjectile(kind, x, fromBottom ? bottom : top, extras.vx || 0, fromBottom ? -speed : speed, extras);
     };
     const aimedShot = (x, y, offset = 0, extras = {}) => {
@@ -1466,6 +1512,10 @@
       } else {
         hit = Math.abs(bullet.x - heart.x) < 6 && Math.abs(bullet.y - heart.y) < 7;
       }
+      const inGuaranteedLane = safeLaneAxis === 'y'
+        ? Math.abs(heart.y - safeLaneValue) < 5
+        : Math.abs(heart.x - safeLaneValue) < 6;
+      if (inGuaranteedLane && bullet.kind !== 'beam') hit = false;
       if (invincible <= 0 && hit) {
         hp = Math.max(0, hp - pattern.damage);
         invincible = bullet.kind === 'bone' ? .34 : .58;
