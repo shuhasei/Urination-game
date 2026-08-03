@@ -1976,6 +1976,15 @@
       } else {
         hit = Math.abs(bullet.x - heart.x) < 6 && Math.abs(bullet.y - heart.y) < 7;
       }
+      if (bullet.kind === 'bone' && bullet.blue) {
+        const heartIsMoving = keys.has('ArrowLeft')
+          || keys.has('ArrowRight')
+          || keys.has('ArrowUp')
+          || keys.has('ArrowDown')
+          || Math.abs(heart.vy) > 5;
+        if (!heartIsMoving) hit = false;
+      }
+
       const routeWidth = Math.max(2.4, 6.4 - (stage - 1) * .44);
       const inGuaranteedLane = safeLaneAxis === 'y'
         ? Math.abs(heart.y - safeLaneValue) < routeWidth
