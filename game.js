@@ -404,23 +404,68 @@
       drawMiniPlayer(player.x,player.y,false);
     }
 
+    function drawBattleGrid() {
+      for(let x=8;x<=312;x+=51) line(x,4,x,95,'#08a34a');
+      for(let y=4;y<=95;y+=47) line(8,y,312,y,'#08a34a');
+    }
+
+    function drawWispMage(x,y) {
+      const c='#fff', sway=Math.round(Math.sin(flowerTime/260)); x+=sway;
+      line(x-17,y-7,x-8,y-15,c);line(x-8,y-15,x-13,y-22,c);line(x-13,y-22,x-7,y-28,c);
+      line(x-7,y-28,x+1,y-27,c);line(x+1,y-27,x+7,y-18,c);line(x+7,y-18,x+18,y-17,c);
+      line(x+18,y-17,x+12,y-10,c);line(x+12,y-10,x-17,y-7,c);
+      line(x-13,y-4,x+13,y-4,c);line(x-9,y,x+9,y,c);line(x-5,y+2,x+5,y+2,c);
+      rect(x-14,y-1,3,2,c);rect(x+11,y-1,3,2,c);
+      line(x-3,y+3,x-3,y+13,c);line(x+3,y+3,x+3,y+13,c);line(x-3,y+7,x+3,y+7,c);
+      line(x-3,y+13,x-13,y+19,c);line(x+3,y+13,x+13,y+19,c);
+      line(x-13,y+19,x-20,y+12,c);line(x+13,y+19,x+20,y+12,c);
+      line(x-20,y+12,x-24,y+16,c);line(x+20,y+12,x+24,y+16,c);
+      line(x-24,y+16,x-20,y+22,c);line(x+24,y+16,x+20,y+22,c);
+      line(x-20,y+22,x-12,y+17,c);line(x+20,y+22,x+12,y+17,c);
+      rect(x-1,y-36,2,3,c);rect(x+5,y-43,2,3,'#777');rect(x+6,y-49,2,3,'#555');
+    }
+
+    function drawHeart(x,y) {
+      rect(x-3,y-2,3,3,'#f5222d');rect(x,y-2,3,3,'#f5222d');
+      rect(x-4,y,8,3,'#f5222d');rect(x-3,y+3,6,2,'#f5222d');rect(x-1,y+5,2,2,'#f5222d');
+    }
+
+    function drawBattleMenu() {
+      const items=[['たたかう',16,55],['こうどう',76,61],['アイテム',142,72],['みのがす',219,85]];
+      for(let i=0;i<items.length;i++){
+        const [label,x,w]=items[i];g.strokeStyle='#ff7518';g.lineWidth=1;g.strokeRect(x,163,w,15);
+        if(i===0){line(x+7,174,x+13,166,'#ff7518');line(x+9,175,x+15,166,'#ff7518');}
+        if(i===1){rect(x+7,168,2,5,'#ff7518');rect(x+10,167,2,7,'#ff7518');}
+        if(i===2){rect(x+7,166,6,3,'#ff7518');rect(x+8,169,4,6,'#ff7518');}
+        if(i===3){line(x+7,167,x+13,174,'#ff7518');line(x+13,167,x+7,174,'#ff7518');}
+        pixelText(label,x+w/2+5,167,7,'#ff7518','center');
+      }
+    }
+
     function drawBattle() {
       rect(0,0,W,H,'#000');
-      pixelText(name||'あい',18,151,9,'#fff'); pixelText('LV 1',88,151,9,'#fff');
-      rect(128,153,54,8,'#6a161c'); rect(128,153,42,8,'#f4d82d'); pixelText('20 / 20',192,151,8,'#fff');
-      g.strokeStyle='#fff';g.lineWidth=2;g.strokeRect(75,84,170,58);
-      if(state==='floweyBattle'){
-        drawFlowey(160,45,flowerTime);
-        if(floweyPhase===0)pixelText('＊ きみの ハートを 動かしてみて。',86,96,8,'#fff');
-        else if(floweyPhase===1){rect(player.x-3,player.y-3,6,6,'#ef2938');for(let i=0;i<7;i++){const a=flowerTime/500+i*.9;rect(160+Math.cos(a)*45-2,112+Math.sin(a)*20-2,4,4,'#fff');}}
-        else if(floweyPhase===2)pixelText('＊ これは 親切のタネだよ！',92,101,8,'#fff');
-        else {pixelText('＊ そこまでです！',105,103,9,'#fff');drawGuide(222,70);rect(178,60,18,4,'#f4dfef');}
-      }else{
-        if(encounterType==='dummy'){rect(157,41,7,22,'#e1d7ca');rect(152,37,17,8,'#755376');pixelText('＊ ダミーは じっとしている。',89,99,8,'#fff');}
-        if(encounterType==='frog'){rect(151,44,19,12,'#ddd');rect(148,42,7,6,'#ddd');rect(166,42,7,6,'#ddd');rect(153,47,2,2,'#111');rect(166,47,2,2,'#111');pixelText('＊ ケロリンが 道をふさいだ。',89,99,8,'#fff');}
-        if(encounterType==='wisp'){rect(155,43,12,16,'#ddd');rect(151,39,5,5,'#ddd');rect(166,39,5,5,'#ddd');pixelText('＊ フワリは にげたそうだ。',93,99,8,'#fff');}
-        pixelText('たたかう',36,166,7,'#f39828');pixelText('こうどう',112,166,7,'#f39828');pixelText('アイテム',188,166,7,'#f39828');pixelText('みのがす',259,166,7,'#f39828');
+      drawBattleGrid();
+      if(state==='floweyBattle') drawFlowey(160,48,flowerTime);
+      else drawWispMage(160,48);
+
+      rect(81,83,158,65,'#fff');rect(84,86,152,59,'#000');
+      if(state==='floweyBattle' && floweyPhase===0) pixelText('＊ ハートを 動かしてみて。',91,101,8,'#fff');
+      else if(state==='floweyBattle' && floweyPhase===2) pixelText('＊ 光のタネが 近づいてくる！',88,101,8,'#fff');
+      else if(state==='floweyBattle' && floweyPhase>2){pixelText('＊ そこまでです！',111,104,8,'#fff');drawGuide(218,115);}
+      else {
+        const hx=state==='floweyBattle'?player.x:162,hy=state==='floweyBattle'?player.y:117;
+        drawHeart(hx,hy);
+        const orbit=flowerTime/520;
+        for(let i=0;i<3;i++){
+          const a=orbit+i*Math.PI*2/3, bx=160+Math.cos(a)*43, by=116+Math.sin(a)*16;
+          rect(bx-3,by-3,7,7,'#fff');rect(bx-1,by-1,3,3,'#000');
+        }
       }
+
+      pixelText(name||'あい',48,151,9,'#fff','center');pixelText('LV 1',83,151,8,'#fff');
+      pixelText('HP',121,151,7,'#fff');rect(137,152,25,8,'#702027');rect(137,152,20,8,'#fff000');
+      pixelText('20 / 20',190,151,8,'#fff');
+      drawBattleMenu();
     }
 
     function showRuinsText(text){ruinsText=text;setState('ruinsText');}
