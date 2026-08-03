@@ -8,9 +8,10 @@
   const W = 320;
   const H = 180;
   const view = document.createElement('canvas');
-  view.width = W;
-  view.height = H;
+  view.width = W * 2;
+  view.height = H * 2;
   const g = view.getContext('2d');
+  g.setTransform(2, 0, 0, 2, 0, 0);
   ctx.imageSmoothingEnabled = false;
   g.imageSmoothingEnabled = false;
 
@@ -54,9 +55,11 @@
   let state = 'title';
   let menu = 0;
   let target = 0;
-  let hp = 60;
-  let maxHp = 60;
+  let playerLevel = 1;
+  let hp = 20;
+  let maxHp = 20;
   let items = 2;
+  let clearChoice = 1;
   let message = ['＊ 10しゅうねんの よる。', '＊ ふたりの ちょうせんしゃが あらわれた。'];
   let attackX = 82;
   let attackDirection = 1;
@@ -73,6 +76,9 @@
   let reviveItems = 1;
   let dodgeAt = -10000;
   let dodgeEnemy = -1;
+  let damageAt = -10000;
+  let damageEnemy = -1;
+  let damageValue = 0;
   let lastTrack = '';
   let synthTimer = null;
   let audio = null;
@@ -203,6 +209,24 @@
     rect(x + 7, y + 35, 8, 2, dark);
   }
 
+  function levelMaxHp(level) {
+    return 20 + Math.round((Math.max(1, Math.min(20, level)) - 1) * 60 / 19);
+  }
+
+  function drawEnemyHealth(enemy) {
+    if (enemy.spared) return;
+    const width = enemy.type === 'sans' ? 64 : 50;
+    const x = enemy.x - width / 2;
+    const y = 80;
+    const ratio = Math.max(0, enemy.hp / enemy.maxHp);
+    const color = ratio > .55 ? '#55d85a' : ratio > .25 ? '#ffe32c' : '#f13838';
+    text(enemy.hp + ' / ' + enemy.maxHp, enemy.x, 70, 7, '#fff', 'center');
+    rect(x - 1, y - 1, width + 2, 7, '#fff');
+    rect(x, y, width, 5, '#171717');
+    if (ratio > 0) rect(x, y, width * ratio, 5, color);
+    for (let tick = 1; tick < 4; tick++) rect(x + width * tick / 4, y, 1, 5, '#111');
+  }
+
   function aliveEnemies() {
     return enemies.map((enemy, index) => ({ enemy, index })).filter(({ enemy }) => enemy.hp > 0 && !enemy.spared);
   }
@@ -210,30 +234,44 @@
   function drawEnemies(now) {
     const dodgeElapsed = now - dodgeAt;
     for (const [index, enemy] of enemies.entries()) {
-      if (enemy.hp <= 0 || enemy.spared) continue;
-      let drawX = enemy.x;
-      if (index === dodgeEnemy && dodgeElapsed >= 0 && dodgeElapsed < 650) {
-        const progress = dodgeElapsed / 650;
-        drawX += Math.sin(progress * Math.PI) * 34;
+      if (enemy.hp > 0 && !enemy.spared) {
+        let drawX = enemy.x;
+        if (index === dodgeEnemy && dodgeElapsed >= 0 && dodgeElapsed < 650) {
+          const progress = dodgeElapsed / 650;
+          drawX += Math.sin(progress * Math.PI) * 34;
+        }
+        if (enemy.type === 'eye') drawEyeComet(drawX, 50, now);
+        else if (enemy.type === 'jelly') drawJellySage(drawX, 51, now);
+        else drawSans(drawX, 45, now);
       }
-      if (enemy.type === 'eye') drawEyeComet(drawX, 50, now);
-      else if (enemy.type === 'jelly') drawJellySage(drawX, 51, now);
-      else drawSans(drawX, 45, now);
+      drawEnemyHealth(enemy);
       if (index === dodgeEnemy && dodgeElapsed >= 0 && dodgeElapsed < 900) {
-        text('MISS', enemy.x + 27, 31, 10, '#fff');
+        text('MISS', enemy.x + 29, 30, 11, '#fff');
       }
     }
+
+    const damageElapsed = now - damageAt;
+    if (damageEnemy >= 0 && damageElapsed >= 0 && damageElapsed < 1000) {
+      const enemy = enemies[damageEnemy];
+      const rise = Math.min(10, damageElapsed / 70);
+      text('-' + damageValue, enemy.x + 24, 42 - rise, 11, '#fff000', 'center');
+      if (damageElapsed < 260) {
+        line(enemy.x - 14, 25, enemy.x + 14, 66, '#fff', 2);
+        line(enemy.x - 9, 23, enemy.x + 19, 64, '#f33', 1);
+      }
+    }
+
     text('STAGE ' + stage + ' / 10', 70, 14, 7, '#62d98c');
     text('REVIVE ' + reviveItems, 298, 14, 7, reviveItems ? '#fff000' : '#777', 'right');
     if (state === 'target') {
       const selected = aliveEnemies()[target];
-      if (selected) heartShape(selected.enemy.x, 79, '#f5222d');
+      if (selected) heartShape(selected.enemy.x, 66, '#f5222d');
     }
   }
 
   function drawStatus() {
     text('すけ', 74, 148, 7);
-    text('LV 10', 96, 148, 8);
+    text('LV ' + playerLevel, 96, 148, 8);
     text('HP', 155, 149, 6);
     rect(168, 149, 29, 8, '#5e1d24');
     rect(168, 149, Math.max(0, 29 * hp / maxHp), 8, '#fff000');
@@ -270,20 +308,79 @@
   }
 
   function drawAttackGauge() {
-    rect(73, 91, 224, 53, '#fff');
-    rect(76, 94, 218, 47, '#000');
-    const left = 82, top = 104, width = 202;
-    const colors = ['#a8d51d', '#e8e61c', '#d92131', '#d92131', '#e8e61c', '#a8d51d'];
-    const spans = [30, 33, 20, 20, 33, 30];
-    let x = left;
-    for (let i = 0; i < spans.length; i++) {
-      rect(x, top + 7, spans[i], 20, colors[i]);
-      x += spans[i] + 1;
+    rect(72, 90, 226, 55, '#fff');
+    rect(75, 93, 220, 49, '#050505');
+
+    const left = 82;
+    const right = 288;
+    const center = 183;
+    const top = 103;
+    const bottom = 136;
+    const gradient = g.createLinearGradient(left, 0, right, 0);
+    gradient.addColorStop(0, '#9fd81c');
+    gradient.addColorStop(.14, '#d8e624');
+    gradient.addColorStop(.28, '#eb252f');
+    gradient.addColorStop(.41, '#ffd928');
+    gradient.addColorStop(.48, '#52d35a');
+    gradient.addColorStop(.5, '#27b99e');
+    gradient.addColorStop(.52, '#52d35a');
+    gradient.addColorStop(.59, '#ffd928');
+    gradient.addColorStop(.72, '#eb252f');
+    gradient.addColorStop(.86, '#d8e624');
+    gradient.addColorStop(1, '#9fd81c');
+
+    g.save();
+    g.beginPath();
+    g.moveTo(left, 119);
+    g.lineTo(left + 22, top + 5);
+    g.lineTo(center - 22, top);
+    g.lineTo(center + 22, top);
+    g.lineTo(right - 22, top + 5);
+    g.lineTo(right, 119);
+    g.lineTo(right - 22, bottom - 5);
+    g.lineTo(center + 22, bottom);
+    g.lineTo(center - 22, bottom);
+    g.lineTo(left + 22, bottom - 5);
+    g.closePath();
+    g.clip();
+    g.fillStyle = gradient;
+    g.fillRect(left, top, right - left, bottom - top);
+    rect(left + 6, top + 9, right - left - 12, bottom - top - 18, '#070707');
+
+    for (let xx = left + 11; xx < right - 8; xx += 10) {
+      const distance = Math.abs(xx - center);
+      const color = distance < 22 ? '#54dc62' : distance < 58 ? '#f3da26' : '#e92a35';
+      rect(xx, top + 12, 5, 2, color);
+      rect(xx + 1, top + 19, 4, 2, color);
     }
-    rect(154, top + 2, 12, 30, '#42b95a');
-    rect(158, top, 4, 34, '#113d2a');
-    for (let xx = left + 8; xx < left + width; xx += 15) rect(xx, top + 15, 5, 2, '#111');
-    rect(attackX - 2, top - 2, 4, 37, '#fff');
+    g.restore();
+
+    g.strokeStyle = '#a7df1d';
+    g.lineWidth = 1;
+    g.beginPath();
+    g.moveTo(left, 119);
+    g.lineTo(left + 22, top + 5);
+    g.lineTo(center - 22, top);
+    g.lineTo(center + 22, top);
+    g.lineTo(right - 22, top + 5);
+    g.lineTo(right, 119);
+    g.lineTo(right - 22, bottom - 5);
+    g.lineTo(center + 22, bottom);
+    g.lineTo(center - 22, bottom);
+    g.lineTo(left + 22, bottom - 5);
+    g.closePath();
+    g.stroke();
+
+    for (const offset of [-68, -32, 32, 68]) {
+      rect(center + offset - 1, top + 3, 3, bottom - top - 6, Math.abs(offset) < 40 ? '#f5e82b' : '#ef3038');
+    }
+    rect(center - 7, top - 1, 14, bottom - top + 2, '#56d85e');
+    rect(center - 3, top - 3, 6, bottom - top + 6, '#174f40');
+    rect(center - 1, top - 3, 2, bottom - top + 6, '#8dfff0');
+
+    rect(attackX - 3, top - 5, 7, bottom - top + 10, '#555');
+    rect(attackX - 2, top - 5, 5, bottom - top + 10, '#fff');
+    rect(attackX - 1, top - 5, 2, bottom - top + 10, '#d9ffff');
   }
 
   function drawEnemyTurn() {
@@ -419,11 +516,14 @@
         rect(45, 38, 230, 102, '#3d3c49');
         rect(57, 50, 206, 78, '#111');
         frameBox(57, 50, 206, 78, '#77768a', 2);
-        text('STAGE ' + stage + ' CLEAR', 160, 58, 14, '#fff000', 'center');
-        text('HP　　　　　　MAX', 160, 82, 9, '#fff', 'center');
-        text('ケーキ　　　　3こ', 160, 97, 9, '#fff', 'center');
-        text('ふっかつのしずく　1こ', 160, 112, 9, '#62e8ff', 'center');
-        text('ENTER / Z　NEXT STAGE', 160, 151, 9, '#fff', 'center');
+        text('STAGE ' + stage + ' CLEAR', 160, 55, 14, '#fff000', 'center');
+        text('LV ' + playerLevel + '　 HP ' + maxHp + ' / ' + maxHp, 160, 78, 9, '#fff', 'center');
+        text('ケーキ 3こ　 ふっかつ 1こ', 160, 94, 9, '#62e8ff', 'center');
+        const replayColor = clearChoice === 0 ? '#ffff00' : '#aaa';
+        const nextColor = clearChoice === 1 ? '#ffff00' : '#aaa';
+        text((clearChoice === 0 ? '♥ ' : '') + 'REPLAY', 108, 115, 9, replayColor, 'center');
+        text((clearChoice === 1 ? '♥ ' : '') + (stage < 10 ? 'NEXT' : 'ENDING'), 214, 115, 9, nextColor, 'center');
+        text('← → でえらぶ　 ENTER / Z', 160, 151, 8, '#fff', 'center');
       } else drawEnding(state === 'victory');
     } else {
       rect(0, 0, W, H, '#000');
@@ -524,7 +624,7 @@
       mood: 0,
       x: template.length === 1 ? 160 : (index === 0 ? 112 : 207)
     }));
-    if (stage > 1) hp = Math.min(maxHp, hp + 12);
+    hp = maxHp;
     menu = 0;
     target = 0;
     bullets = [];
@@ -539,9 +639,12 @@
   }
 
   function resetGame() {
+    playerLevel = 1;
+    maxHp = levelMaxHp(playerLevel);
     hp = maxHp;
     items = 3;
     reviveItems = 1;
+    clearChoice = 1;
     turnCount = 0;
     lastTrack = '';
     startStage(1);
@@ -601,8 +704,8 @@
   }
 
   function resolveAttack() {
-    const center = 160;
-    const accuracy = Math.max(0, 1 - Math.abs(attackX - center) / 80);
+    const center = 183;
+    const accuracy = Math.max(0, 1 - Math.abs(attackX - center) / 101);
     if (stage === 10 && sansDodges < 2) {
       sansDodges++;
       dodgeAt = performance.now();
@@ -611,8 +714,11 @@
       setState('result', ['＊ サンズは こうげきを よけた。', '＊ よこに MISS の文字が うかんだ。']);
       return;
     }
-    const damage = stage === 10 ? 1 : Math.max(4, Math.round(8 + accuracy * 25));
+    const damage = stage === 10 ? 1 : Math.max(3, Math.round(5 + accuracy * (9 + playerLevel * 1.2)));
     enemies[attackTarget].hp = Math.max(0, enemies[attackTarget].hp - damage);
+    damageAt = performance.now();
+    damageEnemy = attackTarget;
+    damageValue = damage;
     beep(150 + accuracy * 500, .12);
     const defeated = enemies[attackTarget].hp <= 0;
     setState('result', [
@@ -634,12 +740,13 @@
 
   function finishVictory() {
     if (spotifyController) spotifyController.pause();
-    if (stage < 10) {
-      hp = maxHp;
-      items = 3;
-      reviveItems = 1;
-      setState('stageClear');
-    } else setState('victory');
+    playerLevel = Math.min(20, playerLevel + 1);
+    maxHp = levelMaxHp(playerLevel);
+    hp = maxHp;
+    items = 3;
+    reviveItems = 1;
+    clearChoice = stage < 10 ? 1 : 0;
+    setState('stageClear');
   }
 
   function finishDefeat() {
@@ -749,7 +856,9 @@
       return;
     }
     if (state === 'stageClear') {
-      startStage(stage + 1);
+      if (clearChoice === 0) startStage(stage);
+      else if (stage < 10) startStage(stage + 1);
+      else setState('victory');
       return;
     }
     if (state === 'victory' || state === 'defeat') {
@@ -768,7 +877,10 @@
 
   function handlePressed() {
     if (pressed.has('Enter') || pressed.has('KeyZ') || pressed.has('Space')) confirm();
-    if (state === 'command') {
+    if (state === 'stageClear') {
+      if (pressed.has('ArrowLeft')) { clearChoice = 0; beep(); }
+      if (pressed.has('ArrowRight')) { clearChoice = 1; beep(); }
+    } else if (state === 'command') {
       if (pressed.has('ArrowLeft')) {
         menu = (menu + 3) % 4;
         beep();
