@@ -73,11 +73,13 @@
   ];
   const MEGALOVANIA = 'spotify:track:1J03Vp93ybKIxfzYI4YJtL';
   const SANS_ATTACK_SEQUENCE = [
-    12,
-    0, 5, 8, 13, 13, 13, 13, 14, 15, 0, 13, 8,
-    11, 2, 11, 10, 10, 3, 10, 11, 10,
-    11, 7
+    12, 0, 5, 8, 13, 14, 15, 2,
+    10, 3, 6, 4, 1, 9, 11, 7,
+    0, 13, 8, 2, 10, 14, 15, 7
   ];
+  const SANS_PHASE_INTERVALS = [980, 920, 1240, 1180, 1020, 1080, 1260, 1380, 1120, 1340, 1040, 1440, 1080, 980, 1180, 1040];
+  const SANS_PHASE_SPEEDS = [210, 165, 0, 0, 110, 200, 180, 0, 210, 0, 42, 0, 46, 126, 58, 118];
+  const SANS_GRAVITY_PHASES = new Set([0, 1, 4, 5, 6, 8, 10, 11, 12, 13, 14, 15]);
   const SANS_BATTLE_LINES = [
     'まずは 重さを 思い出してもらう。',
     '上下の隙間は 動いている。',
@@ -173,6 +175,7 @@
   let stage = 1;
   let sansDodges = 0;
   let sansTurn = 0;
+  let sansPhaseCursor = 0;
   let sansMercyProgress = 0;
   let gravityDirection = 'down';
   let sansGestureUntil = -10000;
@@ -1744,6 +1747,7 @@
     bullets = [];
     sansDodges = 0;
     sansTurn = 0;
+    sansPhaseCursor = 0;
     sansMercyProgress = 0;
     gravityDirection = 'down';
     sansGestureUntil = -10000;
@@ -1888,10 +1892,7 @@
     attackPattern = attacker.patterns[patternIndex];
     if (attacker.type === 'sans') {
       const sequenceIndex = sansTurn % SANS_ATTACK_SEQUENCE.length;
-      const sansPhase = SANS_ATTACK_SEQUENCE[sequenceIndex];
-      const phaseIntervals = [980, 920, 1240, 1180, 1020, 1080, 1260, 1380, 1120, 1340, 1040, 1440, 1080, 980, 1180, 1040];
-      // Horizontal velocity is counter-scaled for the compact square arena.
-      const phaseSpeeds = [210, 165, 0, 0, 110, 200, 180, 0, 210, 0, 42, 0, 46, 126, 58, 118];
+      const sansPhase = SANS_ATTACK_SEQUENCE[sansPhaseCursor % SANS_ATTACK_SEQUENCE.length];
       const turnDurations = [
         15000, 14500, 16000, 15500, 16500, 16000,
         16500, 15500, 17000, 16500, 17000, 17500,
@@ -1902,9 +1903,9 @@
         ...attackPattern,
         sansPhase,
         finalSpecial: sequenceIndex >= SANS_ATTACK_SEQUENCE.length - 2,
-        gravity: [0, 1, 4, 5, 6, 8, 10, 11, 12, 13, 14, 15].includes(sansPhase),
-        interval: phaseIntervals[sansPhase],
-        speed: phaseSpeeds[sansPhase],
+        gravity: SANS_GRAVITY_PHASES.has(sansPhase),
+        interval: SANS_PHASE_INTERVALS[sansPhase],
+        speed: SANS_PHASE_SPEEDS[sansPhase],
         damage: 1,
         duration: turnDurations[sequenceIndex]
       };
@@ -2027,7 +2028,12 @@
   }
 
   function spawnSansVolley(pattern, now) {
-    const phase = pattern.sansPhase ?? ((pattern.id - 1) % 8);
+    const phase = SANS_ATTACK_SEQUENCE[sansPhaseCursor % SANS_ATTACK_SEQUENCE.length];
+    sansPhaseCursor++;
+    pattern.sansPhase = phase;
+    pattern.gravity = SANS_GRAVITY_PHASES.has(phase);
+    pattern.interval = SANS_PHASE_INTERVALS[phase];
+    pattern.speed = SANS_PHASE_SPEEDS[phase];
     const speed = pattern.speed;
     const left = 79, right = 291, top = 96, bottom = 140;
     const shot = volleyCount;
