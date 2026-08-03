@@ -1743,7 +1743,7 @@
     if (attacker.type === 'sans') {
       const sequenceIndex = sansTurn % SANS_ATTACK_SEQUENCE.length;
       const sansPhase = SANS_ATTACK_SEQUENCE[sequenceIndex];
-      const phaseIntervals = [980, 920, 1240, 1180, 1020, 1080, 1260, 1380, 1120, 1340, 1040, 1440, 760, 980, 820, 1040];
+      const phaseIntervals = [980, 920, 1240, 1180, 1020, 1080, 1260, 1380, 1120, 1340, 1040, 1440, 1080, 980, 1180, 1040];
       // Horizontal velocity is counter-scaled for the compact square arena.
       const phaseSpeeds = [210, 165, 0, 0, 110, 200, 180, 0, 210, 0, 42, 0, 46, 126, 58, 118];
       const turnDurations = [
