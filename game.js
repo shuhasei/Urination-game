@@ -50,6 +50,25 @@
     'spotify:track:6YnPqvc66bdYGGOJIlDEz1'
   ];
   const MEGALOVANIA = 'spotify:track:1J03Vp93ybKIxfzYI4YJtL';
+  const SANS_ATTACK_SEQUENCE = [1, 0, 5, 0, 2, 4, 1, 3, 6, 0, 5, 2, 4, 3, 6, 7];
+  const SANS_BATTLE_LINES = [
+    '最初から 速くいくぞ。',
+    '青い心は 重さを覚える。',
+    '横から来る。目を離すな。',
+    '同じ流れには ならない。',
+    '光る前に 音が変わる。',
+    '円の動きは 止まらない。',
+    '着地する場所を 選べ。',
+    '縦の光が 道を切る。',
+    '骨と光を 同時に見るんだ。',
+    'まだ半分だ。続けよう。',
+    '静かな場所ほど 怪しい。',
+    '照準は ほんの一瞬だけだ。',
+    '回る向きを 見失うな。',
+    '次は上下も 見ておけ。',
+    '最後の練習は 終わりだ。',
+    'これで 記念戦の締めだ。'
+  ];
   function createAttackPatterns(type, seed) {
     return Array.from({ length: 60 }, (_, index) => {
       const level = Math.floor(index / 3) + 1;
@@ -103,6 +122,7 @@
   let turnCount = 0;
   let stage = 1;
   let sansDodges = 0;
+  let sansTurn = 0;
   let reviveItems = 1;
   let dodgeAt = -10000;
   let dodgeEnemy = -1;
@@ -334,6 +354,10 @@
   }
 
   function drawSans(x, y, t) {
+    const talking = state === 'enemySpeak' && speakingEnemy?.visual === 'sans';
+    const jaw = talking && Math.floor(speechChars) % 2 ? 2 : 0;
+    const idle = Math.sin(t / 420) * .65;
+    y += idle;
     const white = '#ffffff';
     const bone = '#e8e8e8';
     const gray = '#aeb4bd';
@@ -360,12 +384,12 @@
 
     g.fillStyle = dark;
     g.beginPath();
-    g.ellipse(x, y, 12, 6, 0, 0, Math.PI);
+    g.ellipse(x, y + jaw, 13, 7 + jaw * .4, 0, 0, Math.PI);
     g.fill();
-    rect(x - 11, y - 1, 22, 4, dark);
-    rect(x - 9, y - 1, 18, 3, white);
-    for (let tooth = -7; tooth <= 7; tooth += 3) rect(x + tooth, y - 1, 1, 4, dark);
-    line(x - 9, y + 3, x + 9, y + 3, white);
+    rect(x - 12, y - 1 + jaw, 24, 5 + jaw, dark);
+    rect(x - 10, y - 1 + jaw, 20, 3, white);
+    for (let tooth = -8; tooth <= 8; tooth += 3) rect(x + tooth, y - 1 + jaw, 1, 4 + jaw, dark);
+    line(x - 10, y + 3 + jaw, x + 10, y + 3 + jaw, white);
 
     rect(x - 4, y + 5, 8, 4, bone);
     rect(x - 17, y + 8, 34, 20, white);
@@ -612,13 +636,6 @@
   function drawEnemyTurn() {
     rect(73, 91, 224, 53, '#fff');
     rect(76, 94, 218, 47, '#000');
-    if (safeLaneAxis === 'y') {
-      rect(76, safeLaneValue - 2, 4, 5, '#45e884');
-      rect(290, safeLaneValue - 2, 4, 5, '#45e884');
-    } else {
-      rect(safeLaneValue - 2, 94, 5, 4, '#45e884');
-      rect(safeLaneValue - 2, 137, 5, 4, '#45e884');
-    }
     heartShape(heart.x, heart.y, stage === 10 ? '#168bff' : '#f5222d');
     for (const bullet of bullets) {
       if (bullet.kind === 'beam') {
@@ -1038,12 +1055,20 @@
     target = 0;
     bullets = [];
     sansDodges = 0;
+    sansTurn = 0;
     dodgeAt = -10000;
     dodgeEnemy = -1;
-    setState('intro', [
-      '＊ STAGE ' + stage + ' / 10',
-      '＊ ' + enemies.map(enemy => enemy.name).join('と') + 'が あらわれた。'
-    ]);
+    if (stage === 10) {
+      setState('intro', [
+        '＊ 最後の審判役が 静かに道をふさいだ。',
+        '＊ 笑顔の骨人が ポケットに手を入れた。'
+      ]);
+    } else {
+      setState('intro', [
+        '＊ STAGE ' + stage + ' / 10',
+        '＊ ' + enemies.map(enemy => enemy.name).join('と') + 'が あらわれた。'
+      ]);
+    }
     playStageMusic();
   }
 
@@ -1160,19 +1185,35 @@
     const attacker = attackers[(turnCount - 1) % attackers.length].enemy;
     const patternIndex = (playerLevel - 1) * 3 + ((turnCount - 1) % 3);
     attackPattern = attacker.patterns[patternIndex];
-    safeLaneAxis = attackPattern.formation % 2 === 0 ? 'y' : 'x';
-    safeLaneValue = safeLaneAxis === 'y'
-      ? 105 + ((attackPattern.id + turnCount) % 3) * 12
-      : 112 + ((attackPattern.id + turnCount) % 4) * 42;
     if (attacker.type === 'sans') {
-      attackPattern = { ...attackPattern, gravity: attackPattern.id % 4 !== 2 };
+      const sequenceIndex = sansTurn % SANS_ATTACK_SEQUENCE.length;
+      const sansPhase = SANS_ATTACK_SEQUENCE[sequenceIndex];
+      attackPattern = {
+        ...attackPattern,
+        sansPhase,
+        gravity: [0, 1, 4, 5, 6].includes(sansPhase),
+        duration: sequenceIndex === SANS_ATTACK_SEQUENCE.length - 1 ? 7200 : 4800 + sequenceIndex * 90
+      };
+      safeLaneAxis = sansPhase % 2 === 0 ? 'y' : 'x';
+      safeLaneValue = safeLaneAxis === 'y'
+        ? 105 + (sequenceIndex % 3) * 12
+        : 112 + (sequenceIndex % 4) * 42;
+      sansTurn++;
+    } else {
+      safeLaneAxis = attackPattern.formation % 2 === 0 ? 'y' : 'x';
+      safeLaneValue = safeLaneAxis === 'y'
+        ? 105 + ((attackPattern.id + turnCount) % 3) * 12
+        : 112 + ((attackPattern.id + turnCount) % 4) * 42;
     }
     speakingEnemy = attacker;
     speechChars = 0;
     if (spotifyController) spotifyController.pause();
+    const battleLine = attacker.type === 'sans'
+      ? SANS_BATTLE_LINES[(sansTurn - 1) % SANS_BATTLE_LINES.length]
+      : enemyBattleQuote(attacker);
     setState('enemySpeak', [
-      '＊ ' + attacker.name + '「' + enemyBattleQuote(attacker) + '」',
-      '＊ 攻略：' + attackHint(attackPattern)
+      '＊ ' + attacker.name + '「' + battleLine + '」',
+      '＊ 黒い箱の空気が 低く震えた。'
     ]);
   }
 
@@ -1243,7 +1284,7 @@
   }
 
   function spawnSansVolley(pattern, now) {
-    const phase = (pattern.id - 1) % 8;
+    const phase = pattern.sansPhase ?? ((pattern.id - 1) % 8);
     const speed = pattern.speed;
     const left = 79, right = 291, top = 96, bottom = 140;
 
