@@ -520,7 +520,6 @@
     const down = event => {
       event.preventDefault();
       keyDown(code);
-      if (code === 'Enter') confirm();
     };
     const up = event => {
       event.preventDefault();
