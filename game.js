@@ -1515,7 +1515,7 @@
       const inGuaranteedLane = safeLaneAxis === 'y'
         ? Math.abs(heart.y - safeLaneValue) < 5
         : Math.abs(heart.x - safeLaneValue) < 6;
-      if (inGuaranteedLane && bullet.kind !== 'beam') hit = false;
+      if (inGuaranteedLane) hit = false;
       if (invincible <= 0 && hit) {
         hp = Math.max(0, hp - pattern.damage);
         invincible = bullet.kind === 'bone' ? .34 : .58;
