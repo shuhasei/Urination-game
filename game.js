@@ -137,7 +137,82 @@
         } else if (mode === 'friend') {
           tone(friendA[step % 16], .09, 'square', .46);
           tone(friendA[(step + 4) % 16] - 12, .07, 'square', .18, .055);
-          if (step % 4 === 0) tone(48 + ((st…865 tokens truncated…18){ line(27,y,293,y,'#382c47'); for(let x=34+(y%36?12:0);x<288;x+=30) line(x,y-5,x,y+5,'#382c47'); }
+          if (step % 4 === 0) tone(48 + ((step / 4) % 2) * 5, .18, 'triangle', .38);
+        }
+        step++;
+      }
+      function begin(next, rate) { init(); if (mode === next) return; stop(); mode = next; step = 0; tick(); timer = setInterval(tick, rate); }
+      function stop() { if (timer) clearInterval(timer); timer = null; mode = ''; }
+      function select() { init(); tone(78, .045, 'square', .35); }
+      function accept() { init(); tone(76,.07,'square',.5); tone(88,.18,'square',.6,.055); }
+      function stepSound() { init(); tone(42 + (player.frame % 2) * 2, .025, 'square', .16); }
+      return { startFriend:()=>begin('friend',110), stop, select, accept, step:stepSound, init };
+    })();
+
+    function pixelText(text, x, y, size=10, color='#fff', align='left') {
+      g.save();
+      g.fillStyle = color;
+      g.font = `${size}px "MS Gothic", "Yu Gothic", monospace`;
+      g.textAlign = align; g.textBaseline = 'top';
+      const lines = String(text).split('\n');
+      lines.forEach((line, i) => g.fillText(line, x, y + i * (size + 4)));
+      g.restore();
+    }
+
+    function rect(x,y,w,h,c) { g.fillStyle=c; g.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h)); }
+    function line(x1,y1,x2,y2,c,w=1) { g.strokeStyle=c; g.lineWidth=w; g.beginPath(); g.moveTo(x1,y1); g.lineTo(x2,y2); g.stroke(); }
+
+    function drawName() {
+      rect(0,0,W,H,'#000');
+      pixelText('おちた ニんげんに', 160, 12, 11, '#fff', 'center');
+      pixelText('なまえを つけてあげてね。', 160, 27, 11, '#fff', 'center');
+      g.strokeStyle='#fff'; g.lineWidth=2; g.strokeRect(103,47,114,24);
+      pixelText(name || ' ',160,52,13,'#fff','center');
+
+      for (let i=0;i<chars.length;i++) {
+        const col=i%10,row=Math.floor(i/10), x=25+col*30, y=83+row*17;
+        const label=chars[i];
+        pixelText(label, x+9, y+2, label.length>2?7:10, '#fff', 'center');
+        if (i===cursor) { g.strokeStyle='#fff'; g.lineWidth=1; g.strokeRect(x,y,19,14); }
+      }
+      pixelText('方向キー：えらぶ　　Z / ENTER：決定',160,169,7,'#888','center');
+    }
+
+    function drawTitle(now) {
+      rect(0,0,W,H,'#000');
+      if(titleImage.complete) {
+        g.drawImage(titleImage,0,0,W,H);
+        rect(291,70,29,24,'#000');
+      }
+    }
+
+    function drawConfirm() {
+      drawName();
+      rect(35,47,250,90,'#000');
+      g.strokeStyle='#fff'; g.lineWidth=2; g.strokeRect(35,47,250,90);
+      pixelText(name,160,59,14,'#fff','center');
+      pixelText('この なまえで 決定する？',160,83,10,'#fff','center');
+      const labels=['はい','いいえ'];
+      labels.forEach((v,i)=>{
+        const x=112+i*88;
+        if (confirmChoice===i) { pixelText('◆',x-23,111,8,'#fff'); }
+        pixelText(v,x,108,10,'#fff','center');
+      });
+    }
+
+    function stoneBackdrop(which) {
+      rect(0,0,W,H,'#000');
+      const wall = which===1 ? '#302638' : '#292139';
+      const edge = which===1 ? '#4b3a54' : '#443654';
+      if (which===1) {
+        rect(70,5,180,142,wall); rect(62,19,8,128,edge); rect(250,19,8,128,edge);
+        rect(70,5,180,8,edge); rect(70,141,180,8,'#211927');
+        for(let y=18;y<139;y+=18){ line(70,y,250,y,'#3b2e44'); for(let x=78+(y%36?0:14);x<246;x+=28) line(x,y-5,x,y+5,'#3b2e44'); }
+        rect(238,108,20,31,'#000');
+      } else {
+        rect(20,14,280,142,wall); rect(20,14,280,7,edge); rect(20,149,280,8,'#17121e');
+        rect(20,21,7,128,edge); rect(293,21,7,128,edge);
+        for(let y=27;y<147;y+=18){ line(27,y,293,y,'#382c47'); for(let x=34+(y%36?12:0);x<288;x+=30) line(x,y-5,x,y+5,'#382c47'); }
       }
     }
 
