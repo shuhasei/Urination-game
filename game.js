@@ -681,50 +681,50 @@
   function drawOpeningHero(now) {
     const x = Math.round(openingPlayer.x);
     const y = Math.round(openingPlayer.y);
-    const frame = openingPlayer.moving ? Math.floor(now / 105) % 4 : 0;
+    const frame = openingPlayer.moving ? Math.floor(now / 115) % 4 : 0;
     const stride = frame === 1 ? 1 : frame === 3 ? -1 : 0;
-    const bob = openingPlayer.moving && (frame === 1 || frame === 3) ? -1 : 0;
+    const bob = openingPlayer.moving && frame % 2 ? -1 : 0;
     const facingLeft = openingPlayer.direction === 'left';
     const facingUp = openingPlayer.direction === 'up';
 
     if (heroImage.complete && heroImage.naturalWidth) {
-      const sourceBodyHeight = Math.floor(heroImage.naturalHeight * .78);
+      const sourceBodyHeight = Math.floor(heroImage.naturalHeight * .82);
       g.save();
       g.translate(x, y);
       if (facingLeft) g.scale(-1, 1);
       g.drawImage(
         heroImage,
         0, 0, heroImage.naturalWidth, sourceBodyHeight,
-        -6, -14 + bob, 12, 16
+        -7, -15 + bob, 14, 18
       );
       g.restore();
 
       if (facingUp) {
-        rect(x - 4, y - 12 + bob, 8, 5, '#5c2633');
-        rect(x - 5, y - 10 + bob, 2, 4, '#5c2633');
-        rect(x + 3, y - 10 + bob, 2, 4, '#5c2633');
+        rect(x - 5, y - 13 + bob, 10, 5, '#5c2633');
+        rect(x - 6, y - 11 + bob, 2, 5, '#5c2633');
+        rect(x + 4, y - 11 + bob, 2, 5, '#5c2633');
       }
     } else {
-      rect(x - 4, y - 10 + bob, 8, 7, '#5c2633');
-      rect(x - 4, y - 3 + bob, 8, 6, '#394d85');
-      rect(x - 4, y - 1 + bob, 8, 2, '#bf4dc8');
+      rect(x - 5, y - 11 + bob, 10, 8, '#5c2633');
+      rect(x - 5, y - 3 + bob, 10, 6, '#394d85');
+      rect(x - 5, y - 1 + bob, 10, 2, '#f000dd');
     }
 
-    const rearLeg = openingPlayer.direction === 'right' || openingPlayer.direction === 'left';
-    const leftStride = rearLeg ? stride : -stride;
-    const rightStride = -leftStride;
-    rect(x - 4 + leftStride, y + 2 + bob, 3, 4 + (stride < 0 ? 1 : 0), '#2b2029');
-    rect(x + 1 + rightStride, y + 2 + bob, 3, 4 + (stride > 0 ? 1 : 0), '#2b2029');
-    rect(x - 5 + leftStride, y + 6 + bob + (stride < 0 ? 1 : 0), 4, 2, '#1a1118');
-    rect(x + 1 + rightStride, y + 6 + bob + (stride > 0 ? 1 : 0), 4, 2, '#1a1118');
+    const horizontal = openingPlayer.direction === 'right' || openingPlayer.direction === 'left';
+    const leftStep = horizontal ? stride : -stride;
+    const rightStep = -leftStep;
+    const legY = y + 3 + bob;
 
-    if (openingPlayer.moving && frame % 2) {
-      rect(x - 5, y - 3 + bob, 1, 4, '#f0be55');
-      rect(x + 4, y - 2 + bob, 1, 4, '#f0be55');
-    } else {
-      rect(x - 5, y - 2 + bob, 1, 4, '#f0be55');
-      rect(x + 4, y - 3 + bob, 1, 4, '#f0be55');
-    }
+    rect(x - 4 + leftStep, legY, 3, 2, '#3d171d');
+    rect(x + 1 + rightStep, legY, 3, 2, '#3d171d');
+    rect(x - 5 + leftStep, legY + 2, 4, 2, '#1a1118');
+    rect(x + 1 + rightStep, legY + 2, 4, 2, '#1a1118');
+
+    const armSwing = openingPlayer.moving && frame % 2 ? 1 : 0;
+    rect(x - 7, y - 3 + bob + armSwing, 2, 5, '#4a2028');
+    rect(x + 5, y - 3 + bob + (1 - armSwing), 2, 5, '#4a2028');
+    rect(x - 7, y + 1 + bob + armSwing, 2, 2, '#f0c44e');
+    rect(x + 5, y + 1 + bob + (1 - armSwing), 2, 2, '#f0c44e');
   }
 
   function drawRoomCenter(roomIndex, theme, now) {
