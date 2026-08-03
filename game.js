@@ -440,7 +440,7 @@
         }
         drawEnemyByVisual(enemy, drawX, now);
       }
-      if (stage !== 10) drawEnemyHealth(enemy);
+      if (state === 'attack') drawEnemyHealth(enemy);
       if (index === dodgeEnemy && dodgeElapsed >= 0 && dodgeElapsed < 900) {
         text('MISS', stage === 10 ? enemy.x : enemy.x + 29, stage === 10 ? 18 : 30, 11, '#fff', stage === 10 ? 'center' : 'left');
       }
@@ -776,6 +776,12 @@
       rect(x - 5, y - 11 + bob, 10, 8, '#5c2633');
       rect(x - 5, y - 3 + bob, 10, 6, '#394d85');
       rect(x - 5, y - 1 + bob, 10, 2, '#f000dd');
+      rect(x - 8, y - 3 + bob, 3, 8, '#4a2028');
+      rect(x + 5, y - 3 + bob, 3, 8, '#4a2028');
+      rect(x - 7, y - 1 + bob, 2, 5, '#70bdf0');
+      rect(x + 5, y - 1 + bob, 2, 5, '#70bdf0');
+      rect(x - 7, y + 5 + bob, 2, 2, '#f4d431');
+      rect(x + 5, y + 5 + bob, 2, 2, '#f4d431');
     }
 
     const horizontal = openingPlayer.direction === 'right' || openingPlayer.direction === 'left';
@@ -788,11 +794,6 @@
     rect(x - 5 + leftStep, legY + 2, 4, 2, '#1a1118');
     rect(x + 1 + rightStep, legY + 2, 4, 2, '#1a1118');
 
-    const armSwing = openingPlayer.moving && frame % 2 ? 1 : 0;
-    rect(x - 7, y - 3 + bob + armSwing, 2, 5, '#4a2028');
-    rect(x + 5, y - 3 + bob + (1 - armSwing), 2, 5, '#4a2028');
-    rect(x - 7, y + 1 + bob + armSwing, 2, 2, '#f0c44e');
-    rect(x + 5, y + 1 + bob + (1 - armSwing), 2, 2, '#f0c44e');
   }
 
   function drawRoomCenter(roomIndex, theme, now) {
@@ -1446,12 +1447,17 @@
         ? 105 + ((attackPattern.id + turnCount) % 3) * 12
         : 112 + ((attackPattern.id + turnCount) % 4) * 42;
     }
+    if (attacker.type !== 'sans') {
+      speakingEnemy = null;
+      speechChars = 0;
+      startEnemyAttack();
+      return;
+    }
+
     speakingEnemy = attacker;
     speechChars = 0;
     if (spotifyController) spotifyController.pause();
-    const battleLine = attacker.type === 'sans'
-      ? SANS_BATTLE_LINES[(sansTurn - 1) % SANS_BATTLE_LINES.length]
-      : enemyBattleQuote(attacker);
+    const battleLine = SANS_BATTLE_LINES[(sansTurn - 1) % SANS_BATTLE_LINES.length];
     setState('enemySpeak', [
       '＊ ' + attacker.name + '「' + battleLine + '」',
       '＊ 黒い箱の空気が 低く震えた。'
