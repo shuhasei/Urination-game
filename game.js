@@ -1583,7 +1583,8 @@
       return;
     }
     if (state === 'intro') {
-      setState('command', ['＊ どうする？']);
+      if (stage === 10 && sansTurn === 0) beginEnemyTurn();
+      else setState('command', ['＊ どうする？']);
       return;
     }
     if (state === 'enemySpeak') {
