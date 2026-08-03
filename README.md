@@ -2,6 +2,20 @@
 
 ブラウザで遊べるレトロRPGデモです。
 
+## ファイル構成
+
+```text
+index.html
+game.js
+style.css
+assets/
+  hero.png
+  hero-lying.png
+  flowey.png
+  ruins.png
+  flowers.png
+```
+
 ## 操作
 
 - 方向キー: 移動・選択
