@@ -71,7 +71,7 @@
   ];
   const MEGALOVANIA = 'spotify:track:1J03Vp93ybKIxfzYI4YJtL';
   const SANS_ATTACK_SEQUENCE = [
-    6, 0, 1, 0, 5, 8, 1, 5, 6, 2, 0, 4,
+    11, 0, 1, 6, 5, 8, 1, 5, 6, 2, 0, 4,
     8, 9, 3, 10, 6, 2, 9, 10, 4, 11, 7, 11
   ];
   const SANS_BATTLE_LINES = [
@@ -168,6 +168,8 @@
   let stage = 1;
   let sansDodges = 0;
   let sansTurn = 0;
+  let sansMercyProgress = 0;
+  let projectileTransform = null;
   let reviveItems = 1;
   let dodgeAt = -10000;
   let dodgeEnemy = -1;
@@ -224,6 +226,12 @@
     g.strokeStyle = color;
     g.lineWidth = width;
     g.strokeRect(x, y, w, h);
+  }
+
+  function battleArena() {
+    return stage === 10
+      ? { x: 133, y: 91, w: 54, h: 54, left: 136, right: 184, top: 94, bottom: 142 }
+      : { x: 73, y: 91, w: 224, h: 53, left: 76, right: 294, top: 94, bottom: 141 };
   }
 
   const HEART_PIXELS = [
@@ -412,9 +420,12 @@
       && (state === 'enemyTurn' || state === 'enemySpeak');
 
     if (sansReferenceImage.complete && sansReferenceImage.naturalWidth) {
-      const drawX = Math.round(x - 17);
-      const drawY = Math.round(y - 6 + idle);
-      g.drawImage(sansReferenceImage, drawX, drawY, 34, 45);
+      const drawX = Math.round(x - 20);
+      const drawY = Math.round(y - 9 + idle);
+      g.save();
+      g.imageSmoothingEnabled = false;
+      g.drawImage(sansReferenceImage, drawX, drawY, 40, 53);
+      g.restore();
 
       if (talking && jaw) {
         microPixelRect(x - 5, drawY + 17, 10, 2, '#050505');
@@ -875,33 +886,37 @@
   }
 
   function drawEnemyTurn() {
-    rect(73, 91, 224, 53, '#fff');
-    rect(76, 94, 218, 47, '#000');
+    const arena = battleArena();
+    rect(arena.x, arena.y, arena.w, arena.h, '#fff');
+    rect(arena.left, arena.top, arena.right - arena.left, arena.bottom - arena.top, '#000');
     heartShape(heart.x, heart.y, stage === 10 ? '#168bff' : '#f5222d');
     for (const bullet of bullets) {
       if (bullet.kind === 'beam') {
         const active = bullet.age >= bullet.warning;
         const pulse = .3 + Math.sin(bullet.age * 38) * .16;
+        const beamWidth = stage === 10 ? 5 : 9;
+        const beamOffset = Math.floor(beamWidth / 2);
         g.globalAlpha = active ? 1 : pulse;
         if (bullet.orientation === 'horizontal') {
-          rect(76, bullet.y - (active ? 4 : 1), 218, active ? 9 : 2, active ? '#fff' : '#7cf5ff');
-          if (active) rect(76, bullet.y - 1, 218, 3, '#8ff8ff');
+          rect(arena.left, bullet.y - (active ? beamOffset : 1), arena.right - arena.left, active ? beamWidth : 2, active ? '#fff' : '#7cf5ff');
+          if (active) rect(arena.left, bullet.y - 1, arena.right - arena.left, 3, '#8ff8ff');
         } else {
-          rect(bullet.x - (active ? 4 : 1), 94, active ? 9 : 2, 47, active ? '#fff' : '#7cf5ff');
-          if (active) rect(bullet.x - 1, 94, 3, 47, '#8ff8ff');
+          rect(bullet.x - (active ? beamOffset : 1), arena.top, active ? beamWidth : 2, arena.bottom - arena.top, active ? '#fff' : '#7cf5ff');
+          if (active) rect(bullet.x - 1, arena.top, 3, arena.bottom - arena.top, '#8ff8ff');
         }
         g.globalAlpha = 1;
         drawBlasterHead(bullet, active);
         if (active && bullet.age < bullet.warning + .12) {
           g.globalAlpha = .5;
-          rect(76, 94, 218, 47, '#fff');
+          rect(arena.left, arena.top, arena.right - arena.left, arena.bottom - arena.top, '#fff');
           g.globalAlpha = 1;
         }
       } else if (bullet.kind === 'bone') {
         const boneImage = bullet.blue ? blueBoneProjectileImage : boneProjectileImage;
         const boneTop = bullet.fromTop ? bullet.y : bullet.y - bullet.h;
         if (boneImage.complete && boneImage.naturalWidth) {
-          g.drawImage(boneImage, bullet.x - 4, boneTop, 9, bullet.h);
+          const boneWidth = stage === 10 ? 5 : 9;
+          g.drawImage(boneImage, bullet.x - Math.floor(boneWidth / 2), boneTop, boneWidth, bullet.h);
         } else {
           const boneColor = bullet.blue ? '#00eeff' : '#ffffff';
           rect(bullet.x - 1, boneTop, 3, bullet.h, boneColor);
@@ -1476,6 +1491,7 @@
     bullets = [];
     sansDodges = 0;
     sansTurn = 0;
+    sansMercyProgress = 0;
     dodgeAt = -10000;
     dodgeEnemy = -1;
     if (stage === 10) {
@@ -1519,7 +1535,12 @@
     } else if (menu === 1) {
       const chosen = alive[turnCount % alive.length];
       if (stage === 10) {
-        setState('result', ['＊ サンズの ようすを みた。', '＊ こちらの うごきを よんでいる。']);
+        sansMercyProgress = Math.min(3, sansMercyProgress + 1);
+        if (sansMercyProgress >= 3) {
+          setState('result', ['＊ サンズの まなざしが やわらいだ。', '＊ いまなら たたかわずに 道をあけてもらえそうだ。']);
+        } else {
+          setState('result', ['＊ サンズの ようすを みた。', '＊ ことばを返さず 静かに武器をおろした。']);
+        }
       } else {
         chosen.enemy.mood++;
         if (chosen.enemy.mood >= 2) {
@@ -1538,7 +1559,9 @@
         setState('command', ['＊ アイテムは もう のこっていない。']);
       }
     } else {
-      const spareable = stage === 10 ? [] : alive.filter(({ enemy }) => enemy.mood >= 2 || enemy.hp <= 10);
+      const spareable = stage === 10
+        ? (sansMercyProgress >= 3 ? alive : [])
+        : alive.filter(({ enemy }) => enemy.mood >= 2 || enemy.hp <= 10);
       if (spareable.length) {
         spareable.forEach(({ enemy }) => enemy.spared = true);
         setState('result', ['＊ ' + spareable.map(({ enemy }) => enemy.name).join('と') + 'を みのがした。']);
@@ -1623,7 +1646,7 @@
         ...attackPattern,
         sansPhase,
         finalSpecial: sequenceIndex >= SANS_ATTACK_SEQUENCE.length - 2,
-        gravity: [0, 1, 4, 5, 6, 8, 10].includes(sansPhase),
+        gravity: [0, 1, 4, 5, 6, 8, 10, 11].includes(sansPhase),
         interval: phaseIntervals[sansPhase],
         speed: phaseSpeeds[sansPhase],
         damage: 1,
@@ -1701,6 +1724,20 @@
   }
 
   function addProjectile(kind, x, y, vx, vy, extras = {}) {
+    if (projectileTransform) {
+      const transform = projectileTransform;
+      x = transform.left + (x - transform.sourceLeft) * transform.scaleX;
+      y = transform.top + (y - transform.sourceTop) * transform.scaleY;
+      vx *= transform.scaleX;
+      vy *= transform.scaleY;
+      extras = {
+        ...extras,
+        h: extras.h ? extras.h * transform.scaleY : extras.h,
+        length: extras.length
+          ? extras.length * (extras.orientation === 'vertical' ? transform.scaleY : transform.scaleX)
+          : extras.length
+      };
+    }
     bullets.push({
       kind,
       x,
@@ -1734,6 +1771,15 @@
     const fromRight = shot % 2 === 1;
     const direction = fromRight ? -1 : 1;
     const startX = fromRight ? right + 4 : left - 4;
+    const arena = battleArena();
+    projectileTransform = {
+      sourceLeft: left,
+      sourceTop: top,
+      left: arena.left,
+      top: arena.top,
+      scaleX: (arena.right - arena.left) / (right - left),
+      scaleY: (arena.bottom - arena.top) / (bottom - top)
+    };
 
     const movingBoneGate = (gapCenter, gapSize, velocity = speed) => {
       const gapTop = gapCenter - gapSize / 2;
@@ -1883,20 +1929,23 @@
           });
       }
     } else {
-      // The long finale alternates aimed axes; each beam expires before the next.
-      const horizontal = shot % 2 === 0;
-      if (horizontal) {
-        const targetY = 106 + (shot % 3) * 11;
+      // Special mix: every volley changes its axis or bone route.
+      const specialStep = shot % 6;
+      if (specialStep === 0 || specialStep === 3) {
+        const targetY = specialStep === 0 ? 106 : 130;
         addProjectile('beam', left, targetY, 0, 0, {
           orientation: 'horizontal', length: right - left, warning: .68, life: 1.02,
           side: shot % 4 ? 'right' : 'left'
         });
-      } else {
-        const targetX = 116 + (shot % 4) * 46;
+      } else if (specialStep === 1 || specialStep === 4) {
+        const targetX = specialStep === 1 ? 126 : 244;
         addProjectile('beam', targetX, top, 0, 0, {
           orientation: 'vertical', length: bottom - top, warning: .68, life: 1.02,
           side: shot % 4 === 1 ? 'top' : 'bottom'
         });
+      } else {
+        const corridor = specialStep === 2 ? 110 : 128;
+        movingBoneGate(corridor, 18, 34);
       }
       const orbitAngle = now / 900 + shot * .7;
       addProjectile('bone',
@@ -1906,6 +1955,7 @@
         -Math.sin(orbitAngle) * 18,
         { h: 9, curve: shot % 2 ? .1 : -.1 });
     }
+    projectileTransform = null;
   }
 
   function spawnPatternVolley(pattern, now) {
@@ -2053,22 +2103,24 @@
   function updateEnemyTurn(dt, now) {
     const fallbackIndex = (playerLevel - 1) * 3;
     const pattern = attackPattern || enemies[0].patterns[fallbackIndex];
+    const arena = battleArena();
     const moveSpeed = pattern.gravity ? 86 : 72;
 
     if (keys.has('ArrowLeft')) heart.x -= moveSpeed * dt;
     if (keys.has('ArrowRight')) heart.x += moveSpeed * dt;
     if (pattern.gravity) {
-      heart.vy += 190 * dt;
-      if (keys.has('ArrowUp') && heart.y >= 133) heart.vy = -92;
+      const floor = arena.bottom - 5;
+      heart.vy += 215 * dt;
+      if (keys.has('ArrowUp') && heart.y >= floor - 1) heart.vy = -118;
       heart.y += heart.vy * dt;
-      if (heart.y > 135) { heart.y = 135; heart.vy = 0; }
-      if (heart.y < 99) { heart.y = 99; heart.vy = 0; }
+      if (heart.y > floor) { heart.y = floor; heart.vy = 0; }
+      if (heart.y < arena.top + 5) { heart.y = arena.top + 5; heart.vy = 0; }
     } else {
       if (keys.has('ArrowUp')) heart.y -= moveSpeed * dt;
       if (keys.has('ArrowDown')) heart.y += moveSpeed * dt;
     }
-    heart.x = Math.max(81, Math.min(289, heart.x));
-    heart.y = Math.max(99, Math.min(135, heart.y));
+    heart.x = Math.max(arena.left + 5, Math.min(arena.right - 5, heart.x));
+    heart.y = Math.max(arena.top + 5, Math.min(arena.bottom - 5, heart.y));
 
     if (now >= spawnAt) {
       spawnPatternVolley(pattern, now);
@@ -2095,13 +2147,14 @@
       let hit;
       if (bullet.kind === 'beam') {
         const active = bullet.age >= bullet.warning && bullet.age <= bullet.life;
+        const beamHitRadius = stage === 10 ? 3.5 : 6;
         hit = active && (bullet.orientation === 'horizontal'
-          ? Math.abs(bullet.y - heart.y) < 6
-          : Math.abs(bullet.x - heart.x) < 6);
+          ? Math.abs(bullet.y - heart.y) < beamHitRadius
+          : Math.abs(bullet.x - heart.x) < beamHitRadius);
       } else if (bullet.kind === 'bone') {
         const boneTop = bullet.fromTop ? bullet.y : bullet.y - bullet.h;
         const boneBottom = boneTop + bullet.h;
-        hit = Math.abs(bullet.x - heart.x) < 5
+        hit = Math.abs(bullet.x - heart.x) < (stage === 10 ? 3 : 5)
           && heart.y > boneTop - 4
           && heart.y < boneBottom + 4;
       } else {
@@ -2120,7 +2173,7 @@
       const inGuaranteedLane = safeLaneAxis === 'y'
         ? Math.abs(heart.y - safeLaneValue) < routeWidth
         : Math.abs(heart.x - safeLaneValue) < routeWidth + .8;
-      if (inGuaranteedLane) hit = false;
+      if (stage !== 10 && inGuaranteedLane) hit = false;
       if (invincible <= 0 && hit) {
         hp = Math.max(0, hp - pattern.damage);
         invincible = bullet.kind === 'bone' ? .34 : .58;
@@ -2130,7 +2183,8 @@
 
     bullets = bullets.filter(bullet => bullet.kind === 'beam'
       ? bullet.age < bullet.life
-      : bullet.x > 68 && bullet.x < 302 && bullet.y > 84 && bullet.y < 155);
+      : bullet.x > arena.left - 12 && bullet.x < arena.right + 12
+        && bullet.y > arena.top - 22 && bullet.y < arena.bottom + 22);
     invincible -= dt;
     if (hp <= 0) {
       if (reviveItems > 0) {
@@ -2304,4 +2358,4 @@
 
   hint.classList.add('visible');
   requestAnimationFrame(loop);
-})();
+})
