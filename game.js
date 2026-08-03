@@ -186,12 +186,14 @@
     g.strokeRect(x, y, w, h);
   }
 
-  function heartShape(x, y, color = '#f5222d') {
-    rect(x - 3, y - 2, 3, 3, color);
-    rect(x, y - 2, 3, 3, color);
-    rect(x - 4, y, 8, 3, color);
-    rect(x - 3, y + 3, 6, 2, color);
-    rect(x - 1, y + 5, 2, 2, color);
+  function heartShape(x, y, color = '#ed001f') {
+    rect(x - 4, y - 4, 3, 2, color);
+    rect(x + 1, y - 4, 3, 2, color);
+    rect(x - 5, y - 2, 11, 4, color);
+    rect(x - 4, y + 2, 9, 2, color);
+    rect(x - 3, y + 4, 7, 2, color);
+    rect(x - 2, y + 6, 5, 2, color);
+    rect(x - 1, y + 8, 3, 2, color);
   }
 
   function drawGrid() {
@@ -468,14 +470,14 @@
 
   function drawStatus() {
     const sansLayout = stage === 10;
-    const y = sansLayout ? 137 : 148;
-    text('すけ', sansLayout ? 43 : 74, y, 7);
-    text('LV ' + playerLevel, sansLayout ? 91 : 96, y, 8);
-    text('HP', sansLayout ? 139 : 155, y + 1, 6);
-    const hpX = sansLayout ? 152 : 168;
-    rect(hpX, y + 1, 29, 8, '#5e1d24');
-    rect(hpX, y + 1, Math.max(0, 29 * hp / maxHp), 8, '#fff000');
-    text(hp + ' / ' + maxHp, sansLayout ? 186 : 202, y, 8);
+    const y = 148;
+    text('すけ', sansLayout ? 53 : 74, y, 7);
+    text('LV ' + playerLevel, sansLayout ? 78 : 96, y, 8);
+    text('HP', sansLayout ? 127 : 155, y + 1, 6);
+    const hpX = sansLayout ? 140 : 168;
+    rect(hpX, y + 1, 36, 8, '#5e1d24');
+    rect(hpX, y + 1, Math.max(0, 36 * hp / maxHp), 8, '#fff000');
+    text(hp + ' / ' + maxHp, sansLayout ? 181 : 202, y, 8);
   }
 
   function drawPixelMenuIcon(index, x, y, color) {
@@ -508,8 +510,8 @@
 
   function drawMenu() {
     const sansLayout = stage === 10;
-    const boxes = sansLayout ? [[43, 51], [104, 51], [165, 51], [230, 51]] : menuBoxes;
-    const menuY = sansLayout ? 151 : 162;
+    const boxes = sansLayout ? [[53, 51], [108, 51], [169, 51], [230, 51]] : menuBoxes;
+    const menuY = 162;
     for (let i = 0; i < boxes.length; i++) {
       const [x, w] = boxes[i];
       const selected = state === 'command' && menu === i;
@@ -547,12 +549,12 @@
   }
 
   function drawAttackGauge() {
-    rect(49, 88, 204, 57, '#fff');
-    rect(52, 91, 198, 51, '#000');
+    rect(49, 88, 230, 57, '#fff');
+    rect(52, 91, 224, 51, '#000');
 
-    const left = 55;
-    const right = 247;
-    const center = 151;
+    const left = 70;
+    const right = 260;
+    const center = 165;
     const top = 102;
     const bottom = 135;
 
@@ -894,53 +896,53 @@
     const theme = ROOM_THEMES[roomIndex];
     rect(0, 0, W, H, '#050505');
 
-    g.fillStyle = theme.floor;
-    g.beginPath();
-    g.moveTo(42, 35);
-    g.lineTo(205, 35);
-    g.lineTo(205, 52);
-    g.lineTo(230, 52);
-    g.lineTo(230, 91);
-    g.lineTo(320, 91);
-    g.lineTo(320, 133);
-    g.lineTo(218, 133);
-    g.lineTo(218, 146);
-    g.lineTo(55, 146);
-    g.lineTo(55, 137);
-    g.lineTo(42, 137);
-    g.closePath();
-    g.fill();
+    rect(35, 34, 195, 112, theme.floor);
+    rect(24, 46, 217, 88, theme.floor);
+    rect(0, 98, 320, 28, theme.corridor);
 
-    rect(52, 24, 18, 42, '#000');
-    rect(177, 24, 18, 42, '#000');
-    rect(176, 98, 144, 28, theme.corridor);
+    rect(24, 46, 217, 3, theme.light);
+    rect(24, 131, 217, 3, '#17171b');
+    rect(35, 34, 195, 3, theme.light);
+    rect(35, 143, 195, 3, '#17171b');
 
-    for (let x = 72; x <= 194; x += 24) {
-      rect(x, 39, 1, 8 + roomIndex % 3, theme.accent);
-      rect(x + 5, 39, 1, 5, theme.glow);
+    for (let ty = 55; ty < 139; ty += 14) {
+      const offset = ((ty / 14) | 0) % 2 ? 9 : 0;
+      for (let tx = 39 + offset; tx < 227; tx += 28) {
+        rect(tx, ty, 18, 1, theme.light);
+        rect(tx, ty + 11, 18, 1, '#292832');
+        rect(tx, ty, 1, 12, '#292832');
+      }
+    }
+    for (let tx = 0; tx < 320; tx += 18) {
+      rect(tx, 99, 12, 1, theme.light);
+      rect(tx + 7, 124, 11, 1, '#25252c');
     }
 
-    g.fillStyle = theme.light;
-    g.beginPath();
-    g.ellipse(130, 102, 67, 30, 0, 0, Math.PI * 2);
-    g.fill();
-    g.fillStyle = theme.glow;
-    g.beginPath();
-    g.ellipse(130, 102, 52, 27, 0, 0, Math.PI * 2);
-    g.fill();
-    g.fillStyle = theme.center;
-    g.beginPath();
-    g.ellipse(130, 102, 37, 24, 0, 0, Math.PI * 2);
-    g.fill();
+    rect(116, 27, 28, 32, theme.glow);
+    rect(119, 30, 22, 29, '#050505');
+    rect(122, 34, 16, 25, '#111116');
+    rect(126, 39, 8, 14, theme.center);
+    rect(128, 42, 4, 8, theme.accent);
+    rect(113, 56, 34, 4, theme.light);
+
+    rect(50, 73, 160, 57, theme.light);
+    rect(57, 77, 146, 49, theme.glow);
+    rect(68, 82, 124, 39, theme.center);
+    rect(82, 88, 96, 28, theme.floor);
 
     drawRoomCenter(roomIndex, theme, now);
     drawOpeningHero(now);
 
-    rect(304, 96, 16, 2, theme.glow);
-    rect(304, 124, 16, 2, theme.floor);
-    text('ROOM ' + String(pendingStage).padStart(2, '0'), 264, 59, 7, theme.glow, 'center');
-    text('STAGE ' + pendingStage, 264, 72, 9, theme.accent, 'center');
-    text(theme.name, 264, 83, 7, '#fff', 'center');
+    rect(0, 96, 18, 2, theme.glow);
+    rect(0, 126, 18, 2, '#27272d');
+    rect(302, 96, 18, 2, theme.glow);
+    rect(302, 126, 18, 2, '#27272d');
+
+    text('ROOM ' + String(pendingStage).padStart(2, '0'), 273, 48, 7, theme.glow, 'center');
+    text('STAGE ' + pendingStage, 273, 61, 9, theme.accent, 'center');
+    text(theme.name, 273, 73, 7, '#fff', 'center');
+    text(pendingStage > 1 ? '◀' : '', 10, 107, 8, theme.glow, 'center');
+    text(pendingStage < 10 ? '▶' : '', 310, 107, 8, theme.glow, 'center');
   }
 
   function updateOpening(dt) {
@@ -958,16 +960,29 @@
 
     const nextX = openingPlayer.x + dx;
     const nextY = openingPlayer.y + dy;
-    const inChamber = nextX >= 48 && nextX <= 222 && nextY >= 58 && nextY <= 139;
-    const inCorridor = nextX >= 170 && nextX <= 325 && nextY >= 98 && nextY <= 126;
-    if (inChamber || inCorridor) {
+    const inChamber = nextX >= 25 && nextX <= 240 && nextY >= 48 && nextY <= 143;
+    const inHorizontalCorridor = nextX >= -6 && nextX <= 326 && nextY >= 96 && nextY <= 128;
+    const inBattleDoor = nextX >= 117 && nextX <= 143 && nextY >= 28 && nextY <= 65;
+    if (inChamber || inHorizontalCorridor || inBattleDoor) {
       openingPlayer.x = nextX;
       openingPlayer.y = nextY;
     }
 
-    if (openingPlayer.x > 313) {
-      openingPlayer.x = 70;
+    if (openingPlayer.y < 34 && openingPlayer.x >= 117 && openingPlayer.x <= 143) {
+      openingPlayer.y = 62;
       startStage(pendingStage);
+      return;
+    }
+    if (openingPlayer.x > 318) {
+      if (pendingStage < 10) {
+        pendingStage++;
+        openingPlayer.x = 2;
+      } else openingPlayer.x = 317;
+    } else if (openingPlayer.x < 2) {
+      if (pendingStage > 1) {
+        pendingStage--;
+        openingPlayer.x = 318;
+      } else openingPlayer.x = 2;
     }
   }
 
@@ -1115,7 +1130,7 @@
         const replayColor = clearChoice === 0 ? '#ffff00' : '#aaa';
         const nextColor = clearChoice === 1 ? '#ffff00' : '#aaa';
         text((clearChoice === 0 ? '♥ ' : '') + 'REPLAY', 108, 115, 9, replayColor, 'center');
-        text((clearChoice === 1 ? '♥ ' : '') + (stage < 10 ? 'NEXT' : 'ENDING'), 214, 115, 9, nextColor, 'center');
+        text((clearChoice === 1 ? '♥ ' : '') + (stage < 10 ? 'RETURN' : 'ENDING'), 214, 115, 9, nextColor, 'center');
         text('← → でえらぶ　 ENTER / Z', 160, 151, 8, '#fff', 'center');
       } else drawEnding(state === 'victory');
     } else {
@@ -1862,13 +1877,18 @@
       return;
     }
     if (state === 'stageClear') {
-      if (clearChoice === 1 && stage >= 10) {
+      if (clearChoice === 0) {
+        startStage(stage);
+        return;
+      }
+      if (stage >= 10) {
         setState('victory');
         return;
       }
-      pendingStage = clearChoice === 0 ? stage : stage + 1;
-      openingPlayer.x = 70;
+      pendingStage = stage;
+      openingPlayer.x = 130;
       openingPlayer.y = 112;
+      openingPlayer.direction = 'down';
       openingPlayer.moving = false;
       setState('opening');
       return;
