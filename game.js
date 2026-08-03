@@ -102,6 +102,7 @@
   let reviveItems = 1;
   let dodgeAt = -10000;
   let dodgeEnemy = -1;
+  let dodgeDirection = 1;
   let damageAt = -10000;
   let damageEnemy = -1;
   let damageValue = 0;
@@ -361,7 +362,7 @@
         let drawX = enemy.x;
         if (index === dodgeEnemy && dodgeElapsed >= 0 && dodgeElapsed < 650) {
           const progress = dodgeElapsed / 650;
-          drawX += Math.sin(progress * Math.PI) * 34;
+          drawX += Math.sin(progress * Math.PI) * 34 * dodgeDirection;
         }
         drawEnemyByVisual(enemy, drawX, now);
       }
@@ -505,6 +506,37 @@
     rect(attackX - 1, top - 5, 2, bottom - top + 10, '#d9ffff');
   }
 
+  function drawBlasterHead(bullet, active) {
+    const c = '#fff';
+    const glow = active ? '#8ff8ff' : '#a6b8ba';
+    if (bullet.orientation === 'horizontal') {
+      const fromRight = bullet.side === 'right';
+      const x = fromRight ? 287 : 83;
+      const y = bullet.y;
+      const direction = fromRight ? -1 : 1;
+      rect(x - 7, y - 9, 14, 18, c);
+      rect(x - 5, y - 6, 10, 11, '#000');
+      rect(x - 4, y - 5, 3, 4, c);
+      rect(x + 2, y - 5, 3, 4, c);
+      rect(x - 2, y + 1, 4, 3, c);
+      line(x + direction * 5, y + 5, x + direction * 12, y + 9, c, 2);
+      line(x + direction * 5, y - 5, x + direction * 12, y - 9, c, 2);
+      rect(x + direction * 8 - (direction < 0 ? 4 : 0), y - 2, 5, 5, glow);
+    } else {
+      const x = bullet.x;
+      const y = bullet.side === 'bottom' ? 137 : 98;
+      const direction = bullet.side === 'bottom' ? -1 : 1;
+      rect(x - 9, y - 7, 18, 14, c);
+      rect(x - 6, y - 5, 12, 10, '#000');
+      rect(x - 5, y - 4, 4, 3, c);
+      rect(x + 2, y - 4, 4, 3, c);
+      rect(x - 2, y + 1, 4, 3, c);
+      line(x - 6, y + direction * 5, x - 10, y + direction * 12, c, 2);
+      line(x + 6, y + direction * 5, x + 10, y + direction * 12, c, 2);
+      rect(x - 2, y + direction * 7 - (direction < 0 ? 4 : 0), 5, 5, glow);
+    }
+  }
+
   function drawEnemyTurn() {
     rect(73, 91, 224, 53, '#fff');
     rect(76, 94, 218, 47, '#000');
@@ -512,17 +544,22 @@
     for (const bullet of bullets) {
       if (bullet.kind === 'beam') {
         const active = bullet.age >= bullet.warning;
-        g.globalAlpha = active ? 1 : .35 + Math.sin(bullet.age * 35) * .18;
+        const pulse = .3 + Math.sin(bullet.age * 38) * .16;
+        g.globalAlpha = active ? 1 : pulse;
         if (bullet.orientation === 'horizontal') {
-          rect(76, bullet.y - (active ? 3 : 1), 218, active ? 7 : 2, '#fff');
-          rect(bullet.x - 5, bullet.y - 7, 9, 14, '#fff');
-          rect(bullet.x - 3, bullet.y - 3, 5, 6, '#000');
+          rect(76, bullet.y - (active ? 4 : 1), 218, active ? 9 : 2, active ? '#fff' : '#7cf5ff');
+          if (active) rect(76, bullet.y - 1, 218, 3, '#8ff8ff');
         } else {
-          rect(bullet.x - (active ? 3 : 1), 94, active ? 7 : 2, 47, '#fff');
-          rect(bullet.x - 7, 92, 14, 9, '#fff');
-          rect(bullet.x - 3, 94, 6, 5, '#000');
+          rect(bullet.x - (active ? 4 : 1), 94, active ? 9 : 2, 47, active ? '#fff' : '#7cf5ff');
+          if (active) rect(bullet.x - 1, 94, 3, 47, '#8ff8ff');
         }
         g.globalAlpha = 1;
+        drawBlasterHead(bullet, active);
+        if (active && bullet.age < bullet.warning + .12) {
+          g.globalAlpha = .5;
+          rect(76, 94, 218, 47, '#fff');
+          g.globalAlpha = 1;
+        }
       } else if (bullet.kind === 'bone') {
         rect(bullet.x - 2, bullet.y - bullet.h, 5, bullet.h, '#fff');
         rect(bullet.x - 4, bullet.y - bullet.h, 9, 3, '#fff');
@@ -964,10 +1001,27 @@
       sansDodges++;
       dodgeAt = performance.now();
       dodgeEnemy = attackTarget;
+      dodgeDirection = sansDodges % 2 ? 1 : -1;
       beep(760, .07);
       setState('result', ['＊ サンズは こうげきを よけた。', '＊ よこに MISS の文字が うかんだ。']);
       return;
     }
+
+    const defender = enemies[attackTarget];
+    const dodgeChance = playerLevel >= 6 ? Math.min(.48, .1 + (playerLevel - 6) * .027) : 0;
+    if (stage !== 10 && !defender.justDodged && Math.random() < dodgeChance) {
+      defender.justDodged = true;
+      dodgeAt = performance.now();
+      dodgeEnemy = attackTarget;
+      dodgeDirection = (turnCount + attackTarget) % 2 ? 1 : -1;
+      beep(720, .07);
+      setState('result', [
+        '＊ ' + defender.name + 'は すばやく よけた。',
+        '＊ LV' + playerLevel + ' 回避率 ' + Math.round(dodgeChance * 100) + '％。'
+      ]);
+      return;
+    }
+    defender.justDodged = false;
     const damage = stage === 10 ? 1 : Math.max(3, Math.round(5 + accuracy * (9 + playerLevel * 1.2)));
     enemies[attackTarget].hp = Math.max(0, enemies[attackTarget].hp - damage);
     damageAt = performance.now();
@@ -1049,6 +1103,7 @@
       length: extras.length || 0,
       warning: extras.warning || 0,
       life: extras.life || 5,
+      side: extras.side || 'left',
       age: 0
     });
   }
@@ -1067,7 +1122,11 @@
       const gap = 2 + (turnCount % 3);
       for (let lane = 0; lane < 7; lane++) {
         if (lane === gap || lane === gap + 1) continue;
-        addProjectile('bone', right, bottom, -speed, 0, { h: 8 + lane * 4 });
+        const fromRight = (lane + turnCount) % 2 === 0;
+        addProjectile('bone', fromRight ? right : left, bottom, fromRight ? -speed : speed, 0, {
+          h: 8 + lane * 4,
+          curve: lane % 2 ? .08 : -.08
+        });
       }
     } else if (phase === 1) {
       for (let i = 0; i < 8; i++) {
@@ -1079,7 +1138,7 @@
       for (let lane = 0; lane < 4; lane++) {
         if (lane === safe) continue;
         addProjectile('beam', left, 103 + lane * 10, 0, 0, {
-          orientation: 'horizontal', length: right - left, warning: .42, life: .72
+          orientation: 'horizontal', length: right - left, warning: .42, life: .78, side: turnCount % 2 ? 'right' : 'left'
         });
       }
     } else if (phase === 3) {
@@ -1087,7 +1146,7 @@
       for (let lane = 0; lane < 6; lane++) {
         if (lane === safe || lane === safe + 1) continue;
         addProjectile('beam', 91 + lane * 37, top, 0, 0, {
-          orientation: 'vertical', length: bottom - top, warning: .38, life: .7
+          orientation: 'vertical', length: bottom - top, warning: .38, life: .76, side: turnCount % 2 ? 'bottom' : 'top'
         });
       }
     } else if (phase === 4) {
@@ -1104,7 +1163,7 @@
         addProjectile('bone', x, bottom + 5, 0, -speed * .45, { h: 18 + (x % 4) * 3 });
       }
       addProjectile('beam', left, top + 8 + turnCount % 3 * 11, 0, 0, {
-        orientation: 'horizontal', length: right - left, warning: .55, life: .85
+        orientation: 'horizontal', length: right - left, warning: .55, life: .9, side: turnCount % 2 ? 'right' : 'left'
       });
     } else if (phase === 6) {
       for (let i = 0; i < 5; i++) {
@@ -1112,7 +1171,7 @@
         addProjectile('bone', i % 2 ? left : right, bottom, i % 2 ? speed : -speed, 0, { h: 9 + i * 6 });
       }
       addProjectile('beam', 185, top, 0, 0, {
-        orientation: 'vertical', length: bottom - top, warning: .48, life: .8
+        orientation: 'vertical', length: bottom - top, warning: .48, life: .84, side: turnCount % 2 ? 'bottom' : 'top'
       });
     } else {
       addProjectile('beam', left, 106, 0, 0, {
