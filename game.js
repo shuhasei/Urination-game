@@ -1147,6 +1147,64 @@
     }
   }
 
+  function fillPolygon(points, color) {
+    g.fillStyle = color;
+    g.beginPath();
+    g.moveTo(points[0][0], points[0][1]);
+    for (let index = 1; index < points.length; index++) {
+      g.lineTo(points[index][0], points[index][1]);
+    }
+    g.closePath();
+    g.fill();
+  }
+
+  function drawRoomDepth(wall, wallDark, trim, carpet, carpetWave) {
+    const wallLight = g.createLinearGradient(0, 17, 0, 53);
+    wallLight.addColorStop(0, wallDark);
+    wallLight.addColorStop(.18, wall);
+    wallLight.addColorStop(1, wallDark);
+    g.fillStyle = wallLight;
+    g.fillRect(18, 17, 284, 36);
+
+    // Side-wall thickness makes the stepped room read as a shallow 3D set.
+    fillPolygon([[14, 17], [18, 17], [43, 53], [39, 88], [14, 88]], wallDark);
+    fillPolygon([[302, 17], [306, 17], [306, 88], [298, 53]], '#27151c');
+    fillPolygon([[18, 17], [302, 17], [298, 21], [22, 21]], trim);
+    fillPolygon([[39, 50], [306, 50], [298, 57], [46, 57]], '#311c25');
+    rect(46, 53, 252, 2, trim);
+
+    // The floor is clipped to the connected walkable bands. Lines converge
+    // toward the back wall while depth bands spread toward the camera.
+    g.save();
+    g.beginPath();
+    g.rect(39, 50, 267, 109);
+    g.rect(0, 88, 320, 43);
+    g.rect(104, 156, 112, 24);
+    g.clip();
+    const floorDepth = g.createLinearGradient(0, 51, 0, 180);
+    floorDepth.addColorStop(0, wallDark);
+    floorDepth.addColorStop(.16, carpet);
+    floorDepth.addColorStop(1, carpet);
+    g.fillStyle = floorDepth;
+    g.fillRect(0, 50, 320, 130);
+    g.globalAlpha = .24;
+    for (let x = -40; x <= 360; x += 24) {
+      line(160, 52, x, 180, carpetWave, 1);
+    }
+    for (const y of [60, 72, 88, 109, 134, 160]) {
+      const inset = Math.max(0, Math.round((160 - y) * .42));
+      line(inset, y, 320 - inset, y, carpetWave, 1);
+    }
+    g.globalAlpha = 1;
+    g.restore();
+
+    // Recessed passage edges and a shadow below the back wall.
+    fillPolygon([[0, 85], [112, 85], [108, 91], [0, 91]], '#2b1921');
+    fillPolygon([[142, 85], [320, 85], [320, 91], [146, 91]], '#2b1921');
+    rect(0, 85, 112, 2, trim);
+    rect(142, 85, 178, 2, trim);
+  }
+
   function drawOpening(now) {
     const roomIndex = Math.max(0, Math.min(9, pendingStage - 1));
     const theme = ROOM_THEMES[roomIndex];
@@ -1163,6 +1221,7 @@
     rect(0, 88, 320, 43, carpet);
     rect(39, 50, 267, 109, carpet);
     rect(104, 156, 112, 24, carpet);
+    drawRoomDepth(wall, wallDark, trim, carpet, carpetWave);
     rect(14, 13, 292, 4, trim);
     rect(14, 13, 4, 75, wallDark);
     rect(302, 13, 4, 75, wallDark);
@@ -1202,6 +1261,8 @@
     rect(284, 38, 2, 3, theme.accent);
     rect(262, 55, 34, 4, trim);
     rect(270, 58, 18, 2, theme.accent);
+    fillPolygon([[262, 55], [296, 55], [290, 63], [268, 63]], '#2b191d');
+    rect(269, 58, 20, 2, trim);
 
     if (bedroom) {
       // Bookcase with individually colored book spines.
@@ -1223,6 +1284,7 @@
       rect(235, 38, 8, 2, '#d6caa6');
       rect(211, 33, 3, 3, theme.accent);
       // Bed with posts, pillow, blanket, and visible wooden frame.
+      fillPolygon([[23, 143], [81, 143], [87, 150], [28, 150]], '#25151a');
       rect(24, 111, 57, 33, '#351c17');
       rect(28, 108, 49, 31, '#9b4b22');
       rect(32, 111, 41, 24, '#8b665a');
@@ -1231,19 +1293,32 @@
       rect(24, 107, 5, 39, '#5c2819');
       rect(76, 107, 5, 39, '#5c2819');
       // Central bordered rug reserved for each room's stage emblem.
+      fillPolygon([[88, 68], [180, 68], [176, 123], [92, 123]], '#4a241d');
       rect(88, 68, 92, 55, '#9a4a22');
       rect(92, 72, 84, 47, theme.glow);
       rect(96, 76, 76, 39, theme.floor);
       drawRoomCenter(roomIndex, theme, now);
     } else {
-      // Left staircase with rails and individual wooden treads.
-      rect(20, 60, 61, 48, '#321b20');
-      rect(23, 62, 5, 44, trim);
+      // Perspective staircase: top faces, risers, stringers, and handrails.
+      fillPolygon([[31, 58], [72, 58], [84, 111], [17, 111]], '#24151b');
+      fillPolygon([[25, 61], [31, 61], [22, 108], [17, 111]], '#51271d');
+      fillPolygon([[72, 61], [78, 63], [84, 111], [78, 108]], '#32191a');
       for (let step = 0; step < 6; step++) {
-        rect(29, 65 + step * 7, 48, 4, step % 2 ? '#87401f' : '#a44e22');
-        rect(29, 69 + step * 7, 48, 2, '#3b1c1a');
+        const y = 62 + step * 8;
+        const left = 32 - step * 2;
+        const right = 72 + step * 2;
+        fillPolygon([[left, y], [right, y], [right + 2, y + 4], [left - 2, y + 4]],
+          step % 2 ? '#9a4823' : '#b45a28');
+        fillPolygon([[left - 2, y + 4], [right + 2, y + 4], [right + 2, y + 7], [left - 2, y + 7]],
+          '#40201b');
+      }
+      line(24, 59, 16, 109, trim, 2);
+      line(77, 59, 85, 109, trim, 2);
+      for (const railX of [24, 77]) {
+        line(railX, 59, railX + (railX < 50 ? -5 : 5), 53, '#d4873a', 2);
       }
       // Television, stand, controls, and cable.
+      fillPolygon([[112, 124], [174, 124], [180, 130], [118, 130]], '#21151b');
       rect(112, 91, 62, 34, '#2a1d25');
       rect(116, 95, 54, 26, '#4b3541');
       rect(120, 99, 46, 18, '#17161b');
@@ -1253,6 +1328,7 @@
       rect(154, 129, 7, 3, '#c46625');
       line(143, 124, 150, 130, '#21141a', 1);
       // Green sofa assembled from back, cushions, arms, and feet.
+      fillPolygon([[97, 153], [185, 153], [190, 160], [103, 160]], '#21181a');
       rect(101, 141, 82, 17, '#29421d');
       rect(105, 133, 74, 20, '#638d2d');
       rect(109, 137, 31, 11, '#79a73c');
@@ -1262,6 +1338,7 @@
       rect(107, 155, 5, 4, '#321d17');
       rect(172, 155, 5, 4, '#321d17');
       // Long table and plate on the right.
+      fillPolygon([[238, 91], [293, 91], [298, 97], [243, 97]], '#5b2a19');
       rect(238, 91, 55, 61, '#3a211a');
       rect(242, 94, 47, 55, '#8d431d');
       rect(247, 101, 37, 3, '#a95a27');
