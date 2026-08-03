@@ -186,11 +186,18 @@
   let spotifyController = null;
   let spotifyPlaybackActive = false;
   const openingPlayer = { x: 131, y: 112, moving: false, direction: 'down' };
+  const sansSpeechSource = 'https://videoeditingsfx.com/sounds/game-ui.mp3';
   const sansSpeechBlipData = 'data:audio/wav;base64,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';
   const sansSpeechPool = Array.from({ length: 6 }, () => {
-    const sample = new Audio(sansSpeechBlipData);
+    const sample = new Audio(sansSpeechSource);
     sample.preload = 'auto';
-    sample.volume = .32;
+    sample.volume = .24;
+    sample.preservesPitch = false;
+    sample.addEventListener('error', () => {
+      if (sample.src === sansSpeechBlipData) return;
+      sample.src = sansSpeechBlipData;
+      sample.load();
+    }, { once: true });
     return sample;
   });
   let sansSpeechPoolIndex = 0;
@@ -1422,9 +1429,15 @@
     const isSans = speakingEnemy?.visual === 'sans';
     if (isSans) {
       const sample = sansSpeechPool[sansSpeechPoolIndex++ % sansSpeechPool.length];
+      sample.pause();
       sample.currentTime = 0;
-      sample.playbackRate = .94 + (Math.floor(speechChars) % 4) * .035;
+      sample.preservesPitch = false;
+      sample.playbackRate = .58 + (Math.floor(speechChars) % 4) * .025;
       sample.play().catch(() => {});
+      window.setTimeout(() => {
+        sample.pause();
+        sample.currentTime = 0;
+      }, 74);
       return;
     }
     const frequencies = [base + (Math.floor(speechChars) % 3) * 13];
