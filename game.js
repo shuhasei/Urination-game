@@ -344,67 +344,121 @@
     return list[(turnCount - 1) % list.length];
   }
 
+  function microPixelRect(x, y, width, height, color) {
+    for (let py = 0; py < height; py++) {
+      for (let px = 0; px < width; px++) {
+        rect(Math.round(x + px), Math.round(y + py), 1, 1, color);
+      }
+    }
+  }
+
   function drawSans(x, y, t) {
     const talking = state === 'enemySpeak' && speakingEnemy?.visual === 'sans';
     const jaw = talking && Math.floor(speechChars) % 2 ? 1 : 0;
-    const idle = Math.floor(Math.sin(t / 420) * .9);
-    const py = Math.round(y - 8 + idle);
+    const idle = Math.round(Math.sin(t / 420));
+    const sy = Math.round(y - 8 + idle);
     const white = '#ffffff';
-    const bone = '#e9e9e9';
-    const gray = '#a8adb5';
-    const dark = '#050505';
-    const eyeGlow = Math.floor(t / 170) % 2 ? '#48eaff' : '#72ff8e';
+    const bone = '#dedede';
+    const shade = '#949aa1';
+    const black = '#050505';
+    const glow = Math.floor(t / 170) % 2 ? '#45ecff' : '#75ff91';
+    const p = (dx, dy, w, h, color) => microPixelRect(x + dx, sy + dy, w, h, color);
 
-    rect(x - 9, py, 18, 2, white);
-    rect(x - 12, py + 2, 24, 2, white);
-    rect(x - 14, py + 4, 28, 9, white);
-    rect(x - 13, py + 13, 26, 4, white);
-    rect(x - 10, py + 17, 20, 3, bone);
+    // Stepped skull silhouette.
+    p(-7, 0, 14, 1, bone);
+    p(-10, 1, 20, 2, white);
+    p(-12, 3, 24, 2, white);
+    p(-14, 5, 28, 7, white);
+    p(-13, 12, 26, 3, white);
+    p(-11, 15, 22, 3, white);
+    p(-8, 18, 16, 2, bone);
+    p(-13, 6, 1, 5, bone);
+    p(12, 6, 1, 5, bone);
+    p(-10, 2, 4, 1, bone);
+    p(6, 2, 4, 1, bone);
 
-    rect(x - 10, py + 5, 7, 7, dark);
-    rect(x + 3, py + 5, 7, 7, dark);
-    rect(x - 8, py + 5, 3, 2, white);
-    rect(x + 5, py + 5, 3, 2, white);
-    rect(x + 5, py + 7, 2, 3, eyeGlow);
-    rect(x + 6, py + 7, 1, 1, white);
-    rect(x - 2, py + 10, 4, 3, dark);
-    rect(x - 4, py + 12, 3, 2, dark);
-    rect(x + 2, py + 12, 3, 2, dark);
+    // Uneven sockets, pupils and nose.
+    p(-10, 5, 7, 7, black);
+    p(-9, 4, 5, 1, black);
+    p(3, 5, 7, 7, black);
+    p(4, 4, 5, 1, black);
+    p(-8, 6, 2, 2, white);
+    p(6, 6, 2, 2, white);
+    p(5, 7, 2, 3, glow);
+    p(6, 7, 1, 1, white);
+    p(-2, 10, 4, 3, black);
+    p(-4, 12, 3, 2, black);
+    p(2, 12, 3, 2, black);
 
-    rect(x - 10, py + 14 + jaw, 20, 4 + jaw, dark);
-    rect(x - 8, py + 14 + jaw, 16, 2, white);
-    for (let tooth = -7; tooth <= 7; tooth += 3) {
-      rect(x + tooth, py + 14 + jaw, 1, 4, dark);
+    // Broad grin with individually separated teeth.
+    p(-10, 14 + jaw, 20, 5 + jaw, black);
+    p(-8, 14 + jaw, 16, 2, white);
+    p(-7, 17 + jaw, 14, 1, white);
+    for (let tooth = -7; tooth <= 7; tooth += 2) {
+      p(tooth, 14 + jaw, 1, 4 + jaw, black);
     }
-    rect(x - 7, py + 18 + jaw, 14, 1, white);
+    p(-9, 18 + jaw, 2, 1, bone);
+    p(7, 18 + jaw, 2, 1, bone);
 
-    rect(x - 3, py + 20, 6, 3, bone);
-    rect(x - 13, py + 22, 26, 3, white);
-    rect(x - 16, py + 25, 32, 13, white);
-    rect(x - 13, py + 25, 26, 12, gray);
-    rect(x - 6, py + 25, 12, 12, dark);
-    rect(x - 3, py + 25, 2, 11, white);
-    rect(x + 1, py + 25, 2, 11, white);
+    // Neck and hood rim.
+    p(-3, 20, 6, 2, bone);
+    p(-8, 21, 16, 2, white);
+    p(-11, 22, 22, 2, white);
+    p(-9, 23, 18, 2, black);
+    p(-7, 24, 14, 1, shade);
 
-    rect(x - 17, py + 27, 4, 12, white);
-    rect(x + 13, py + 27, 4, 12, white);
-    rect(x - 15, py + 31, 3, 9, gray);
-    rect(x + 12, py + 31, 3, 9, gray);
-    rect(x - 13, py + 33, 6, 4, dark);
-    rect(x + 7, py + 33, 6, 4, dark);
-    rect(x - 15, py + 39, 5, 2, bone);
-    rect(x + 10, py + 39, 5, 2, bone);
+    // Hoodie outline and dark interior.
+    p(-13, 24, 26, 2, white);
+    p(-15, 26, 30, 12, white);
+    p(-13, 27, 26, 10, black);
+    p(-10, 27, 20, 9, shade);
+    p(-7, 27, 14, 9, black);
+    p(-3, 26, 1, 10, white);
+    p(2, 26, 1, 10, white);
+    p(-5, 27, 2, 2, bone);
+    p(3, 27, 2, 2, bone);
+    p(-5, 31, 3, 1, shade);
+    p(2, 31, 3, 1, shade);
 
-    rect(x - 11, py + 38, 9, 6, white);
-    rect(x + 2, py + 38, 9, 6, white);
-    rect(x - 9, py + 39, 6, 5, dark);
-    rect(x + 3, py + 39, 6, 5, dark);
-    rect(x - 8, py + 44, 4, 4, bone);
-    rect(x + 4, py + 44, 4, 4, bone);
-    rect(x - 13, py + 47, 10, 3, white);
-    rect(x + 3, py + 47, 11, 3, white);
-    rect(x - 11, py + 48, 7, 2, dark);
-    rect(x + 6, py + 48, 7, 2, dark);
+    // Sleeves, folds and hands tucked into pockets.
+    p(-17, 27, 3, 10, white);
+    p(14, 27, 3, 10, white);
+    p(-18, 30, 3, 8, white);
+    p(15, 30, 3, 8, white);
+    p(-16, 29, 2, 7, black);
+    p(14, 29, 2, 7, black);
+    p(-15, 32, 3, 1, shade);
+    p(12, 32, 3, 1, shade);
+    p(-14, 35, 7, 3, black);
+    p(7, 35, 7, 3, black);
+    p(-13, 35, 4, 2, bone);
+    p(9, 35, 4, 2, bone);
+    p(-10, 34, 3, 1, white);
+    p(7, 34, 3, 1, white);
+
+    // Hem and shorts.
+    p(-12, 38, 24, 2, white);
+    p(-10, 40, 9, 6, white);
+    p(1, 40, 9, 6, white);
+    p(-8, 40, 6, 5, black);
+    p(2, 40, 6, 5, black);
+    p(-7, 41, 4, 1, shade);
+    p(3, 41, 4, 1, shade);
+    p(-1, 40, 2, 4, black);
+
+    // Thin legs, ankles and pixel slippers.
+    p(-7, 46, 4, 4, bone);
+    p(3, 46, 4, 4, bone);
+    p(-6, 47, 2, 3, white);
+    p(4, 47, 2, 3, white);
+    p(-12, 50, 10, 3, white);
+    p(2, 50, 11, 3, white);
+    p(-14, 52, 12, 2, bone);
+    p(2, 52, 13, 2, bone);
+    p(-11, 51, 7, 2, black);
+    p(5, 51, 8, 2, black);
+    p(-13, 53, 4, 1, white);
+    p(11, 53, 4, 1, white);
   }
 
   function levelMaxHp(level) {
