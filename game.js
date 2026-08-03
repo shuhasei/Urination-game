@@ -14,6 +14,13 @@
   ctx.imageSmoothingEnabled = false;
   g.imageSmoothingEnabled = false;
 
+  const titleImage = new Image();
+  titleImage.src = 'assets/title.png';
+  const heroImage = new Image();
+  heroImage.src = 'assets/hero.png';
+  const flowersImage = new Image();
+  flowersImage.src = 'assets/flowers.png';
+
   const keys = new Set();
   const pressed = new Set();
   const menuLabels = ['たたかう', 'こうどう', 'アイテム', 'みのがす'];
@@ -43,6 +50,7 @@
   let synthTimer = null;
   let audio = null;
   let spotifyController = null;
+  const openingPlayer = { x: 131, y: 112, moving: false, direction: 'down' };
 
   function rect(x, y, w, h, color) {
     g.fillStyle = color;
@@ -212,12 +220,103 @@
     }
   }
 
+  function drawOpening(now) {
+    rect(0, 0, W, H, '#050505');
+
+    g.fillStyle = '#3d3c49';
+    g.beginPath();
+    g.moveTo(42, 35);
+    g.lineTo(205, 35);
+    g.lineTo(205, 52);
+    g.lineTo(230, 52);
+    g.lineTo(230, 91);
+    g.lineTo(320, 91);
+    g.lineTo(320, 133);
+    g.lineTo(218, 133);
+    g.lineTo(218, 146);
+    g.lineTo(55, 146);
+    g.lineTo(55, 137);
+    g.lineTo(42, 137);
+    g.closePath();
+    g.fill();
+
+    rect(52, 24, 18, 42, '#000');
+    rect(177, 24, 18, 42, '#000');
+    rect(176, 98, 144, 28, '#474656');
+
+    g.fillStyle = '#68677c';
+    g.beginPath();
+    g.ellipse(130, 102, 67, 30, 0, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = '#d8d5e4';
+    g.beginPath();
+    g.ellipse(130, 102, 52, 27, 0, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = '#20bd50';
+    g.beginPath();
+    g.ellipse(130, 102, 37, 24, 0, 0, Math.PI * 2);
+    g.fill();
+
+    if (flowersImage.complete && flowersImage.naturalWidth) {
+      g.drawImage(flowersImage, 94, 81, 72, 42);
+    } else {
+      for (let yy = 87; yy < 119; yy += 6) {
+        for (let xx = 103; xx < 159; xx += 7) {
+          rect(xx, yy, 5, 4, (xx + yy) % 3 ? '#ffe523' : '#e4a900');
+          rect(xx + 2, yy + 1, 2, 2, '#6f4b00');
+        }
+      }
+    }
+
+    const bob = openingPlayer.moving && Math.floor(now / 130) % 2 ? 1 : 0;
+    if (heroImage.complete && heroImage.naturalWidth) {
+      g.drawImage(heroImage, Math.round(openingPlayer.x - 6), Math.round(openingPlayer.y - 14 + bob), 12, 20);
+    } else {
+      rect(openingPlayer.x - 4, openingPlayer.y - 10 + bob, 8, 7, '#5c2633');
+      rect(openingPlayer.x - 4, openingPlayer.y - 3 + bob, 8, 6, '#394d85');
+      rect(openingPlayer.x - 4, openingPlayer.y - 1 + bob, 8, 2, '#bf4dc8');
+      rect(openingPlayer.x - 3, openingPlayer.y + 3 + bob, 3, 5, '#2b2029');
+      rect(openingPlayer.x + 1, openingPlayer.y + 3 + bob, 3, 5, '#2b2029');
+    }
+
+    rect(304, 96, 16, 2, '#555463');
+    rect(304, 124, 16, 2, '#31303c');
+  }
+
+  function updateOpening(dt) {
+    const speed = 54;
+    let dx = 0;
+    let dy = 0;
+    if (keys.has('ArrowLeft')) dx -= speed * dt;
+    if (keys.has('ArrowRight')) dx += speed * dt;
+    if (keys.has('ArrowUp')) dy -= speed * dt;
+    if (keys.has('ArrowDown')) dy += speed * dt;
+
+    openingPlayer.moving = dx !== 0 || dy !== 0;
+    if (Math.abs(dx) > Math.abs(dy)) openingPlayer.direction = dx < 0 ? 'left' : 'right';
+    else if (dy !== 0) openingPlayer.direction = dy < 0 ? 'up' : 'down';
+
+    const nextX = openingPlayer.x + dx;
+    const nextY = openingPlayer.y + dy;
+    const inChamber = nextX >= 48 && nextX <= 222 && nextY >= 58 && nextY <= 139;
+    const inCorridor = nextX >= 170 && nextX <= 325 && nextY >= 98 && nextY <= 126;
+    if (inChamber || inCorridor) {
+      openingPlayer.x = nextX;
+      openingPlayer.y = nextY;
+    }
+
+    if (openingPlayer.x > 313) resetGame();
+  }
+
   function drawTitle(now) {
     rect(0, 0, W, H, '#000');
-    text('ちていのものがたり', 160, 45, 18, '#fff', 'center');
-    heartShape(160, 75);
-    text('10th ANNIVERSARY BATTLE', 160, 94, 9, '#4edc77', 'center');
-    if (Math.floor(now / 500) % 2 === 0) text('ENTER / Z', 160, 130, 9, '#fff', 'center');
+    if (titleImage.complete && titleImage.naturalWidth) {
+      g.drawImage(titleImage, 0, 0, W, H);
+    } else {
+      text('UNDERTALE', 160, 68, 28, '#fff', 'center');
+      heartShape(160, 90);
+    }
+    if (Math.floor(now / 500) % 2 === 0) text('ENTER / Z', 160, 142, 9, '#fff', 'center');
   }
 
   function drawEnding(victory) {
@@ -230,6 +329,8 @@
   function draw(now) {
     if (state === 'title') {
       drawTitle(now);
+    } else if (state === 'opening') {
+      drawOpening(now);
     } else if (state === 'victory' || state === 'defeat') {
       drawEnding(state === 'victory');
     } else {
@@ -441,7 +542,10 @@
     startAudio();
     if (spotifyController && state === 'title') spotifyController.play();
     if (state === 'title') {
-      resetGame();
+      openingPlayer.x = 131;
+      openingPlayer.y = 112;
+      openingPlayer.moving = false;
+      setState('opening');
       hint.classList.remove('visible');
       touch.classList.add('show');
       return;
@@ -534,7 +638,9 @@
     const dt = Math.min(.035, (now - last) / 1000);
     last = now;
     handlePressed();
-    if (state === 'attack') {
+    if (state === 'opening') {
+      updateOpening(dt);
+    } else if (state === 'attack') {
       attackX += attackDirection * 125 * dt;
       if (attackX >= 284) attackDirection = -1;
       if (attackX <= 82 && attackDirection < 0) resolveAttack();
