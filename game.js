@@ -424,7 +424,7 @@
         }
         drawEnemyByVisual(enemy, drawX, now);
       }
-      drawEnemyHealth(enemy);
+      if (stage !== 10) drawEnemyHealth(enemy);
       if (index === dodgeEnemy && dodgeElapsed >= 0 && dodgeElapsed < 900) {
         text('MISS', enemy.x + 29, 30, 11, '#fff');
       }
@@ -441,9 +441,11 @@
       }
     }
 
-    text('STAGE ' + stage + ' / 10', 70, 13, 7, '#62d98c');
-    text('PATTERN ' + (attackPattern ? attackPattern.id : (playerLevel - 1) * 3 + 1) + ' / 60', 160, 13, 7, '#fff', 'center');
-    text('REVIVE ' + reviveItems, 298, 13, 7, reviveItems ? '#fff000' : '#777', 'right');
+    if (stage !== 10) {
+      text('STAGE ' + stage + ' / 10', 70, 13, 7, '#62d98c');
+      text('PATTERN ' + (attackPattern ? attackPattern.id : (playerLevel - 1) * 3 + 1) + ' / 60', 160, 13, 7, '#fff', 'center');
+      text('REVIVE ' + reviveItems, 298, 13, 7, reviveItems ? '#fff000' : '#777', 'right');
+    }
     if (state === 'target') {
       const selected = aliveEnemies()[target];
       if (selected) heartShape(selected.enemy.x, 66, '#f5222d');
@@ -451,34 +453,40 @@
   }
 
   function drawStatus() {
-    text('すけ', 74, 148, 7);
-    text('LV ' + playerLevel, 96, 148, 8);
-    text('HP', 155, 149, 6);
-    rect(168, 149, 29, 8, '#5e1d24');
-    rect(168, 149, Math.max(0, 29 * hp / maxHp), 8, '#fff000');
-    text(hp + ' / ' + maxHp, 202, 148, 8);
+    const sansLayout = stage === 10;
+    const y = sansLayout ? 137 : 148;
+    text('すけ', sansLayout ? 43 : 74, y, 7);
+    text('LV ' + playerLevel, sansLayout ? 91 : 96, y, 8);
+    text('HP', sansLayout ? 139 : 155, y + 1, 6);
+    const hpX = sansLayout ? 152 : 168;
+    rect(hpX, y + 1, 29, 8, '#5e1d24');
+    rect(hpX, y + 1, Math.max(0, 29 * hp / maxHp), 8, '#fff000');
+    text(hp + ' / ' + maxHp, sansLayout ? 186 : 202, y, 8);
   }
 
   function drawMenu() {
-    for (let i = 0; i < menuBoxes.length; i++) {
-      const [x, w] = menuBoxes[i];
+    const sansLayout = stage === 10;
+    const boxes = sansLayout ? [[43, 51], [104, 51], [165, 51], [230, 51]] : menuBoxes;
+    const menuY = sansLayout ? 151 : 162;
+    for (let i = 0; i < boxes.length; i++) {
+      const [x, w] = boxes[i];
       const selected = state === 'command' && menu === i;
-      frameBox(x, 162, w, 16, selected ? '#ffff00' : '#ff7518', 1);
-      if (selected) heartShape(x + 6, 168, '#f5222d');
+      frameBox(x, menuY, w, 16, selected ? '#ffff00' : '#ff7518', 1);
+      if (selected) heartShape(x + 6, menuY + 6, '#f5222d');
       if (i === 0) {
-        line(x + 7, 174, x + 13, 165, '#ff7518');
-        line(x + 9, 175, x + 15, 165, '#ff7518');
+        line(x + 7, menuY + 12, x + 13, menuY + 3, '#ff7518');
+        line(x + 9, menuY + 13, x + 15, menuY + 3, '#ff7518');
       } else if (i === 1) {
-        rect(x + 7, 167, 2, 7, '#ff7518');
-        rect(x + 10, 166, 2, 8, '#ff7518');
+        rect(x + 7, menuY + 5, 2, 7, '#ff7518');
+        rect(x + 10, menuY + 4, 2, 8, '#ff7518');
       } else if (i === 2) {
-        rect(x + 7, 166, 7, 3, '#ff7518');
-        rect(x + 9, 169, 4, 6, '#ff7518');
+        rect(x + 7, menuY + 4, 7, 3, '#ff7518');
+        rect(x + 9, menuY + 7, 4, 6, '#ff7518');
       } else {
-        line(x + 7, 166, x + 14, 174, '#ff7518');
-        line(x + 14, 166, x + 7, 174, '#ff7518');
+        line(x + 7, menuY + 4, x + 14, menuY + 12, '#ff7518');
+        line(x + 14, menuY + 4, x + 7, menuY + 12, '#ff7518');
       }
-      text(menuLabels[i], x + 17, 165, 8, '#ff7518');
+      text(menuLabels[i], x + 17, menuY + 3, 8, '#ff7518');
     }
   }
 
@@ -494,11 +502,16 @@
   }
 
   function drawMessageBox() {
-    rect(73, 91, 224, 53, '#fff');
-    rect(76, 94, 218, 47, '#000');
-    visibleSpeechRows().forEach((row, index) => text(row, 84, 97 + index * 13, 8));
+    const sansLayout = stage === 10;
+    const x = sansLayout ? 31 : 73;
+    const y = sansLayout ? 87 : 91;
+    const w = sansLayout ? 258 : 224;
+    const h = sansLayout ? 55 : 53;
+    rect(x, y, w, h, '#fff');
+    rect(x + 3, y + 3, w - 6, h - 6, '#000');
+    visibleSpeechRows().forEach((row, index) => text(row, x + 11, y + 6 + index * 13, 8));
     if (state === 'enemySpeak' && speechChars >= message.join('').length) {
-      text('▼', 285, 129, 8, '#fff', 'center');
+      text('▼', x + w - 12, y + h - 15, 8, '#fff', 'center');
     }
   }
 
@@ -889,11 +902,11 @@
       } else drawEnding(state === 'victory');
     } else {
       rect(0, 0, W, H, '#000');
-      drawGrid();
+      if (stage !== 10) drawGrid();
       drawEnemies(now);
       if (state === 'attack') drawAttackGauge();
       else if (state === 'enemyTurn') drawEnemyTurn();
-      else drawMessageBox();
+      else if (!(stage === 10 && state === 'command')) drawMessageBox();
       drawStatus();
       drawMenu();
     }
