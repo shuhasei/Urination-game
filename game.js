@@ -27,16 +27,16 @@
   const menuLabels = ['たたかう', 'こうどう', 'アイテム', 'みのがす'];
   const menuBoxes = [[73, 55], [132, 55], [191, 55], [250, 55]];
   const STAGES = [
-    [{ name: 'ヒカリメ', type: 'eye', maxHp: 26 }],
-    [{ name: 'クラゲン', type: 'jelly', maxHp: 30 }],
-    [{ name: 'ヒカリメ', type: 'eye', maxHp: 32 }, { name: 'クラゲン', type: 'jelly', maxHp: 34 }],
-    [{ name: 'ホシノコ', type: 'eye', maxHp: 40 }],
-    [{ name: 'ミズクラゲ', type: 'jelly', maxHp: 44 }],
-    [{ name: 'ヒカリメ改', type: 'eye', maxHp: 46 }, { name: 'ミズクラゲ', type: 'jelly', maxHp: 42 }],
-    [{ name: 'セキガン', type: 'eye', maxHp: 58 }],
-    [{ name: 'オオクラゲ', type: 'jelly', maxHp: 62 }],
-    [{ name: '記念祭の双星', type: 'eye', maxHp: 58 }, { name: '記念祭の賢者', type: 'jelly', maxHp: 64 }],
-    [{ name: 'サンズ', type: 'sans', maxHp: 1 }]
+    [{ name: 'ヒカリメ', type: 'eye', visual: 'comet', maxHp: 26 }],
+    [{ name: 'クラゲン', type: 'jelly', visual: 'jelly', maxHp: 30 }],
+    [{ name: 'ランタンナイト', type: 'eye', visual: 'lantern', maxHp: 38 }],
+    [{ name: 'ツキノカメン', type: 'eye', visual: 'moon', maxHp: 42 }],
+    [{ name: 'シロハネ', type: 'jelly', visual: 'moth', maxHp: 46 }],
+    [{ name: 'カガミオウ', type: 'eye', visual: 'mirror', maxHp: 52 }],
+    [{ name: 'トケイノメ', type: 'eye', visual: 'clock', maxHp: 58 }],
+    [{ name: 'オオカンムリ', type: 'jelly', visual: 'crown', maxHp: 64 }],
+    [{ name: 'ソウセイ・アカ', type: 'eye', visual: 'sun', maxHp: 58 }, { name: 'ソウセイ・アオ', type: 'jelly', visual: 'star', maxHp: 64 }],
+    [{ name: 'サンズ', type: 'sans', visual: 'sans', maxHp: 1 }]
   ];
   const BATTLE_TRACKS = [
     'spotify:track:5iOTHhi2C3mHSn007Neqcg',
@@ -208,6 +208,102 @@
     line(x + 27, y + 6, x + 31, y + 2, c);
   }
 
+  function drawRelicEnemy(enemy, x, y, t) {
+    const c = '#fff';
+    const bob = Math.round(Math.sin(t / 260 + x) * 2);
+    y += bob;
+
+    if (enemy.visual === 'lantern') {
+      line(x - 12, y - 15, x + 12, y - 15, c);
+      line(x - 12, y - 15, x - 16, y + 6, c);
+      line(x + 12, y - 15, x + 16, y + 6, c);
+      rect(x - 14, y - 10, 28, 21, c);
+      rect(x - 11, y - 7, 22, 15, '#000');
+      rect(x - 4, y - 4, 8, 9, '#ffe36b');
+      line(x - 16, y + 6, x - 22, y + 14, c);
+      line(x + 16, y + 6, x + 22, y + 14, c);
+      rect(x - 7, y + 11, 14, 4, c);
+    } else if (enemy.visual === 'moon') {
+      g.strokeStyle = c; g.lineWidth = 3;
+      g.beginPath(); g.arc(x, y - 2, 18, .55, Math.PI * 1.55); g.stroke();
+      g.beginPath(); g.arc(x + 8, y - 5, 14, Math.PI * 1.5, .7); g.stroke();
+      rect(x - 9, y - 4, 4, 5, c);
+      rect(x - 7, y - 2, 2, 2, '#000');
+      line(x - 12, y + 15, x - 18, y + 22, c);
+      line(x - 6, y + 16, x - 3, y + 24, c);
+    } else if (enemy.visual === 'moth') {
+      rect(x - 4, y - 17, 8, 31, c);
+      rect(x - 2, y - 14, 4, 25, '#000');
+      line(x - 3, y - 15, x - 9, y - 23, c);
+      line(x + 3, y - 15, x + 9, y - 23, c);
+      for (let wing = -1; wing <= 1; wing += 2) {
+        g.strokeStyle = c; g.lineWidth = 2;
+        g.beginPath(); g.moveTo(x + wing * 4, y - 10); g.lineTo(x + wing * 23, y - 17); g.lineTo(x + wing * 19, y + 4); g.lineTo(x + wing * 5, y + 10); g.stroke();
+        rect(x + wing * 13 - 2, y - 7, 5, 5, c);
+      }
+      rect(x - 2, y - 9, 2, 3, '#000'); rect(x + 1, y - 9, 2, 3, '#000');
+    } else if (enemy.visual === 'mirror') {
+      g.strokeStyle = c; g.lineWidth = 2;
+      g.beginPath(); g.moveTo(x, y - 23); g.lineTo(x + 17, y - 11); g.lineTo(x + 14, y + 12); g.lineTo(x, y + 22); g.lineTo(x - 14, y + 12); g.lineTo(x - 17, y - 11); g.closePath(); g.stroke();
+      rect(x - 11, y - 8, 22, 18, c);
+      rect(x - 8, y - 5, 16, 12, '#000');
+      rect(x - 6, y - 2, 4, 4, c); rect(x + 3, y - 2, 4, 4, c);
+      line(x - 5, y + 5, x + 5, y + 5, c);
+      line(x - 18, y + 2, x - 27, y + 12, c); line(x + 18, y + 2, x + 27, y + 12, c);
+    } else if (enemy.visual === 'clock') {
+      g.strokeStyle = c; g.lineWidth = 2;
+      g.beginPath(); g.arc(x, y - 2, 19, 0, Math.PI * 2); g.stroke();
+      for (let i = 0; i < 12; i++) {
+        const a = i * Math.PI / 6;
+        rect(x + Math.cos(a) * 15 - 1, y - 2 + Math.sin(a) * 15 - 1, 3, 3, c);
+      }
+      line(x, y - 2, x, y - 13, c, 2); line(x, y - 2, x + 9, y + 4, c, 2);
+      rect(x - 7, y + 19, 5, 5, c); rect(x + 3, y + 19, 5, 5, c);
+    } else if (enemy.visual === 'crown') {
+      line(x - 18, y - 6, x - 13, y - 22, c); line(x - 13, y - 22, x - 5, y - 10, c);
+      line(x - 5, y - 10, x, y - 25, c); line(x, y - 25, x + 6, y - 10, c);
+      line(x + 6, y - 10, x + 14, y - 22, c); line(x + 14, y - 22, x + 18, y - 6, c);
+      rect(x - 18, y - 6, 36, 9, c); rect(x - 14, y - 3, 28, 17, c); rect(x - 11, y, 22, 11, '#000');
+      rect(x - 7, y + 2, 4, 4, c); rect(x + 4, y + 2, 4, 4, c);
+      line(x - 8, y + 15, x - 15, y + 23, c); line(x + 8, y + 15, x + 15, y + 23, c);
+    } else if (enemy.visual === 'sun' || enemy.visual === 'star') {
+      const points = enemy.visual === 'sun' ? 12 : 8;
+      for (let i = 0; i < points; i++) {
+        const a = i * Math.PI * 2 / points + t / 1200;
+        line(x + Math.cos(a) * 12, y + Math.sin(a) * 12, x + Math.cos(a) * 23, y + Math.sin(a) * 23, c);
+      }
+      g.strokeStyle = c; g.lineWidth = 2;
+      g.beginPath(); g.arc(x, y, 12, 0, Math.PI * 2); g.stroke();
+      rect(x - 6, y - 3, 4, 4, c); rect(x + 3, y - 3, 4, 4, c);
+      line(x - 5, y + 5, x + 5, y + 5, c);
+    }
+  }
+
+  function drawEnemyByVisual(enemy, x, now) {
+    if (enemy.visual === 'comet') drawEyeComet(x, 50, now);
+    else if (enemy.visual === 'jelly') drawJellySage(x, 51, now);
+    else if (enemy.visual === 'sans') drawSans(x, 45, now);
+    else drawRelicEnemy(enemy, x, 49, now);
+  }
+
+  function enemyBattleQuote(enemy) {
+    const quotes = {
+      comet: ['目を そらすな。', '光の軌道を よめるかな。', 'つぎは 速くいくぞ。'],
+      jelly: ['水の流れに のってみな。', '足もとを よく見て。', '波は 同じ形では来ない。'],
+      lantern: ['暗がりを 照らしてやろう。', '影の向きを 見きわめろ。', '灯りが 揺れたら 合図だ。'],
+      moon: ['月の裏側を 見せよう。', '満ちて、そして欠ける。', '静かな夜ほど 危険だ。'],
+      moth: ['羽音を 追ってみて。', '風向きが 変わるよ。', '白い羽には 触れないで。'],
+      mirror: ['きみの動きを 映している。', '左右は 本当に同じかな。', '鏡像が 先に動く。'],
+      clock: ['針が重なる時を 待て。', '一秒ごとに 速くなる。', '時間は 止まらない。'],
+      crown: ['王冠の間を 進め。', '高い場所ほど 狭くなる。', '正面から 受けてみろ。'],
+      sun: ['赤い星が 先に動く。', 'ふたつの光を 見くらべろ。', '交差する瞬間が来る。'],
+      star: ['青い星は 後から追う。', '相棒と 軌道を合わせる。', '星のすきまを 探して。'],
+      sans: ['準備は できたか。', '重力の向きが 変わるぞ。', '骨のすきまを よく見ろ。', '次は 休むひまがない。']
+    };
+    const list = quotes[enemy.visual] || ['次の攻撃を はじめる。'];
+    return list[(turnCount - 1) % list.length];
+  }
+
   function drawSans(x, y, t) {
     const c = '#fff', shade = '#cfcfcf', dark = '#000';
     rect(x - 10, y - 21, 20, 3, c);
@@ -267,9 +363,7 @@
           const progress = dodgeElapsed / 650;
           drawX += Math.sin(progress * Math.PI) * 34;
         }
-        if (enemy.type === 'eye') drawEyeComet(drawX, 50, now);
-        else if (enemy.type === 'jelly') drawJellySage(drawX, 51, now);
-        else drawSans(drawX, 45, now);
+        drawEnemyByVisual(enemy, drawX, now);
       }
       drawEnemyHealth(enemy);
       if (index === dodgeEnemy && dodgeElapsed >= 0 && dodgeElapsed < 900) {
@@ -881,6 +975,13 @@
     const attacker = attackers[(turnCount - 1) % attackers.length].enemy;
     const patternIndex = (playerLevel - 1) * 3 + ((turnCount - 1) % 3);
     attackPattern = attacker.patterns[patternIndex];
+    if (attacker.type === 'sans') {
+      attackPattern = { ...attackPattern, gravity: attackPattern.id % 4 !== 2 };
+    }
+    setState('enemySpeak', ['＊ ' + attacker.name + '「' + enemyBattleQuote(attacker) + '」', '＊ PATTERN ' + attackPattern.id + ' が はじまる。']);
+  }
+
+  function startEnemyAttack() {
     heart.x = 160;
     heart.y = 117;
     heart.vy = 0;
@@ -1165,6 +1266,10 @@
     }
     if (state === 'intro') {
       setState('command', ['＊ どうする？']);
+      return;
+    }
+    if (state === 'enemySpeak') {
+      startEnemyAttack();
       return;
     }
     if (state === 'command') {
