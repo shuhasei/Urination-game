@@ -530,82 +530,130 @@
 
   function drawAttackGauge() {
     rect(49, 88, 204, 57, '#fff');
-    rect(52, 91, 198, 51, '#030303');
+    rect(52, 91, 198, 51, '#000');
 
-    const left = 72;
-    const right = 230;
+    const left = 55;
+    const right = 247;
     const center = 151;
-    const top = 101;
+    const top = 102;
     const bottom = 135;
 
     g.save();
     g.beginPath();
     g.moveTo(left, 118);
-    g.lineTo(left + 15, 108);
-    g.lineTo(left + 43, 102);
-    g.lineTo(center - 22, top);
-    g.lineTo(center + 22, top);
-    g.lineTo(right - 43, 102);
-    g.lineTo(right - 15, 108);
+    g.lineTo(left + 5, 111);
+    g.lineTo(left + 14, 111);
+    g.lineTo(left + 14, 108);
+    g.lineTo(left + 25, 108);
+    g.lineTo(left + 25, 105);
+    g.lineTo(left + 42, 105);
+    g.lineTo(left + 42, 103);
+    g.lineTo(center - 30, 101);
+    g.lineTo(center - 12, 101);
+    g.lineTo(center - 12, 99);
+    g.lineTo(center + 12, 99);
+    g.lineTo(center + 12, 101);
+    g.lineTo(center + 30, 101);
+    g.lineTo(right - 42, 103);
+    g.lineTo(right - 42, 105);
+    g.lineTo(right - 25, 105);
+    g.lineTo(right - 25, 108);
+    g.lineTo(right - 14, 108);
+    g.lineTo(right - 14, 111);
+    g.lineTo(right - 5, 111);
     g.lineTo(right, 118);
-    g.lineTo(right - 15, 128);
-    g.lineTo(right - 43, 134);
-    g.lineTo(center + 22, bottom);
-    g.lineTo(center - 22, bottom);
-    g.lineTo(left + 43, 134);
-    g.lineTo(left + 15, 128);
+    g.lineTo(right, 123);
+    g.lineTo(right - 5, 130);
+    g.lineTo(right - 14, 130);
+    g.lineTo(right - 14, 133);
+    g.lineTo(right - 25, 133);
+    g.lineTo(right - 25, 136);
+    g.lineTo(right - 42, 136);
+    g.lineTo(right - 42, 138);
+    g.lineTo(center + 30, 140);
+    g.lineTo(center + 12, 140);
+    g.lineTo(center + 12, 142);
+    g.lineTo(center - 12, 142);
+    g.lineTo(center - 12, 140);
+    g.lineTo(center - 30, 140);
+    g.lineTo(left + 42, 138);
+    g.lineTo(left + 42, 136);
+    g.lineTo(left + 25, 136);
+    g.lineTo(left + 25, 133);
+    g.lineTo(left + 14, 133);
+    g.lineTo(left + 14, 130);
+    g.lineTo(left + 5, 130);
+    g.lineTo(left, 123);
     g.closePath();
-    g.fillStyle = '#b8ef21';
+    g.fillStyle = '#b7ef25';
     g.fill();
     g.clip();
 
-    rect(left + 5, top + 4, right - left - 10, bottom - top - 8, '#050505');
-    rect(left + 9, 111, right - left - 18, 15, '#090909');
+    g.beginPath();
+    g.moveTo(left + 8, 118);
+    g.lineTo(left + 17, 112);
+    g.lineTo(left + 31, 108);
+    g.lineTo(center - 31, 104);
+    g.lineTo(center + 31, 104);
+    g.lineTo(right - 31, 108);
+    g.lineTo(right - 17, 112);
+    g.lineTo(right - 8, 118);
+    g.lineTo(right - 8, 123);
+    g.lineTo(right - 17, 129);
+    g.lineTo(right - 31, 133);
+    g.lineTo(center + 31, 137);
+    g.lineTo(center - 31, 137);
+    g.lineTo(left + 31, 133);
+    g.lineTo(left + 17, 129);
+    g.lineTo(left + 8, 123);
+    g.closePath();
+    g.fillStyle = '#020302';
+    g.fill();
 
-    rect(left + 18, 106, 4, 25, '#f32232');
-    rect(right - 22, 106, 4, 25, '#f32232');
-    rect(left + 47, 102, 4, 33, '#f5dd26');
-    rect(right - 51, 102, 4, 33, '#f5dd26');
-    rect(center - 13, 100, 26, 37, '#88d931');
-    rect(center - 8, 100, 16, 37, '#28b87d');
-    rect(center - 4, 99, 8, 39, '#063e36');
-    rect(center - 2, 99, 4, 39, '#58f6bd');
+    rect(left + 20, 107, 5, 28, '#ed092b');
+    rect(right - 25, 107, 5, 28, '#ed092b');
+    rect(left + 60, 102, 5, 38, '#f5f523');
+    rect(right - 65, 102, 5, 38, '#f5f523');
 
-    for (let i = 0; i < 8; i++) {
-      const lx = left + 27 + i * 7;
-      const rx = right - 27 - i * 7;
-      const color = i < 3 ? '#e82a35' : i < 6 ? '#e4d72a' : '#57d85a';
-      rect(lx, 109 + (i % 2) * 7, 4, 2, color);
-      rect(rx - 4, 109 + (i % 2) * 7, 4, 2, color);
-      rect(lx + 1, 123 - (i % 3) * 5, 3, 1, color);
-      rect(rx - 4, 123 - (i % 3) * 5, 3, 1, color);
+    rect(center - 13, 100, 26, 41, '#b7ef25');
+    rect(center - 9, 101, 18, 39, '#35c95d');
+    for (let y = 104; y < 138; y += 5) {
+      rect(center - 9, y, 5, 2, '#72ec43');
+      rect(center + 4, y, 5, 2, '#72ec43');
+    }
+    rect(center - 4, 102, 8, 37, '#030504');
+
+    for (let i = 0; i < 5; i++) {
+      const y = 109 + i * 6;
+      rect(left + 30 + (i % 2) * 4, y, 4, 1, '#e91a35');
+      rect(left + 48 - (i % 2) * 3, y + 2, 3, 1, '#d91631');
+      rect(right - 34 - (i % 2) * 4, y, 4, 1, '#e91a35');
+      rect(right - 51 + (i % 2) * 3, y + 2, 3, 1, '#d91631');
     }
 
-    for (let x = left + 8; x < right - 8; x += 8) {
-      rect(x, top + 2, 4, 1, '#9ecb1c');
-      rect(x + 2, bottom - 3, 4, 1, '#9ecb1c');
+    for (let i = 0; i < 5; i++) {
+      const y = 108 + i * 6;
+      rect(left + 70 + (i % 2) * 4, y, 4, 1, '#f0ee35');
+      rect(left + 83 - (i % 2) * 3, y + 3, 4, 1, '#e8e72c');
+      rect(right - 74 - (i % 2) * 4, y, 4, 1, '#f0ee35');
+      rect(right - 87 + (i % 2) * 3, y + 3, 4, 1, '#e8e72c');
     }
     g.restore();
 
-    line(left, 118, left + 15, 108, '#d8ff38');
-    line(left + 15, 108, left + 43, 102, '#d8ff38');
-    line(left + 43, 102, center - 22, top, '#d8ff38');
-    line(center + 22, top, right - 43, 102, '#d8ff38');
-    line(right - 43, 102, right - 15, 108, '#d8ff38');
-    line(right - 15, 108, right, 118, '#d8ff38');
-    line(left, 118, left + 15, 128, '#8fc315');
-    line(left + 15, 128, left + 43, 134, '#8fc315');
-    line(left + 43, 134, center - 22, bottom, '#8fc315');
-    line(center + 22, bottom, right - 43, 134, '#8fc315');
-    line(right - 43, 134, right - 15, 128, '#8fc315');
-    line(right - 15, 128, right, 118, '#8fc315');
+    rect(center - 40, 97, 30, 1, '#b7ef25');
+    rect(center - 47, 97, 4, 1, '#b7ef25');
+    rect(center + 10, 97, 30, 1, '#b7ef25');
+    rect(center + 43, 97, 4, 1, '#b7ef25');
+    rect(center - 40, 143, 30, 1, '#b7ef25');
+    rect(center - 47, 143, 4, 1, '#b7ef25');
+    rect(center + 10, 143, 30, 1, '#b7ef25');
+    rect(center + 43, 143, 4, 1, '#b7ef25');
 
-    const gaugeX = left + (attackX - 82) / (284 - 82) * (right - left);
-    rect(gaugeX - 5, top - 4, 11, bottom - top + 8, 'rgba(255,255,255,.18)');
-    rect(gaugeX - 3, top - 5, 7, bottom - top + 10, '#595959');
-    rect(gaugeX - 2, top - 5, 5, bottom - top + 10, '#fff');
-    rect(gaugeX - 1, top - 5, 2, bottom - top + 10, '#d8ffff');
-    rect(gaugeX, top - 3, 1, bottom - top + 6, '#fff');
+    const gaugeX = left + 4 + (attackX - 82) / (284 - 82) * (right - left - 8);
+    rect(gaugeX - 3, top - 4, 8, bottom - top + 12, '#050505');
+    rect(gaugeX - 2, top - 3, 6, bottom - top + 10, '#a6a6a6');
+    rect(gaugeX - 1, top - 3, 4, bottom - top + 10, '#fff');
+    rect(gaugeX, top - 2, 2, bottom - top + 8, '#f8ffff');
   }
 
   function drawBlasterHead(bullet, active) {
