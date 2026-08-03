@@ -50,6 +50,25 @@
     'spotify:track:6YnPqvc66bdYGGOJIlDEz1'
   ];
   const MEGALOVANIA = 'spotify:track:1J03Vp93ybKIxfzYI4YJtL';
+  function createAttackPatterns(type, seed) {
+    return Array.from({ length: 20 }, (_, index) => {
+      const level = index + 1;
+      const typeOffset = type === 'eye' ? 0 : type === 'jelly' ? 1 : 2;
+      return {
+        id: level,
+        kind: type === 'eye' ? 'star' : type === 'jelly' ? 'drop' : 'bone',
+        route: (index + seed + typeOffset) % 4,
+        speed: (type === 'sans' ? 62 : 34) + level * (type === 'sans' ? 2.8 : 2.1) + seed % 5,
+        interval: Math.max(type === 'sans' ? 115 : 190, (type === 'sans' ? 330 : 570) - level * (type === 'sans' ? 10 : 16) - seed % 20),
+        burst: 1 + Math.floor((level - 1) / 5),
+        wave: 5 + level * 1.2 + seed % 4,
+        damage: type === 'sans' ? 3 + Math.floor(level / 6) : 2 + Math.floor(level / 5),
+        gravity: type === 'sans' && index % 3 !== 1,
+        duration: 3300 + Math.min(2500, level * 105)
+      };
+    });
+  }
+
   let enemies = [];
 
   let state = 'title';
@@ -60,6 +79,8 @@
   let maxHp = 20;
   let items = 2;
   let clearChoice = 1;
+  let pendingStage = 1;
+  let attackPattern = null;
   let message = ['＊ 10しゅうねんの よる。', '＊ ふたりの ちょうせんしゃが あらわれた。'];
   let attackX = 82;
   let attackDirection = 1;
@@ -101,14 +122,15 @@
 
   function text(value, x, y, size = 8, color = '#fff', align = 'left') {
     const readableSize = Math.max(8, size);
-    g.font = '900 ' + readableSize + 'px "MS Gothic","Yu Gothic",monospace';
+    g.font = '700 ' + readableSize + 'px "Meiryo","Yu Gothic UI","Noto Sans JP",sans-serif';
     g.textAlign = align;
     g.textBaseline = 'top';
     for (const [i, row] of String(value).split('\n').entries()) {
       const tx = Math.round(x);
       const ty = Math.round(y + i * (readableSize + 3));
-      g.strokeStyle = '#000';
-      g.lineWidth = 2;
+      g.strokeStyle = 'rgba(0,0,0,.9)';
+      g.lineJoin = 'round';
+      g.lineWidth = .75;
       g.strokeText(row, tx, ty);
       g.fillStyle = color;
       g.fillText(row, tx, ty);
@@ -261,8 +283,9 @@
       }
     }
 
-    text('STAGE ' + stage + ' / 10', 70, 14, 7, '#62d98c');
-    text('REVIVE ' + reviveItems, 298, 14, 7, reviveItems ? '#fff000' : '#777', 'right');
+    text('STAGE ' + stage + ' / 10', 70, 13, 7, '#62d98c');
+    text('PATTERN ' + playerLevel, 160, 13, 7, '#fff', 'center');
+    text('REVIVE ' + reviveItems, 298, 13, 7, reviveItems ? '#fff000' : '#777', 'right');
     if (state === 'target') {
       const selected = aliveEnemies()[target];
       if (selected) heartShape(selected.enemy.x, 66, '#f5222d');
@@ -392,9 +415,14 @@
         rect(bullet.x - 2, bullet.y - bullet.h, 5, bullet.h, '#fff');
         rect(bullet.x - 4, bullet.y - bullet.h, 9, 3, '#fff');
         rect(bullet.x - 4, bullet.y - 3, 9, 3, '#fff');
+      } else if (bullet.kind === 'drop') {
+        rect(bullet.x - 2, bullet.y - 5, 5, 10, '#bffcff');
+        rect(bullet.x - 1, bullet.y - 7, 3, 2, '#fff');
+        rect(bullet.x - 1, bullet.y + 5, 3, 2, '#fff');
       } else {
-        rect(bullet.x - 3, bullet.y - 3, 7, 7, '#fff');
-        rect(bullet.x - 1, bullet.y - 1, 3, 3, '#000');
+        rect(bullet.x - 1, bullet.y - 5, 3, 11, '#fff');
+        rect(bullet.x - 5, bullet.y - 1, 11, 3, '#fff');
+        rect(bullet.x - 2, bullet.y - 2, 5, 5, '#d8fff3');
       }
     }
   }
@@ -460,6 +488,7 @@
 
     rect(304, 96, 16, 2, '#555463');
     rect(304, 124, 16, 2, '#31303c');
+    text('STAGE ' + pendingStage, 264, 72, 9, '#fff000', 'center');
   }
 
   function updateOpening(dt) {
@@ -484,7 +513,10 @@
       openingPlayer.y = nextY;
     }
 
-    if (openingPlayer.x > 313) resetGame();
+    if (openingPlayer.x > 313) {
+      openingPlayer.x = 70;
+      startStage(pendingStage);
+    }
   }
 
   function drawTitle(now) {
@@ -622,7 +654,8 @@
       hp: enemy.maxHp,
       spared: false,
       mood: 0,
-      x: template.length === 1 ? 160 : (index === 0 ? 112 : 207)
+      x: template.length === 1 ? 160 : (index === 0 ? 112 : 207),
+      patterns: createAttackPatterns(enemy.type, number * 7 + index * 11)
     }));
     hp = maxHp;
     menu = 0;
@@ -730,8 +763,12 @@
   function beginEnemyTurn() {
     if (!aliveEnemies().length) return finishVictory();
     turnCount++;
+    const attackers = aliveEnemies();
+    const attacker = attackers[(turnCount - 1) % attackers.length].enemy;
+    attackPattern = attacker.patterns[playerLevel - 1];
     heart.x = 160;
     heart.y = 117;
+    heart.vy = 0;
     bullets = [];
     spawnAt = 0;
     invincible = 0;
@@ -755,10 +792,12 @@
   }
 
   function updateEnemyTurn(dt, now) {
-    const speed = stage === 10 ? 86 : 72;
+    const pattern = attackPattern || createAttackPatterns(enemies[0].type, stage)[playerLevel - 1];
+    const speed = pattern.gravity ? 86 : 72;
+
     if (keys.has('ArrowLeft')) heart.x -= speed * dt;
     if (keys.has('ArrowRight')) heart.x += speed * dt;
-    if (stage === 10) {
+    if (pattern.gravity) {
       heart.vy += 190 * dt;
       if (keys.has('ArrowUp') && heart.y >= 133) heart.vy = -92;
       heart.y += heart.vy * dt;
@@ -770,30 +809,35 @@
     }
     heart.x = Math.max(81, Math.min(231, heart.x));
     heart.y = Math.max(99, Math.min(135, heart.y));
+
     if (now >= spawnAt) {
-      if (stage === 10) {
-        const fromSide = Math.random() > .35;
-        bullets.push({
-          kind: 'bone',
-          x: fromSide ? 233 : 82 + Math.random() * 148,
-          y: fromSide ? 138 : 145,
-          vx: fromSide ? -(68 + Math.random() * 28) : 0,
-          vy: fromSide ? 0 : -(45 + Math.random() * 20),
-          h: 9 + Math.random() * 20
-        });
-        spawnAt = now + 190;
-      } else {
-        const fromLeft = Math.random() > .5;
-        bullets.push({
-          kind: 'orb',
-          x: fromLeft ? 79 : 233,
-          y: 101 + Math.random() * 32,
-          vx: (fromLeft ? 1 : -1) * (38 + stage * 3 + Math.random() * 22),
-          vy: (Math.random() - .5) * (12 + stage)
-        });
-        spawnAt = now + Math.max(210, 520 - stage * 24);
+      for (let shot = 0; shot < pattern.burst; shot++) {
+        const offset = (shot - (pattern.burst - 1) / 2) * 9;
+        if (pattern.kind === 'bone') {
+          const horizontal = pattern.route === 0 || pattern.route === 2;
+          const reverse = pattern.route >= 2;
+          bullets.push({
+            kind: 'bone',
+            x: horizontal ? (reverse ? 79 : 233) : 90 + Math.random() * 140,
+            y: horizontal ? 138 + offset * .15 : (reverse ? 96 : 145),
+            vx: horizontal ? (reverse ? 1 : -1) * pattern.speed : 0,
+            vy: horizontal ? 0 : (reverse ? 1 : -1) * pattern.speed,
+            h: 9 + ((playerLevel * 3 + shot * 7) % 22)
+          });
+        } else {
+          const route = pattern.route;
+          const fromHorizontal = route === 0 || route === 2;
+          const reverse = route >= 2;
+          let x = fromHorizontal ? (reverse ? 233 : 79) : 88 + Math.random() * 144;
+          let y = fromHorizontal ? 116 + offset : (reverse ? 139 : 96);
+          let vx = fromHorizontal ? (reverse ? -1 : 1) * pattern.speed : Math.sin((now + shot * 80) / 180) * pattern.wave;
+          let vy = fromHorizontal ? Math.sin((now + shot * 120) / 210) * pattern.wave : (reverse ? -1 : 1) * pattern.speed;
+          bullets.push({ kind: pattern.kind, x, y, vx, vy, h: 0 });
+        }
       }
+      spawnAt = now + pattern.interval;
     }
+
     for (const bullet of bullets) {
       bullet.x += bullet.vx * dt;
       bullet.y += bullet.vy * dt;
@@ -801,12 +845,13 @@
         ? Math.abs(bullet.x - heart.x) < 6 && heart.y > bullet.y - bullet.h - 4 && heart.y < bullet.y + 5
         : Math.abs(bullet.x - heart.x) < 6 && Math.abs(bullet.y - heart.y) < 7;
       if (invincible <= 0 && hit) {
-        hp = Math.max(0, hp - (stage === 10 ? 4 : 3 + Math.ceil(stage / 3)));
-        invincible = stage === 10 ? .35 : .65;
+        hp = Math.max(0, hp - pattern.damage);
+        invincible = pattern.kind === 'bone' ? .34 : .58;
         beep(110, .1);
       }
     }
-    bullets = bullets.filter(b => b.x > 74 && b.x < 239 && b.y > 88 && b.y < 150);
+
+    bullets = bullets.filter(bullet => bullet.x > 70 && bullet.x < 242 && bullet.y > 86 && bullet.y < 153);
     invincible -= dt;
     if (hp <= 0) {
       if (reviveItems > 0) {
@@ -819,13 +864,22 @@
         beep(880, .18);
         setState('result', ['＊ ふっかつのしずくが かがやいた！', '＊ HPが ぜんかいした。']);
       } else finishDefeat();
-    } else if (now - stateAt > (stage === 10 ? 6000 : 3600 + stage * 120)) setState('command', ['＊ どうする？']);
+    } else if (now - stateAt > pattern.duration) {
+      setState('command', ['＊ どうする？']);
+    }
   }
 
   function confirm() {
     startAudio();
     if (spotifyController && state === 'title') spotifyController.play();
     if (state === 'title') {
+      playerLevel = 1;
+      maxHp = levelMaxHp(playerLevel);
+      hp = maxHp;
+      items = 3;
+      reviveItems = 1;
+      turnCount = 0;
+      pendingStage = 1;
       openingPlayer.x = 131;
       openingPlayer.y = 112;
       openingPlayer.moving = false;
@@ -856,9 +910,15 @@
       return;
     }
     if (state === 'stageClear') {
-      if (clearChoice === 0) startStage(stage);
-      else if (stage < 10) startStage(stage + 1);
-      else setState('victory');
+      if (clearChoice === 1 && stage >= 10) {
+        setState('victory');
+        return;
+      }
+      pendingStage = clearChoice === 0 ? stage : stage + 1;
+      openingPlayer.x = 70;
+      openingPlayer.y = 112;
+      openingPlayer.moving = false;
+      setState('opening');
       return;
     }
     if (state === 'victory' || state === 'defeat') {
