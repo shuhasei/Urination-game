@@ -1066,7 +1066,8 @@
       g.restore();
       return;
     } else if (facingUp) {
-      drawHeroBackSprite(x, y, spriteSize, bob, frame);
+      const backSize = Math.max(14, Math.round(spriteSize * .84));
+      drawHeroBackSprite(x, y, backSize, bob, frame);
       return;
     } else if (heroImage.complete && heroImage.naturalWidth) {
       g.save();
@@ -1543,8 +1544,15 @@
       : obstacle(123, 80, 59, 41) || obstacle(114, 120, 81, 42)
         || obstacle(221, 99, 78, 66) || obstacle(76, 130, 39, 35)
         || obstacle(244, 72, 54, 29) || obstacle(34, 18, 43, 43);
+    const crossingFloorBoundary = (openingPlayer.y >= 80 && nextY < 80)
+      || (openingPlayer.y < 80 && nextY >= 80);
+    const currentOnConnector = bedroom
+      ? openingPlayer.x >= 246 && openingPlayer.x <= 295
+      : openingPlayer.x >= 26 && openingPlayer.x <= 99;
+    const connectorAllowsCrossing = !crossingFloorBoundary
+      || (currentOnConnector && (inLivingStairs || inBedroomSteps));
     if ((inLowerFloor || inUpperWalkway || inLivingStairs || inBedroomSteps
-      || inHorizontalCorridor || inBattleDoor) && !blocked) {
+      || inHorizontalCorridor || inBattleDoor) && !blocked && connectorAllowsCrossing) {
       openingPlayer.x = nextX;
       openingPlayer.y = nextY;
     }
