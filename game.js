@@ -196,6 +196,8 @@
   let audio = null;
   let spotifyController = null;
   let spotifyPlaybackActive = false;
+  let spotifyRequestedUri = '';
+  let spotifyLoopGuard = false;
   const openingPlayer = { x: 131, y: 112, moving: false, direction: 'down' };
   let openingDoorProgress = 0;
   let openingDoorHold = 0;
@@ -994,6 +996,32 @@
     }
   }
 
+  function drawHeroBackSprite(x, y, size, bob, frame) {
+    const scale = size / 16;
+    const stride = frame === 1 ? 1 : frame === 3 ? -1 : 0;
+    g.save();
+    g.translate(Math.round(x - size / 2), Math.round(y + 4 - size + bob));
+    g.scale(scale, scale);
+
+    // Back-facing frame: the same proportions and palette as the front/side art.
+    rect(5, 0, 6, 1, '#3b161d');
+    rect(3, 1, 10, 2, '#4a1c25');
+    rect(2, 3, 12, 4, '#55202a');
+    rect(3, 7, 10, 1, '#3b161d');
+    rect(4, 8, 8, 2, '#3f5ba8');
+    rect(4, 10, 8, 2, '#ed20d5');
+    rect(4, 12, 8, 1, '#3f5ba8');
+    rect(2, 8 + (stride > 0 ? 1 : 0), 2, 5, '#5f2a31');
+    rect(12, 8 + (stride < 0 ? 1 : 0), 2, 5, '#5f2a31');
+    rect(2, 12 + (stride > 0 ? 1 : 0), 2, 2, '#e2bd32');
+    rect(12, 12 + (stride < 0 ? 1 : 0), 2, 2, '#e2bd32');
+    rect(5 + stride, 13, 3, 2, '#412028');
+    rect(9 - stride, 13, 3, 2, '#412028');
+    rect(4 + stride, 15, 4, 1, '#171116');
+    rect(9 - stride, 15, 4, 1, '#171116');
+    g.restore();
+  }
+
   function drawOpeningHero(now) {
     const x = Math.round(openingPlayer.x);
     const y = Math.round(openingPlayer.y);
@@ -1002,8 +1030,7 @@
     const bob = openingPlayer.moving && frame % 2 ? -1 : 0;
     const facingLeft = openingPlayer.direction === 'left';
     const facingUp = openingPlayer.direction === 'up';
-    const horizontalWalk = openingPlayer.moving
-      && (openingPlayer.direction === 'left' || openingPlayer.direction === 'right');
+    const horizontalFacing = openingPlayer.direction === 'left' || openingPlayer.direction === 'right';
     const bedroom = (pendingStage - 1) % 2 === 0;
     const onLivingStairs = !bedroom && x >= 25 && x <= 99 && y >= 54 && y <= 136;
     const onBedroomSteps = bedroom && x >= 246 && x <= 294 && y >= 42 && y <= 98;
@@ -1024,9 +1051,9 @@
     g.fill();
     g.globalAlpha = 1;
 
-    if (horizontalWalk && heroSideImage.complete && heroSideImage.naturalWidth) {
+    if (horizontalFacing && heroSideImage.complete && heroSideImage.naturalWidth) {
       const sideFrameWidth = Math.floor(heroSideImage.naturalWidth / 2);
-      const sideFrame = Math.floor(now / 125) % 2;
+      const sideFrame = openingPlayer.moving ? Math.floor(now / 125) % 2 : 0;
       g.save();
       g.translate(x, y);
       if (facingLeft) g.scale(-1, 1);
@@ -1037,6 +1064,9 @@
         spriteLeft, spriteTop, spriteSize, spriteSize
       );
       g.restore();
+      return;
+    } else if (facingUp) {
+      drawHeroBackSprite(x, y, spriteSize, bob, frame);
       return;
     } else if (heroImage.complete && heroImage.naturalWidth) {
       g.save();
@@ -1050,11 +1080,6 @@
       );
       g.restore();
 
-      if (facingUp) {
-        rect(x - 5, y - 13 + bob, 10, 5, '#5c2633');
-        rect(x - 6, y - 11 + bob, 2, 5, '#5c2633');
-        rect(x + 4, y - 11 + bob, 2, 5, '#5c2633');
-      }
       return;
     } else {
       rect(x - 5, y - 11 + bob, 10, 8, '#5c2633');
@@ -1689,10 +1714,16 @@
       [64, 67, 71, 72, 71, 67, 64, 59, 62, 66, 69, 71, 69, 66, 62, 59],
       [57, 60, 64, 67, 64, 60, 62, 65, 69, 72, 69, 65, 60, 64, 67, 71],
       [62, 65, 69, 70, 69, 65, 62, 57, 60, 64, 67, 69, 67, 64, 60, 57],
-      [52, 55, 59, 60, 64, 60, 59, 55, 50, 54, 57, 62, 57, 54, 50, 47]
+      [
+        52, 55, 59, 62, 64, 62, 59, 55, 50, 54, 57, 61, 64, 61, 57, 54,
+        47, 50, 54, 57, 59, 57, 54, 50, 45, 49, 52, 56, 59, 56, 52, 49,
+        52, 59, 55, 62, 57, 64, 59, 66, 64, 59, 62, 57, 60, 55, 59, 54,
+        40, 47, 52, 55, 43, 50, 55, 59, 45, 52, 57, 60, 47, 54, 59, 62
+      ]
     ];
     synthTimer = setInterval(() => {
-      if (!audio || audio.state !== 'running' || state === 'title' || state === 'opening' || spotifyPlaybackActive) return;
+      if (!audio || audio.state !== 'running' || state === 'title' || state === 'opening'
+        || spotifyPlaybackActive || (spotifyController && spotifyRequestedUri)) return;
       const melody = stageMelodies[stage === 10 ? 3 : (stage - 1) % 3];
       const oscillator = audio.createOscillator();
       const gain = audio.createGain();
@@ -1704,6 +1735,20 @@
       gain.connect(audio.destination);
       oscillator.start();
       oscillator.stop(audio.currentTime + .14);
+
+      if (stage === 10 && step % 4 === 0) {
+        const bass = audio.createOscillator();
+        const bassGain = audio.createGain();
+        const bassRoots = [28, 28, 26, 26, 24, 24, 23, 26];
+        bass.type = 'square';
+        bass.frequency.value = 440 * Math.pow(2, (bassRoots[Math.floor(step / 8) % bassRoots.length] - 69) / 12);
+        bassGain.gain.setValueAtTime(.024, audio.currentTime);
+        bassGain.gain.exponentialRampToValueAtTime(.001, audio.currentTime + .28);
+        bass.connect(bassGain);
+        bassGain.connect(audio.destination);
+        bass.start();
+        bass.stop(audio.currentTime + .3);
+      }
       step++;
     }, 145);
   }
@@ -1733,7 +1778,11 @@
     startAudio();
     if (!spotifyController || state === 'opening' || state === 'title') return;
     const uri = stage === 10 ? MEGALOVANIA : stageTrack();
-    spotifyController.loadUri(uri);
+    if (spotifyRequestedUri !== uri) {
+      spotifyRequestedUri = uri;
+      spotifyLoopGuard = false;
+      spotifyController.loadUri(uri);
+    }
     spotifyController.play();
   }
 
@@ -1799,7 +1848,10 @@
       spotifyController = controller;
       controller.addListener('playback_update', event => {
         spotifyPlaybackActive = Boolean(event.data && event.data.isPaused === false);
-        if (event.data && event.data.duration && event.data.position >= event.data.duration - 900) {
+        if (event.data && event.data.position < 1200) spotifyLoopGuard = false;
+        if (!spotifyLoopGuard && event.data && event.data.duration
+          && event.data.position >= event.data.duration - 500) {
+          spotifyLoopGuard = true;
           controller.seek(0);
           controller.play();
         }
@@ -1995,7 +2047,7 @@
     attackPattern = attacker.patterns[patternIndex];
     if (attacker.type === 'sans') {
       const sequenceIndex = sansTurn % SANS_ATTACK_SEQUENCE.length;
-      const sansPhase = SANS_ATTACK_SEQUENCE[sansPhaseCursor % SANS_ATTACK_SEQUENCE.length];
+      const sansPhase = SANS_ATTACK_SEQUENCE[sequenceIndex];
       const turnDurations = [
         15000, 14500, 16000, 15500, 16500, 16000,
         16500, 15500, 17000, 16500, 17000, 17500,
@@ -2016,6 +2068,7 @@
       safeLaneValue = safeLaneAxis === 'y'
         ? 105 + (sequenceIndex % 3) * 12
         : 112 + (sequenceIndex % 4) * 42;
+      sansPhaseCursor = sequenceIndex;
       sansTurn++;
     } else {
       safeLaneAxis = attackPattern.formation % 2 === 0 ? 'y' : 'x';
@@ -2131,8 +2184,9 @@
   }
 
   function spawnSansVolley(pattern, now) {
-    const phase = SANS_ATTACK_SEQUENCE[sansPhaseCursor % SANS_ATTACK_SEQUENCE.length];
-    sansPhaseCursor++;
+    // The turn chooses the phase once. volleyCount varies the layout inside it.
+    // Advancing here as well caused the sequence to wrap and repeat unpredictably.
+    const phase = pattern.sansPhase;
     pattern.sansPhase = phase;
     pattern.gravity = SANS_GRAVITY_PHASES.has(phase);
     pattern.interval = SANS_PHASE_INTERVALS[phase];
