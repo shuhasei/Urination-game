@@ -77,9 +77,9 @@
   ];
   const MEGALOVANIA = 'spotify:track:1J03Vp93ybKIxfzYI4YJtL';
   const SANS_ATTACK_SEQUENCE = [
-    12, 0, 5, 8, 13, 14, 15, 2,
-    10, 3, 6, 4, 1, 9, 11, 7,
-    0, 13, 8, 2, 10, 14, 15, 7
+    12, 0, 5, 8, 13, 14, 15, 6,
+    2, 7, 10, 11, 4, 2, 7, 10,
+    11, 2, 7, 10, 11, 3, 9, 12
   ];
   const SANS_PHASE_INTERVALS = [980, 920, 1240, 1180, 1020, 1080, 1260, 1380, 1120, 1340, 1040, 1440, 1080, 980, 1180, 1040];
   const SANS_PHASE_SPEEDS = [210, 165, 0, 0, 110, 200, 180, 0, 210, 0, 42, 0, 46, 126, 58, 118];
@@ -1336,8 +1336,6 @@
       text('ROOM ' + String(pendingStage).padStart(2, '0') + '  STAGE ' + pendingStage,
         160, 8, 5, theme.glow, 'center');
       drawRoomNavigation(theme);
-      text(pendingStage > 1 ? '◀' : '', 10, 107, 8, theme.glow, 'center');
-      text(pendingStage < 10 ? '▶' : '', 310, 107, 8, theme.glow, 'center');
       return;
     }
     rect(0, 0, W, H, '#050505');
@@ -1488,8 +1486,6 @@
     text('STAGE ' + pendingStage, 202, 36, 7, theme.accent, 'left');
     text(theme.name, 202, 46, 5, '#fff', 'left');
     drawRoomNavigation(theme);
-    text(pendingStage > 1 ? '◀' : '', 10, 107, 8, theme.glow, 'center');
-    text(pendingStage < 10 ? '▶' : '', 310, 107, 8, theme.glow, 'center');
   }
 
   function navigateOpeningRoom(direction) {
@@ -2561,10 +2557,10 @@
       scaleY: (arena.bottom - arena.top) / (sourceBottom - sourceTop)
     };
 
-    const addWall = (wallX, wallDirection, center, wallSpeed) => {
-      const gapTop = center - gapSize / 2;
-      const gapBottom = center + gapSize / 2;
-      for (let column = 0; column < columns; column++) {
+    const addWall = (wallX, wallDirection, center, wallSpeed, opening = gapSize, width = columns) => {
+      const gapTop = center - opening / 2;
+      const gapBottom = center + opening / 2;
+      for (let column = 0; column < width; column++) {
         const x = wallX - wallDirection * column * spacing;
         addProjectile('bone', x, sourceTop, wallDirection * wallSpeed, 0, {
           h: Math.max(5, gapTop - sourceTop),
@@ -2578,13 +2574,96 @@
       }
     };
 
-    addWall(startX, direction, gapCenter, speed);
+    const addFence = (height, blue = false, fromCeiling = false, width = 6) => {
+      for (let column = 0; column < width; column++) {
+        const x = startX - direction * column * 9;
+        addProjectile('bone', x, fromCeiling ? sourceTop : sourceBottom,
+          direction * speed, 0, {
+            h: height,
+            fromTop: fromCeiling,
+            blue,
+            life: 5
+          });
+      }
+    };
 
-    // Later phases send a second aligned wall. It keeps a continuous opening,
-    // so the route is difficult but never sealed by crossing bone hitboxes.
-    if (phase >= 8 && volleyCount % 3 === 2) {
-      const oppositeX = fromRight ? sourceLeft - 34 : sourceRight + 34;
-      addWall(oppositeX, -direction, gapCenter, speed * .88);
+    const addPlatform = (y, platformDirection = direction) => {
+      const x = platformDirection > 0 ? sourceLeft - 12 : sourceRight + 12;
+      addProjectile('platform', x, y, platformDirection * speed * .82, 0, {
+        w: 34,
+        life: 5
+      });
+    };
+
+    const addWarnedBeam = (horizontal, position) => {
+      addProjectile('beam', horizontal ? sourceLeft : position,
+        horizontal ? position : sourceTop, 0, 0, {
+          orientation: horizontal ? 'horizontal' : 'vertical',
+          length: horizontal ? sourceRight - sourceLeft : sourceBottom - sourceTop,
+          warning: .56,
+          life: .94,
+          side: horizontal ? (fromRight ? 'right' : 'left') : (fromRight ? 'bottom' : 'top')
+        });
+    };
+
+    switch (phase) {
+      case 12: // Opening combination: fixed bone lanes followed by warned beams.
+        addWall(startX, direction, [108, 127, 116, 124][volleyCount % 4], speed * 1.08, 18, 5);
+        if (volleyCount % 4 === 2) addWarnedBeam(true, 104);
+        if (volleyCount % 4 === 3) addWarnedBeam(false, fromRight ? 244 : 126);
+        break;
+      case 0: // Fixed-height bone gaps for measured jumps.
+        addWall(startX, direction, [109, 124, 130, 116][volleyCount % 4], speed, 18, 4);
+        break;
+      case 5: // Alternating blue and short white bone groups.
+        addFence(volleyCount % 2 ? 10 : 20, volleyCount % 2 === 0, false, 7);
+        break;
+      case 8: // Irregular-height gaps, always deterministic and readable.
+      case 4:
+        addWall(startX, direction, gapCenter, speed * 1.04, 17, 5);
+        break;
+      case 13: // Moving platforms over a low bone floor.
+        addPlatform([110, 121, 129][volleyCount % 3]);
+        addFence(8, false, false, 7);
+        break;
+      case 14: { // Opposing bone slides share one continuous opening.
+        addWall(startX, direction, gapCenter, speed, 18, 4);
+        const oppositeX = fromRight ? sourceLeft - 38 : sourceRight + 38;
+        addWall(oppositeX, -direction, gapCenter, speed * .9, 18, 4);
+        break;
+      }
+      case 15: // Platform passage followed by a tall aligned bone gate.
+        addPlatform(volleyCount % 2 ? 126 : 111);
+        addWall(startX, direction, volleyCount % 2 ? 108 : 129, speed, 19, 4);
+        break;
+      case 2: // Horizontal blaster cue plus a lower bone route.
+        addFence(9, false, false, 6);
+        if (volleyCount % 2 === 1) addWarnedBeam(true, 128);
+        break;
+      case 10: // Even low rows intended for repeated small jumps.
+        addFence(11, false, false, 8);
+        break;
+      case 3: // Vertical blaster cue with a fixed bone opening.
+        addWall(startX, direction, volleyCount % 2 ? 110 : 128, speed, 19, 4);
+        if (volleyCount % 3 === 2) addWarnedBeam(false, fromRight ? 247 : 123);
+        break;
+      case 6: // Low route and alternating moving platforms.
+      case 7:
+        addFence(8, false, false, 6);
+        addPlatform(volleyCount % 2 ? 108 : 125, phase === 7 ? -direction : direction);
+        break;
+      case 1: // Upper and lower combs leave a central moving gap.
+      case 11:
+        addFence(10 + volleyCount % 3, false, false, 7);
+        addFence(10 + (volleyCount + 1) % 3, false, true, 7);
+        break;
+      case 9: // Position warning is paired with a bone wall, never shown alone.
+        addWall(startX, direction, gapCenter, speed, 18, 4);
+        if (volleyCount % 3 === 1) addWarnedBeam(true, Math.max(103, Math.min(132, heart.y)));
+        break;
+      default:
+        addWall(startX, direction, gapCenter, speed, 18, 5);
+        break;
     }
 
     if (volleyCount % 4 === 0) {
@@ -2594,7 +2673,7 @@
     }
 
     // Bone groups overlap slightly in time, preventing completely empty turns.
-    pattern.interval = Math.max(420, 700 - Math.min(220, phase * 14));
+    pattern.interval = Math.max(440, 720 - Math.min(210, phase * 13));
     projectileTransform = null;
   }
 
