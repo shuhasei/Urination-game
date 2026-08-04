@@ -1279,6 +1279,21 @@
     rect(264, 53, 20, 2, thresholdGlow > 3 ? '#d89543' : '#713318');
   }
 
+  function drawRoomNavigation(theme) {
+    const drawArrow = (leftSide) => {
+      const x = leftSide ? 2 : 296;
+      g.globalAlpha = .62;
+      rect(x, 91, 22, 32, '#070707');
+      g.globalAlpha = 1;
+      rect(x, 91, 22, 1, theme.glow);
+      rect(x, 122, 22, 1, theme.glow);
+      if (leftSide) fillPolygon([[17, 99], [8, 107], [17, 115]], theme.glow);
+      else fillPolygon([[303, 99], [312, 107], [303, 115]], theme.glow);
+    };
+    if (pendingStage > 1) drawArrow(true);
+    if (pendingStage < 10) drawArrow(false);
+  }
+
   function drawOpening(now) {
     const roomIndex = Math.max(0, Math.min(9, pendingStage - 1));
     const theme = ROOM_THEMES[roomIndex];
@@ -1306,6 +1321,7 @@
       g.globalAlpha = 1;
       text('ROOM ' + String(pendingStage).padStart(2, '0') + '  STAGE ' + pendingStage,
         160, 8, 5, theme.glow, 'center');
+      drawRoomNavigation(theme);
       text(pendingStage > 1 ? '◀' : '', 10, 107, 8, theme.glow, 'center');
       text(pendingStage < 10 ? '▶' : '', 310, 107, 8, theme.glow, 'center');
       return;
@@ -1457,8 +1473,24 @@
     text('ROOM ' + String(pendingStage).padStart(2, '0'), 202, 25, 6, theme.glow, 'left');
     text('STAGE ' + pendingStage, 202, 36, 7, theme.accent, 'left');
     text(theme.name, 202, 46, 5, '#fff', 'left');
+    drawRoomNavigation(theme);
     text(pendingStage > 1 ? '◀' : '', 10, 107, 8, theme.glow, 'center');
     text(pendingStage < 10 ? '▶' : '', 310, 107, 8, theme.glow, 'center');
+  }
+
+  function navigateOpeningRoom(direction) {
+    const nextStage = pendingStage + direction;
+    if (state !== 'opening' || nextStage < 1 || nextStage > 10) return false;
+    pendingStage = nextStage;
+    openingPlayer.x = direction > 0 ? 8 : 312;
+    openingPlayer.y = Math.max(96, Math.min(126, openingPlayer.y));
+    openingPlayer.direction = direction > 0 ? 'right' : 'left';
+    openingPlayer.moving = false;
+    openingDoorProgress = 0;
+    openingDoorHold = 0;
+    openingDoorActive = false;
+    beep(520, .055);
+    return true;
   }
 
   function updateOpening(dt) {
@@ -1527,19 +1559,9 @@
       return;
     }
     if (openingPlayer.x > 318) {
-      if (pendingStage < 10) {
-        pendingStage++;
-        openingPlayer.x = 2;
-        openingDoorProgress = 0;
-        openingDoorHold = 0;
-      } else openingPlayer.x = 317;
+      if (!navigateOpeningRoom(1)) openingPlayer.x = 317;
     } else if (openingPlayer.x < 2) {
-      if (pendingStage > 1) {
-        pendingStage--;
-        openingPlayer.x = 318;
-        openingDoorProgress = 0;
-        openingDoorHold = 0;
-      } else openingPlayer.x = 2;
+      if (!navigateOpeningRoom(-1)) openingPlayer.x = 2;
     }
   }
 
@@ -2928,7 +2950,22 @@
     if (!keyDown(event.code)) event.preventDefault();
   });
   window.addEventListener('keyup', event => keys.delete(event.code));
-  canvas.addEventListener('pointerdown', () => {
+  canvas.addEventListener('pointerdown', event => {
+    if (state === 'opening') {
+      const bounds = canvas.getBoundingClientRect();
+      const pointerX = (event.clientX - bounds.left) * W / bounds.width;
+      const pointerY = (event.clientY - bounds.top) * H / bounds.height;
+      if (pointerY >= 84 && pointerY <= 130) {
+        if (pointerX <= 32 && navigateOpeningRoom(-1)) {
+          event.preventDefault();
+          return;
+        }
+        if (pointerX >= 288 && navigateOpeningRoom(1)) {
+          event.preventDefault();
+          return;
+        }
+      }
+    }
     if (state !== 'enemyTurn') confirm();
   });
 
