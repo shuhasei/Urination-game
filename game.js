@@ -84,6 +84,8 @@
   const SANS_PHASE_INTERVALS = [980, 920, 1240, 1180, 1020, 1080, 1260, 1380, 1120, 1340, 1040, 1440, 1080, 980, 1180, 1040];
   const SANS_PHASE_SPEEDS = [210, 165, 0, 0, 110, 200, 180, 0, 210, 0, 42, 0, 46, 126, 58, 118];
   const SANS_GRAVITY_PHASES = new Set([0, 1, 4, 5, 6, 8, 10, 11, 12, 13, 14, 15]);
+  // 一回の通しテスト用。false に戻すと通常の被弾処理へ復帰する。
+  const TEST_PLAY_INVINCIBLE = true;
   const GravityDirection = Object.freeze({
     DOWN: 'down',
     UP: 'up',
@@ -187,6 +189,7 @@
   let karmaHp = 0;
   let karmaDrainFrames = 0;
   let lastSansHitSoundAt = -10000;
+  let lastSansDamageAt = -10000;
   let practiceGuardTurns = 1;
   let practiceGuardActive = false;
   let turnCount = 0;
@@ -706,7 +709,7 @@
       text(hp + ' / ' + maxHp, 202, y, 8);
     }
     if (practiceGuardActive && state === 'enemyTurn') {
-      text('GUARD', 297, y, 7, '#62f5ff', 'right');
+      text('TEST GUARD', 297, y, 7, '#62f5ff', 'right');
     }
   }
 
@@ -2014,6 +2017,7 @@
     karmaDrainFrames = 0;
     practiceGuardTurns = 1;
     practiceGuardActive = false;
+    lastSansDamageAt = -10000;
     menu = 0;
     target = 0;
     bullets = [];
@@ -2237,8 +2241,8 @@
     volleyCount = 0;
     lastThreatAt = performance.now();
     invincible = 0;
-    practiceGuardActive = practiceGuardTurns > 0;
-    if (practiceGuardActive) practiceGuardTurns--;
+    practiceGuardActive = TEST_PLAY_INVINCIBLE || practiceGuardTurns > 0;
+    if (!TEST_PLAY_INVINCIBLE && practiceGuardActive) practiceGuardTurns--;
     setState('enemyTurn');
   }
 
@@ -3140,6 +3144,9 @@
   }
 
   function applySansDamage(now) {
+    // 連続接触中も約0.1秒ごとの判定に抑え、HPが一瞬で消えないようにする。
+    if (now - lastSansDamageAt < 100) return;
+    lastSansDamageAt = now;
     hp = Math.max(0, hp - 1);
     karmaHp = Math.min(Math.max(0, hp - 1), karmaHp + 1);
     if (now - lastSansHitSoundAt > 70) {
@@ -3151,7 +3158,7 @@
   function updateKarmaDrain(dt) {
     if (stage !== 10 || karmaHp <= 0) return;
     karmaDrainFrames += dt * 60;
-    const period = karmaHp >= 30 ? 2 : karmaHp >= 15 ? 3 : 4;
+    const period = karmaHp >= 30 ? 5 : karmaHp >= 15 ? 7 : 9;
     while (karmaDrainFrames >= period && karmaHp > 0) {
       karmaDrainFrames -= period;
       karmaHp--;
@@ -3275,7 +3282,8 @@
       if (stage === 10 && hit) {
         sansHitThisFrame = true;
       } else if (invincible <= 0 && hit) {
-        hp = Math.max(0, hp - pattern.damage);
+        const reducedDamage = Math.min(3, Math.max(1, Math.ceil(pattern.damage * .4)));
+        hp = Math.max(0, hp - reducedDamage);
         invincible = bullet.kind === 'bone' ? .34 : .58;
         beep(110, .1);
       }
