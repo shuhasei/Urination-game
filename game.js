@@ -195,6 +195,8 @@
   let sansMercyProgress = 0;
   let gravityDirection = 'down';
   let sansGestureUntil = -10000;
+  let sansGestureStartedAt = -10000;
+  let sansGestureDirection = GravityDirection.DOWN;
   let sansExpressionUntil = -10000;
   let sansExpression = 'grin';
   let sansWaveEvents = new Set();
@@ -487,11 +489,18 @@
         microPixelRect(x + 6, drawY + 11, 1, 1, '#ffffff');
       }
       if (t < sansGestureUntil) {
-        // A brief raised-hand cue precedes the upward gravity slam.
-        microPixelRect(x + 13, drawY + 19, 4, 10, '#050505');
-        microPixelRect(x + 15, drawY + 13, 3, 8, '#ffffff');
-        microPixelRect(x + 14, drawY + 12, 5, 3, '#dedede');
-        microPixelRect(x + 15, drawY + 20, 2, 7, '#dedede');
+        const lift = Math.min(1, Math.max(0, (t - sansGestureStartedAt) / 90));
+        const armSide = sansGestureDirection === GravityDirection.LEFT ? -1 : 1;
+        const shoulderX = x + armSide * 12;
+        const handX = x + armSide * (14 + Math.round(lift * 3));
+        const handY = drawY + 23 - Math.round(lift * 13);
+
+        // 元画像の腕を黒で隠し、肩から手までを段階的に持ち上げる。
+        microPixelRect(shoulderX - (armSide < 0 ? 5 : 0), drawY + 18, 5, 13, '#050505');
+        line(shoulderX, drawY + 24, handX, handY + 4, '#dedede', 3);
+        microPixelRect(handX - 2, handY, 5, 4, '#ffffff');
+        microPixelRect(handX - 1, handY - 2, 2, 3, '#ffffff');
+        microPixelRect(handX + (armSide > 0 ? 2 : -1), handY - 1, 2, 3, '#dedede');
       }
       if (state === 'enemyTurn' && t < sansExpressionUntil) {
         if (sansExpression === 'focus') {
@@ -1994,7 +2003,7 @@
         number
       )
     }));
-    if (stage === 10) maxHp = 92;
+    maxHp = levelMaxHp(playerLevel);
     hp = maxHp;
     karmaHp = 0;
     karmaDrainFrames = 0;
@@ -2007,6 +2016,8 @@
     sansMercyProgress = 0;
     gravityDirection = 'down';
     sansGestureUntil = -10000;
+    sansGestureStartedAt = -10000;
+    sansGestureDirection = GravityDirection.DOWN;
     sansExpressionUntil = -10000;
     sansExpression = 'grin';
     sansWaveEvents = new Set();
@@ -2986,7 +2997,9 @@
     heart.isJumping = false;
     heart.jumpHold = 0;
     heart.slamActive = true;
-    sansGestureUntil = performance.now() + 280;
+    sansGestureDirection = direction;
+    sansGestureStartedAt = performance.now();
+    sansGestureUntil = sansGestureStartedAt + 320;
   }
 
   function updateSoulPhysics(dt, arena, gravityEnabled) {
@@ -3030,17 +3043,17 @@
       const gravityVelocity = heart.vx * gravity.x + heart.vy * gravity.y;
       if (grounded && gravityVelocity >= 0) heart.isJumping = false;
       if (grounded && jumpHeld && !heart.jumpWasHeld) {
-        heart.vx = verticalGravity ? heart.vx : -gravity.x * 190;
-        heart.vy = verticalGravity ? -gravity.y * 190 : heart.vy;
+        heart.vx = verticalGravity ? heart.vx : -gravity.x * 122;
+        heart.vy = verticalGravity ? -gravity.y * 122 : heart.vy;
         heart.isJumping = true;
         heart.jumpHold = 0;
       }
 
       // 押下時間に応じて反重力方向へ加速し、短押しと長押しの高度差を作る。
-      if (heart.isJumping && jumpHeld && heart.jumpHold < .16) {
+      if (heart.isJumping && jumpHeld && heart.jumpHold < .10) {
         heart.jumpHold += dt;
-        if (verticalGravity) heart.vy -= gravity.y * 390 * dt;
-        else heart.vx -= gravity.x * 390 * dt;
+        if (verticalGravity) heart.vy -= gravity.y * 220 * dt;
+        else heart.vx -= gravity.x * 220 * dt;
       }
 
       heart.vx += gravity.x * 540 * dt;
