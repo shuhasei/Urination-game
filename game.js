@@ -28,7 +28,11 @@
   const heroSideImage = new Image();
   heroSideImage.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAYAAACinX6EAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAGFSURBVGhD7ZXBTQMxEEVTAQcKyI0WOFAvfXDnTBF0EZRVvJo8xuvxzNi+7JO+IN71f1+REJfLyclJDx8vrzdLeC8LemrhvTQoqoX3sqCnFt4LQ4El7IjAbkvY4YbFPWGXB3b2hF3dsNATdvbALk/Y2QXLPGFnD+zyhJ1dsMwTdvbALk/YaYIllty+3/ZEB7Dbkkx/9wAplyPYa4X9rdAd9bsHyM+RAexvJdu/fAD7W8n2NwdImRwgExlAHzPabxrQSmQAfQxdWiL+5oDWiPIOe63QpYXOTP8OpbMH0Dnbvw0oPxlKmYwBq/3/4Iij8G4GdByFd1O4F79//m4povJZnvFeFsv8pfjr+rNHO5PP2BFBc2lno/zLB2gu7WyUf/kAzaWdjfLvA7S/t9ozdkSoOWb5DweUfzt8xg4vxXP/nY4Z/g1+2zLy/+6IAfILoHuGf4PS2gAZdniRfXTM8D9BSS28lwU9tfBeGAosYYcX9moOnvN5mFYxn2vveLH28r2jd08e/AGixGLG1uN67wAAAABJRU5ErkJggg==';
   const sansReferenceImage = new Image();
-  sansReferenceImage.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAtCAYAAADLEbkXAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAHC0lEQVR4nLVYW48URRTu6u7pnp2Z3QWjgii3BeLTJiqGBQIoRG4PGvU/+Ii3NYDRsBIBf4CwQmJUIm9Gjb4auUN4lt/B7jI7093TXd3HfKeqerpnFnd3Bis56Vt11Vfn8p1TZVmDtM0WWS9aZG2wyFpvkfW8RdY6fYX83812XExCSSehVKaUploK91mWUcV1uN/TRyBcngQt4wkznjCfPBepv6ckk4SklOTalacHiDSATEpKIYXVGxBFQACqnlVf3/GGB9PpdEoT5xMCUAazaC1o85DpUwSZJOQqsw7e0gSryoiwStZIvyYMOCrc81WDhFSrw5mIzMTQDJzQcZRUq37BHACpfAjfbN3H8/zclNDUUECyLKM3DuwzUcAihLomSZJrB5NZotBHC48BH5PJcEDQiiCKgqgomqgMVpSe9TiDtbEPfF7xtoltfSBs2y45KUxw+tSpMhh9/eL0l/T1+W+Gc1aSUCxR3InJczUIYVHFq/DkMpFsItyjeU5XE67r5g4+NMHZwupGBwjKcSgMA8oQuokkWwiybZGHbAyndhwKAvTJOMTDIBqeRzLt8Vg1O2eRvEDnlQoLOy1HiGZdKaniejn3wJRDAaGM6PBbh3iyOI7za5G4UlA7gGgBvXsV5g3uX3DkwVsAFaeSOnFM7bDN0VD1fBodbZDv+1T1KlStjlDV98i2LeYX9PE9n79niWJWZ5R9Z/XNtW0SgtXZTWpZxo4KjbQXm7zSK1cuay1IqggrX33zUZtSzTFhxD4CJVLW6awc0OTkpIoIPehrk6+onIKR0oxmL12mSxdnaXr6JO3dM0UfffwJnTjxIYfrzJkzdPHiJY4g9D95+nPWkDHbZ9PTK/YXykw+YYGjCXKEIqW+OgR98+TWpXNgNlxi+ObOrVtdnrGX8Rl7s3IymMB2bHIcm1UcRRFTOwTvAI772IKErQgO974pitBPCIrCkLXpV/0Sy+L9shqxethx9uIsh65hVMe2qFGrkldxNQCbjh05WmJTJD2pNRZF7BfGJMw9IMjG6OjSYDpxXAIwNzdXyhsylXnlxUkvjnMzPXz4D7/78fuf+LuUCYcuJsf/GO/OndulRbbbbXJ6K7jtm7bqDl2Knl9YyLMtBCvEoCgJOp2IB6cspUQmdPPmDUXnzK4xr7pXu9ev/9UHpNVqdYGEYZSrTRRS+fz8fOnHJIkZBMwE/+Aco6kfDeMkicw1ZsTRCfL2rRt94Gq1Oq197hkFJk3SvH4QeiXs7VlGjXqDms1FWlxcpNZii2r1Oj16NEf1RiOPGGgFDeH+7nvvsPkwRqNe5zHwH57v3r1T8iOhgYyPjZElJhwezHy0Ch3n5h7l9jXfkEvCMGQHNLkHJlOhrTJxEiec9PhfvTAXiTGKS6Y22l+7ZlxrREraunFTyTTImksVQ1ghIiIMWrlpUCoqBlPcIeOYooDDsyS7du0uV3laxsfHFJCKIyjpFCJGKBLq9RkGksRM8fAV+EJeOBMxMJkgMdqcZ3qB7Nz5er9pRmo01miUIyfVAwJlsfRTKjbqFJxZF5FrNANzlQ/TpCmHb295aSae0hoxz2ilqDFNVJQmjKOiCMoB6J99V9DISI014jguVSCuy/dw0qs/XOWIKoKAwJwwN7SPcZGlYzj1+BOysmO7vA3QWYs6cadUkY84KoGZsDWFkesqQZ5SPFMW/PPgwX2qcDUnyauvcPcnPEHtdouiKKRm8zG1Wk0KghYtzCu2XU6KvoV7jPHnH7+SXbfIGeN8tOpGvRMUtwqGe8zE5rnXT6DdytsD7oE3rHuBB7n28zWOlBLX9PBLSQtLAFloLtD6959dPRDf9qnZbGoSS3MHLJIRZGbmqz6zoC/8pwzcohs3/h5AI8Kix4+b7OUAgtpiKV+4cOEcR0QvP8AUSA3F9/fv3Vs9ENtxaH5unlC79m4ni2F59uwMR02J+LRp4kSTJAooYdHuqb2mz8qbDJBhBfPKwYNvljbYRpAIz58/lxdNRf/Bf/ArAwTXPXsGAJLqbSLyyJEjh5fUSBJ3qDbtMZBu9lYTh0HY5+BTU3sG0EikihsAOX78WH/e0Q5Z+3Q0B9IN3wIQNovyr/37D5gxVt6CoM3pHsXOoUMHyfO8PkGFVT25hqyaUH2DkIIo4n+iMOL9DCQIA7JGLCW1IXZ87qs1fVJkk+s6XM3hulTf2W+/K5nQsQfc4RVabk+xLz83XXbQ33/5jfdCxb2OsBXogmlX0Da5lMblk6DjR4+SjFVdqiPgSU0lQ3PYp87NyHVUOJuTAiRG21tGU8RJt7Cb04DAAy/v2PGfQLAb3L59B23ZsoW2TkzQxpc28gZc7fS6h8Gc1TvLnJlwEcyVljrcVfc4G5G8j0nCJ2+ise/BQQ32NOiLsgDjsJjTaD4dkCT8so/9CygsUI2uYcjVAAAAAElFTkSuQmCC';
+  sansReferenceImage.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQgAAAFgCAYAAABHUefIAAARqklEQVR42u3dPXLb1toAYPAbF3STLsoCbiUp4yJ7wNwVpJQnKyAbq0yVUmqAFdyJy6zgDvaQwmNLVRZgp0tjdbot+RofDo/wQ4B8ng6iRAIH0DvnfXl+VgWjqqrqXdfr2+32fvf44eHheff48vLypNvn8fFx7/jq6mrVp/0Y1v9pAkCAAAQIYDgrTTCsqqr2agibzUajDCjWLJqmud09VpPQgwAECECAAGZLDSIhfg9fluVdzt+f+jiGY4s1iahpmr3j7XbrmdeDAAQIQIAAjkM+lnBucyNOTcu4ib1jNQk9CECAAAQIYDLyryCOe9hsNnda5YT/AVYr/wN6EIAAAQgQwEQp2LldcGpuhXEO562u673jcx8noQcBCBCAAAEM6OzyK3MryFHX9dPu8Xa7fa0HASBAAAIE8CKvNAF0WutBAAgQgAABDOLkaxBxr0zIUZZlfJ6+7h6f+rgIPQhAgAAECGBAJ1eDaFlT0l3mxVrm6pzVuAg9CECAAAQIQIAABAhAgAAECGBhrAfR0+Pj495x0zSjfl6cGzD3NTXjPhNjM+5FDwIQIAABApgtNYh0Dv0l/OgiHL/fPdhut2/HPJ8416Rpmrtj5uAtNZgvoT1+mPiWfQ3HnXMn1Cz0IAABAhAggMmc3N6cLetB3PXJqa+urhbVRs/Pz5Ouwbm09qqq6vfd47Isb3aPU+NKlv586EEAAgQgQABHdPbjIMbOKWNNpCiKVE1k0nEVM6gJZNVMttttr/sT27Oqqn/vHl9eXl4IC3oQgAABCBDAKMzFGN9vuwepsf91Xd+EH51UDSLWZHLXt9hut0Of0nceUT0IQIAABAhgEmoQ41trgln7KxxfaxI9CECAAAQIYBQnV4PYbrf34Ue/7B6UZbmXY8bv3R8eHvbmBvSdm9EydyC1ZuJt1/vFuQtxHEFKag3Joij+u3uw2Wxuut4vt/3i/amq6pdwPrEG8GXI56Oqqo/h+jprDi37erzXgwAQIAABAniR1bldcMyRU2P/Yw4ac/6p94GINYjcfR1y17/ou8blarWa9BnLrdHk3v++61HoQQACBCBAAGfs7OZiNE2TlYMekONfdOXAL9D5PXvuuIe+Ys0i1V6pmkDM4Qdor9z7lXW9RVE86UEACBCAAAEMYnXuDdB3XMHQWsb+98qx+36P33cvy28euDAuIndcygTt/xTa67UeBIAAAQgQwCCsSTmx1NyEueXkcS/Lh4eHmz7vF+d2xBpJnBtSVdXe+hmbzcYan3oQgAABCBDAMp1dDWLocQ8tY/eLrhpCrDGkfv/UxfYvyzJrbkZqvY7c9izLch2el70ayLmNi9CDAAQIQIAABnR2NYih11OI60sU367n0GvuwtDXm6qBpIx9/i94/9twP+76vF/8/aZpznrchR4EIEAAAgQwIHMxElLjHFp8CDnsUXP8pY+rOKD93+wetKx30blPxrmNO9GDAAQIQIAAjkgNIqFlfYJ3Iee9D693zvVY2noQU4s1h6ZpbrvaOyW1D4cahB4EIEAAAgQwGTWIhLiGYou7nPeLNYzNZrP396k1Gk9drMHE9mmp+ey1Z1mWveZioAcBCBCAAAGM5uxqEE3TfAk/uuiTs8ZxDvF7/Ja9Nt/kvF9qjcY4TiDm4Ae0x1P4+3Xm38cffQrvd53591mGrjm0zP241YMAECAAAQIYxNnVILbb7Q+7x0OPzU/9/dXV1dvwo701K2MNIvV+TdO8yfn9lhx7PeT1N01z3ef9Yk0krgk59lyV+PmpuTa5a5z2nVuiBwEIEIAAAahBjKeqqo/hR9eZb5GV88UcfeiaRNzrsSiKp/D5ufswfJjZLXsKx+uu9m0ZB/FrOB51bkVLTeaPruev75qWcd+Oqqp+Cc/nj3oQgBQDECCAEzW7GkTM0ePcgNycr67rmPOl9lHYc8B6EFk2m806cb7xR3HuyH/D+d+H9uqVsw9dg2nJwePepT8Nef6519ey5ujv4X5dD3z/4/lczzlA6EEAAgQgQAADmt16h0Pn/Lk5aNTyPXivuQZDn//QY/tT+37M/f7m3u9Y80rViHLVdR3ndrzWgwCkGIAAAZyps6tB5OaoLTl65/n1Havf9/znbuj2aBk3En3qenHocQ7xfOI4m7ieRZyLkhqXowcBCBCAAAEs2OT5ThzrXpblTVdOljJ0zp/K6eO+Gi1rXP4e/uQm5/PjWP1Td8D6EJ1yc/a+4x5S55s6n9SalnOrSehBAAIEIEAAAzrGehA/JV7vNbcgfs+cEmsWB9QwLkJOGecuxH0v3uacT2ovzlMzds7dMpdmfczzTY2LaKlBPY/ZPnoQgAABCBDAhFbn3gCp76Vz97pMjZMY4fy/hs97PfLnxX1K/gyf//aY9y/qO06mrutP4fp+HPP8U+NgUnM99CAAKQYgQAAzttIE3+SEcV+ErLkUuetLDJ2zjp0zp8aZDH29Ldf/LtQYBt1HY+ocP9W+qesZe81LPQhAgAAECGBAo8/FOCBnnnTcQErL9/g/h+O/wvV07pMR19hsGTcxaA4Zz2ez2Uy6z8jYNYfNZnM35PvXdf0+cf/7Pt9Z9zfuc9I0zV3X+xdF8Y8eBCDFAAQI4FxrEKm5DS37GNz1/LzO78Wbpuk1LuCAmsDX8PnrrppEy/fae7//gn0TssbyD11ziO2bkrtexwvOp8i8v29Hfr5/zTyfuP7Jfdf9Lsvyouv8+o7j0IMABAhAgADmVINI5WQtOdaoY9tjjt80zfWYnxdrFLE94vmkxg0cULPozDHjmpZD74XZkuP/q6vGEH8/93xie4091yUltb7E2OcT73dqL9u+64XoQQACBCBAAFPWIOI4gyLsWzH3vQWLoniaU4OnctTUegCxveP9ie+fer8B5lJkjfuIn5d6feoaQ66x56Lkfn5qnE3uOAk9CECAAAQIYMoaRFEUv+0ebDabvZzm2Gv4nbq+OXnfHD6u0XnA3IXOuSFN07wPv3/jLr9cXD+iCHObUjWh7XarBwFIMQABApjKITWIdeL1J804H6mx+bnqur4d8v1iDePh4WHWNYgJxpH0bc/O9SNy99nQgwAECECAAEb0TQ2iqqrPu8dx7H9LzvXrzK/xnzmdTGpNxrnluHGNz6qqfgu/su56Xuae08dxHmVZ3vTJ2ecmtR5Hy/odT3oQgBQDECCAkbSNg7joylla9hq8n/MFtuwb8DXx+2uPxf9//5um6aw5zC1nz10zNXf9irnLvd54f/UgACkGIEAAA3rVsubkSefQRfjevu++DSkte0furYfQMjchtc9B7voMs5JaM/MFNYbP4Ud/d+Xgufe3Ze/R6yW1d9/nWw8CECAAAQIY0Ks41n7pY89TUte3Wq0GXVMzfg+/2Wzi+gc3XTn6AX8/K6maS6yhDNCe8Vcuct4v9373XV9hanGN2LgGZWr9ED0IQIAABAhgQK9O/QJb5o68nvP5vmC9hA9zOv+WfRiyaibx+qqq+rh7HGsOdV1/Cvf3xzndv7i+wtyfPz0IQIAABAhgRIurQaTm9y9tzczUfP3UegRxrP3cxL1bXzA34vs5XU+sKRRhbs/S7o8eBCBAAAIEMKFXqRwp5lRxzcap1ydI5bBDz6U4Qo4b98Jc1FyZWDOJcwGiA9aD+DscXxzz+uI4hlgTO7W5THoQgAABCBDAgF7FHDHuG3F5eZn6njeOtX+rWQ8Xa0Bxn5GHh4e7JV1PfD76rv9QFMW/Eq//6Sk6XO790IMABAhAgAAG9M1cjJb56nvz8cuy3NsXIM7PL8syzoe/7cqxz0Dn2P3oBetBzFpqDc3UXI3NZrPXXksf5zJBjeFdaM9e42j0IAABAhAggAEl14OIa/zFHOfy8jKV48Tv8c+qBtFS0/kacsTOvUKjBa4H8SnUFK79240nt+ZQ1/WtHgQgxQAECGAi2WtStoxjuAs5UGfOnJr/H/dyHHt9iSP4I7TPTVdNIR4vbT2Ioij+0/W8xHE08e/jOAmKzv+nA2oOqf9nPQhAigEIEMBYeu+L0bKeRGeNIZUjNU3zk9vycqm5DQN4H45vEs/HXo672Wz2ahCx5tCyPsas5l7E9VJGaN9OuXN1+ranHgQgQAACBDCgwffmTNUk+n6PnxoXkKqBxBx6buMsXpDTxrkuT6G91gOfYmfNIfd+LKDm8Dncn3Wf5znWMIrE+iCp9h27hqMHAQgQgAABDGjyfC+uyx/XLKzrOn7P/iHkgL3W2GvJ2SatScTrL8vyps/1LF3L/chaw3MET+H5XPe8ntvwfr32OZl6TU49CECAAAQIYECvpv7Alhz/567Xc+e7p7T8/dR7i34Y8npSWtZTeBr5+tYh5866H3Ev2CPo9fktNa3OuSjRATUZPQhAigEIEMBSzX6fw6qqPoYfde6rkMp55+aAGkHfnPyoe6MeMDdmbrLGQcSawdXV1SrRHqm5GJ/C/fpRDwKQYgACBHAiVqd2Qal9N+amaZpZ5ZzsizWUuF7H3Nez0IMABAhAgABmZKUJWFINoMVTqAG8nvJ8Tq3moAcBCBCAAAGM6JUmyM5B34Uc9F6rjCc1t+bx8XE98v3+mDifz+F5+EEPApBiAAIEQKuTr0HE761jDlnXdef36Kk1MeMag3Ffj7nt/cng/taDAKQYAAIEcJCTq0Gk5u+3rAH568Cn8JPH6nS0rM8Rn6/rrudv6XM19CAAAQIQIIABnVwNItYc4riFA/YtyFrTMu6LUBTFn0tqr5brnXR9hQW6Dc/XnR4EIMUAECCAg1gPIjhg/YG941RNY25S40SKsFdk3EtSTaJ4owcBIEAAAgTwImoQ/XP6Wa9RmVpTMc5NiTWJsizX7rIeBIAAAQgQwADUIOgU57LM/fyen5/3xnnUdf1p97hlfQf0IAABAhAggGmoQXDqBl2fo2Wfk5vdgziOZOlrVOpBAAIEIEAAA1p8DSLunRnF9Rvi3ImyLLPWFGyaJuak9zNvopiDX+dcX6q9m6a5XVh7DCrWFGL7tKy3oQcBSDEAAQI4V4uvQcSx+Kk1I+P6CKm5BvH95v49dqyxFOF7+tycOn6PH9eTaJrmjX8jPQhAgAAQIIADmItxevbGdaT2+TgDP3kk9CAAAQIQIIBZUIM4M6vVarXk841zHea+ZqYeBCBAAAIEgAABCBCAAAEIEMCkznEcRNYajZzc/UYPAhAgAAECOI6Tr0FUVfU1/Gjttp+VuCbn28Tz8nvi7/UgAAQIQIAAXmbxNYi4b0VcH+Dy8nLQmkNLTUOOv98+P8/p5FrW5Oy8f2VZrruep77Ppx4EIMUABAjgjK2WfgEt31sPug9CWZbXQ+akY4s5b9M0n3aPt9vtjz3b+zmR4y9aqv0O8H04vgvtf68HAUgxAAECOFMrTZDMuT+HH10s6fy32+1q4PZ415Vjn4Cn0H6v9SAABAhAgAAGoQbBUVVV9XH3OI47aZrmNtQE7rWaHgQgQAACBLBIi1sPYug1JlPjBEZYo/BL+PwfzvwZ7Jzr0jTNXbgfY4+76HV/Yk2lyNx3ZehxK3oQgAABCBDAjMy+BjHB+gPPXS+WZVl05ci5Hh8fL875gYtzOWL7RlOvN5G6P/F5HOF5eU68Puj6HnoQgAABCBDAhGY3FyPmqJvN5qjrDbSsUdgrR47vd3V1dVbzYea2pmXu/Xh+fn5e0vnqQQACBCBAADNy9HEQc99nIfU9dl3XT+H81x6r+arrem8cQVx/4tg1htzn8eHhYe98h65J6EEAAgQgQAADOnoNIjUWf+7ivgllWXbmsHEcxRl6v3vw+Ph4M/Hztqi9VlPGPn89CECAAAQIYECvNEG/nC+O44jfQ8fXY80lvj63NQn7Sl3/2DWZ2J5zH+eQK87N0IMApBiAAAHM2NFrEDEHXdr30i1zR37vyrlT1xfXw1j6XpSp6x/6fqdy8vj60p4360EAUgxAgAAWbA7jIG53D+q6/i28/s/M2/DvUDN4G2oKe7/cNM3P4e//CH9/f0oPWNM07xPX3/f+fheO/0qcz6dw/P3Mm/C7rudFDwKQYgACBLAg/wPgbUzkm+UA0AAAAABJRU5ErkJggg==';
+  const sansArmUpReferenceImage = new Image();
+  sansArmUpReferenceImage.src = 'data:image/png;base64,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';
+  const sansPointReferenceImage = new Image();
+  sansPointReferenceImage.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAXgAAAFgCAYAAACxGGJQAAARsUlEQVR42u3dMY7bSrYAUOmjN/GA1w+TtvJpr4DJhPYCfmBjQnID7eDD3kAxHLSDWYC9gOEK7J93p4Z7gLcMTfIGIO+jWc0mJZHSOVl1SyJZLF0ULku3thtW5eHhYX/O19c0TfzTx3ajqqr3RgE8z//oAgABHgABHoBT2+qC40opTcqhl2V5Uf31+PjYaffk6AdVVWWMYwYPgAAPgAAPwKnITx5ZXMd+c3OjU2bUk7N/125XVfVJL2EGD4AAD4AAD8CRyMFPFNe1X9o69bWr67rTtm4eM3gABHgABHgAZiTfOJKc+3mL6+h3u53vCGbwAAjwAAjwALyU/GJGzLkXRdH5v1oy5806eczgARDgARDgAZhAPjGwzp0h1sljBg+AAA+AAA/ACFeX3gEppbftdlznDm3xdw9x/NjzFTN4AAR4AAR4AFqudMHmL+2G2jKM9PfQloPHDB4AAR4AAR6A/7q4Ohoppa/tdlEUt+22HDxjxNo0TdN02urHYwYPgAAPgAAPcNEucR28nDuzieMn5uDBDB4AAR4AAR5AgAdAgAdAgAdAgAdgdurBH1hd1532oWuTPDw87Nvtpa3zj7VbdrvdUWu17Pf7vVGJGTwAAjwAAjwARyIHP9Kpc8g58Xxi/fuyLG+PeT7HfgaRs91uB4+/9GcYYAYPgAAPIMADsCpy8Bm5PTc5L03TfAt/sn8AZvAACPAACPAAvJQcfEbMuZ96HfcL/OIuPl9VVa/a7ZSSdfGYwQMgwAMgwAPwUnLw5+/30L7WJWAGD4AAD4AAD8BRXGIO/im0B3PSRVF02imlH+12VVW/LeniUkqfw59uT3k+Pf33NfTfq4X134eh8wczeAAEeAAEeABGuLgcfE/OvJNTL8uyk5PvqT2y6HXkRVG8zpz/oJ769x/DS/53qL+inuPfLnyI3I3pv7qunzLjC8zgARDgARDgAS7XxdeiiTnTsiz3Q6+POdn9fj/4+rquv4XjvVpZ/7xvt1NK38NL7td0PQ8PD3PXd/8/YQQzeAAEeAAEeAB+YqsLuuIenGVZTvq8uK58rJgj3m632znPt2fde6ed24N2ak47Hn+3222HPn+qqTn33PmCGTwAAjwAAjwALfZkDWLOuSiKSTnmGdZZd8Sc+9R65U3TfAnX/2bK+29ubl5P6Z94fYfuzxw5d8zgARDgARDgAZhADj7I5YAPra7rwf9PXZff468T3//rnCcTry/mwGP/xGcQc+foc88Icr8TADN4AAR4AAR4gIt28fnDlNLbdrsoik5986k53WPnjEcPgFDbZmr/lWW5qPrwsf/nfoZR1/W7druqqk/CCmbwAAjwAAjwAPzBnqwhZ7rf7w+aQ87VOz92Tj63p+wZ3N/4jGHRzwzADB4AAR5AgAfgrKhFM1Funftms+msk87VujlBLZpVye0hm9OzTv1+6P6d+ncKYAYPgAAPIMADsGpy8BPl9kSNOd+Hh4fBWjdxnXzM2cccNH/q78HaOvF3B2AGD4AAD4AAD8ABycEHMcedWwed+39u3Xs8Xnx9XPeeWye/2Wy+tBtVVb0Zcz6bsG6/x9jaLZM+L+bUx9bOiddrXTtm8AAI8AAI8AAc0VYXDJu7XnvMoccccy4Hn9NTq+Vb+LzbMe+Pxl7/1No6uT1Vc7VpptbuyfVnVVWvfEswgwdAgAdAgAfgJ1a3Dj6l9HbK+3vqgR9VzAkXRdHJucdaNFVVdV7/gj1U/x3at2sesNvtdnBP20PXy48597H3oyen/zF8/nthCTN4AAR4AAEegLOxuhx8URT3Ez9iVA4+t+fn1HXx8f25euW5PWB7zvfXhd2/zZjri78TmPt3CWNNrSffc753oS0Hjxk8AAI8gAAPwPlYXC2alNKPdrsoiut2e2rONa5DjuvOn3F+H8L53c15fmPPP4o5+FwOO/f+KJdDP/Tnzd2/Y/e4nXv8cVy574cZPAACPAACPAAzW2IO/qi1RXLrrpd2vjk9tU6eFnaLfw/t21P2X+53Bcd+5vOCWkNM+358Cy/55cindB3a70I8mlQ7ywwe4EwJ8AACPABrcvIcfE99906tmVPnZDebzZfQfmg3xtbvPnUtlXN36pz31Gc6HNbSv3/PiD9xfL0xgwe4QAI8gAAPwJqcPD/4jNoouXWq/99uFEXxut0+dO2SF9Sy+Rz+9NfMW/7ZbpRleXdJA7QnJ5kbD5119nEP1WhqDr6u66dwvN+EleVa+zOwsfHHDB7gTAnwAAI8AGuyhHXwgznQqbVhDl1vvKe2xay1JOa+vrnF+tpTz6enfvzH0J+T9iydmoOd+gyG4zr3353kak+ZwQOcKQEeQIAHYE3kD4Op9d17cmKdWhK52hFTzzc6dC2UmONsmmbWnPnY6889Axibg1VbZt0urb5+HK9m8ABnSoAHEOABWJOj5xNTSj/Cnzq1ZObOUU81dR1tTy2Vpzmv/xm1fObek7Wzh2R8RnHonHWs5TN37aEZag2tanyfOzl4AM6SAA8gwAOwJleHPsAz1ilfz3y8r+FPnXrhY+t153Kw8XhFUdy22z3r6K8z7R9D/8/ltGMO+ubm5npJAy6l9CH8KVff/in056zXU9f1t9C/r6aM73i/Hx8fr4UZzOABEOABEOABLtbBc/A9OclOO9ZqmSrmwI/gH+F6Ojn/sTnwXI65qqrYf+/CS+7D8Q968S/IYd8NjY8eg/3RM54m3b+p47vndw9fhJnTifcjPgNce334nvH2zgwe4AII8AACPABrMrlOSG4dcC4nOXdtjlztmO12e9T6O7EWRi5nPDZH+Iyc7+uh+zN5AIX+nHsPzLE59mPXa4/3V/34ZTt0LaO55cZ/bnyZwQOcKQEeQIAHYE1Gr4PP1ZaJOSM5yK5cDi3WE4/r6GP/RrlnGkVRLKo+dryemAMdm3NkXrlaS2t37Jx77vs7Nl6YwQNcKAEeQIAHYE1G5+B76rl3jN3D8tLk+m+Tqb3yjPr0g/XkX1CrZVStmXh+z9gztvP5Nzc3i8rxxnXTm/C7gme8/8eY+7v08br22i3HNnWPXzN4AAR4AAEegNXL5uB7coi513f23Kyq6r1uPl7/FkXRyfHOUAvmNhx/H44f1/F/HTp+zzrgpeXcP4T+nFSrZO77cWp1XX/0/TaDB0CAB0CAB+DZsjn4mEOM4p6qcnLDYg527J6tCzjf+JK3YbzcTvy8U7ub8/yapvkY2ndrHr++32bwAAjwAAjwAIySzcHn1jHPvafqocXaKE3TvGu3i6K4H7r+qXr2WPwYXtLJ0fbsofp9yf2b66/cHpNz7xmbUnobPv9+yufFPVdz59uTs5bDxgweAAEeAAEe4HL8KQefq9+9dj054sGc7Ng9FF8grov+GI7f+X98RpBSul9T//fUo38K7VG/C8jtEZyTu7+5PTHLstwLI5jBAyDAAyDAA/ATV7H+9bnvuTg15zpVfMYR11Fvt9vOOumUUm5d/Kr7O1frKJo75x73hM3tOZsTzydXPx/M4AEQ4AEQ4AHO2tXaLyA+Q4hiznW3220Xfj2DOfq1mbv+e+yPpd3fc3+GhRk8AAI8AAI8AKOsLgcfc+5FUQzucdlTb33RYo65ruun8P/rNV3PDPXvF62u62/h/G+FFczgARDgARDgAfjDVc+ekbt2oyzL1+12XOfbs8dpJ8fa8/mzesaesavaA7Ou68H+W3v98Xg9sdbOCq+nU7umKAr14TGDB0CAB0CAB+C//rQOvqqqN+FPg7VRempvxJzqe938c7lnBmvfIzf3zCbXH7G+es+6+kVf7xH29AUzeAABHgABHoDlytai6dlDclROvmed/Kx7YK5NzBnHHPPac+45uXrp2+22M972+32nP+q6zo1PwAweQIAHQIAHYClG14OfmpNvmuai62XH/os599hfsTbNzc3Nqmq35NaBx+tNKb1d8/217h0zeAAEeAAEeABaJu/JGnPKVVV1/h/XMcccfa6+eVwXfYG+r/nkc7ViYg6+LMv7dnvp695TSp+HrkdOHjN4AAR4AAR4gIt2degDxBxqzMFHcpZdVVV9Cv13P/T63W7XyVGnlOaubfN0zPGy2Ww+Lvn+xD2LwQweAAEeAAEegJajrymOOeFcTj63Dj5XyyWX048562Mbe/65euqnfoaRO7/sgFzY7x7ieI31+8fej1OPN8zgARDgARDgATiqq2MfMFdPPuY4o1zOOsr9/9R7xsZaLfF8x+a0T52jH/vMIMrlvE9t7PXkavGAGTwAAjwAAjzAWVv8mtyU0od2uyzLg+5J2lML5Vto/zLxEL+3G0VRdPaonbqOPHvDj7zOfOwzk7Vbev16zOABEOABEOABOKqzyw+uLeerVsmyja2dJAePGTwAAjwAAjwALVfndkFN0zyF9rXbzATv2o26ru8zr/+oyzCDB0CAB0CAB+AP1uhyUimlH+12WZaDz0wOvc48V4/e7xQwgwdAgAdAgAdghLNbBx9zqFEuZ5vLwcY9NtUamWxRv1OI9zvWMor7E1RV9d4txAweAAEeAAEegJ9YfQ4+lzMfK1fvO+Zkq6oyis5IfMbSI+4JLAePGTwAAjwAAjwAP7O6HHxchxxz5mP3OI21UHLi56+w/76221VVvfI16PTHNvRXbk9W6+IxgwdAgAdAgAfgZ64u7YLH1h+POfe45+sKrjc+s7gNL5FDBjN4AAR4AAR4AA5j9Tn4F6xLH1V/vKf++29L7o9cbZ64p2lRFHfh/XfhetW7BzN4AAR4AAR4AF7mShcMm1pf/tTnG+vXN03zLvz/fs3XF585nOCZwXffEszgARDgARDgAfiJ1efgY4557fXaj+Av53S/j61nfHWeYaSU/tZuV1X1xpDDDB4AAR4AAR7gYl1iLRp4tp49Wt+222VZdnLwdV2/1muYwQMgwAMgwAPwh8Xn4Hv2FO3UK485+N1uF3Om+/D+wePFeulnWA/9e7jeL+12URSdHPLDw8N+qH8vTVVVn8J4uhdGMIMHQIAHQIAH4CdWvw4+7pl6aWKOPFerJeaQN5vNp6HPA8zgARDgARDgAXgxe7KeuRXU6vkWzve23T51/XcwgwdAgAdAgAdgAjn4M5OrzbM0VVW9ardTSp/b7ZubG/XVwQweAAEeQIAHYK3k4FmaX3UBmMEDIMADCPAAnAk5eC5aSult+NPfQvuh3aiq6r1ewwweAAEeAAEegGdafQ6+LMvYtqfouv0rtG+HXhzrxcc9ZXO1eIqiuB/6vM1m8zqMrzu3CDN4AAR4AAR4AJ5pu7YTjjlWupqm6bSrqhp1j1NKnf4tiuKk1zN1T9Zj70nbNM1T6P/fjErM4AEQ4AEQ4AEu1lYXdMUc/9Qc8KHVdd1pj82558ScfPzdwdrVdS1njhk8AAI8AAI8AIciB89JpZQ+t9tVVb3RK2AGD4AADyDAA3AmFp+DjznaFxi1p2ZK6UP4027KweWUw83I/M5gu91uZ77/B70/Lzg/e7xiBg+AAA+AAA9wORa3J+vUeuQxp/v4+Pg6vGQw51kUxV3m80Ydf7PZ/Gg3Lr3WSaxXn9tTdapn1BLah/sz6rlUURSvDzkewQweAAEeQIAHYNVOnoM/dL3xuXO8L6gPf33JA2xsff1D19/veYbybmg85p4BjT3fseNx6h67mMEDIMADIMADcFJHz8FPXec+VS5nGnO0sb30PVoZvp8xp73ZbO6HxuOh7/fYz08pfW23q6p65S5jBg8gwAMgwAOwWAfPwaeU3rbbc69zn1vMidZ13Wk3TfMlXM/rzEc+GWbHk8u5L3385cbjZrO5dZcxgwcQ4AEQ4AFYjaOvg1/buvK4Lnq328U9PL9mPuIflzzA4jOLpml+nfkQ/w7tzjORteXcwQweAAEeQIAH4KwcPQe/tlouufrdTdN01rkXRXEd3h/XLXdqn6y9vnesjVIUxe0x7/fj4+NtuB9n9QXtWdf/TdjCDB5AgAdAgAdgNQ6eg6+q6lP402D97aXryfH+M7Tv2o2ePUDPzb9C/9ye+H50ctR1Xd+ufLx9C98n9d8xgwcQ4AEQ4AFYj/8APq7Wx9AQzhIAAAAASUVORK5CYII=';
   const boneProjectileImage = new Image();
   boneProjectileImage.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAfCAYAAAA1HueWAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAARklEQVR4nO2TQQoAIAgE5/+fNoSMLNHoGM1xmRURBEA6TLhMFsJMDiBqboJRCkYpKF/in4B3TyA37+TETBhi1EynRSto1gC59gIbBRijIAAAAABJRU5ErkJggg==';
   const blueBoneProjectileImage = new Image();
@@ -76,30 +80,38 @@
     'spotify:track:6YnPqvc66bdYGGOJIlDEz1'
   ];
   const MEGALOVANIA = 'spotify:track:1J03Vp93ybKIxfzYI4YJtL';
-  // Sans battle attack order, modeled after the original no-hit battle sequence.
-  // The numeric phase is used only by the attack scheduler; visual assets are unchanged.
-  const SANS_ATTACK_SEQUENCE = Array.from({ length: 25 }, (_, index) => index);
+  // Publicly documented attack families are arranged in a fixed first wave,
+  // second wave, final gauntlet, blaster spiral and non-lethal final slams.
+  const SANS_ATTACK_SEQUENCE = [
+    12,
+    0, 5, 8, 13, 16, 6, 17, 14, 15, 10, 1, 8,
+    11, 2, 21, 18, 19, 3, 20, 21, 18,
+    22, 23, 24
+  ];
   const SANS_PHASE_INTERVALS = [
-    760, 680, 720, 690, 860, 860, 760, 720, 760, 680,
-    560, 650, 540, 620, 520, 560, 520, 500, 460, 520,
-    430, 430, 390, 360, 120
+    880, 900, 500, 520, 820, 860, 880, 760, 820, 720,
+    720, 760, 1100, 900, 760, 820, 820, 760, 650, 520,
+    680, 620, 560, 280, 420
   ];
   const SANS_PHASE_SPEEDS = [
-    176, 142, 148, 156, 104, 104, 122, 154, 0, 172,
-    188, 152, 196, 178, 0, 184, 0, 0, 0, 168,
-    202, 0, 220, 232, 0
+    170, 160, 0, 0, 100, 175, 150, 0, 180, 0,
+    150, 0, 190, 120, 160, 120, 130, 145, 0, 0,
+    130, 180, 190, 0, 0
   ];
   const SANS_GRAVITY_PHASES = new Set([
-    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
-    15, 16, 17, 19, 20, 21, 22, 23
+    0, 1, 4, 5, 6, 8, 10, 12, 13, 14, 15, 16, 17, 18, 19, 24
   ]);
   const SANS_TURN_DURATIONS = [
-    8800, 7200, 7600, 7800, 9000, 9000, 8600, 8200, 9000, 8600,
-    7400, 8200, 7600, 9200, 9000, 9800, 7600, 7800, 9600, 9200,
-    10200, 9000, 11800, 12600, 36000
+    5200,
+    5200, 5200, 5600, 6000, 6500, 6500, 6500, 6000, 6200, 5400, 5600, 6000,
+    6500, 6000, 6500, 5200, 5000, 5200, 5600, 6500, 5200,
+    8000, 9000, 4500
   ];
-  // 一回の通しテスト用。false に戻すと通常の被弾処理へ復帰する。
   const TEST_PLAY_INVINCIBLE = false;
+  const BLUE_SOUL_JUMP_VELOCITY = 168;
+  const BLUE_SOUL_JUMP_HOLD_ACCEL = 325;
+  const BLUE_SOUL_GRAVITY = 520;
+  const BLUE_SOUL_PRELIFT_SPEED = 92;
   const GravityDirection = Object.freeze({
     DOWN: 'down',
     UP: 'up',
@@ -212,6 +224,8 @@
   let sansTurn = 0;
   let sansPhaseCursor = 0;
   let sansMercyProgress = 0;
+  let soulMode = 'red';
+  let sansBattleComplete = false;
   let gravityDirection = 'down';
   let sansGestureUntil = -10000;
   let sansGestureStartedAt = -10000;
@@ -490,11 +504,41 @@
       && (state === 'enemyTurn' || state === 'enemySpeak');
 
     if (sansReferenceImage.complete && sansReferenceImage.naturalWidth) {
-      const drawX = Math.round(x - 20);
-      const drawY = Math.round(y - 9 + idle);
+      const gestureActive = t < sansGestureUntil;
+      const direction = sansGestureDirection;
+      let sprite = sansReferenceImage;
+      let spriteW = 40;
+      let spriteH = 53;
+      let drawX = Math.round(x - 20);
+      let drawY = Math.round(y - 9 + idle);
+      let flipX = false;
+
+      if (gestureActive && direction === GravityDirection.UP
+        && sansArmUpReferenceImage.complete && sansArmUpReferenceImage.naturalWidth) {
+        sprite = sansArmUpReferenceImage;
+        spriteW = 43;
+        spriteH = 53;
+        drawX = Math.round(x - 22);
+        drawY = Math.round(y - 13 + idle);
+      } else if (gestureActive
+        && sansPointReferenceImage.complete && sansPointReferenceImage.naturalWidth) {
+        sprite = sansPointReferenceImage;
+        spriteW = 48;
+        spriteH = 45;
+        drawX = Math.round(x - 24);
+        drawY = Math.round(y - 6 + idle);
+        flipX = direction === GravityDirection.LEFT;
+      }
+
       g.save();
       g.imageSmoothingEnabled = false;
-      g.drawImage(sansReferenceImage, drawX, drawY, 40, 53);
+      if (flipX) {
+        g.translate(drawX + spriteW, 0);
+        g.scale(-1, 1);
+        g.drawImage(sprite, 0, drawY, spriteW, spriteH);
+      } else {
+        g.drawImage(sprite, drawX, drawY, spriteW, spriteH);
+      }
       g.restore();
 
       if (talking && jaw) {
@@ -506,20 +550,6 @@
       if (finalSpecial && Math.floor(t / 170) % 2) {
         microPixelRect(x + 5, drawY + 11, 2, 2, '#55f3ff');
         microPixelRect(x + 6, drawY + 11, 1, 1, '#ffffff');
-      }
-      if (t < sansGestureUntil) {
-        const lift = Math.min(1, Math.max(0, (t - sansGestureStartedAt) / 90));
-        const armSide = sansGestureDirection === GravityDirection.LEFT ? -1 : 1;
-        const shoulderX = x + armSide * 12;
-        const handX = x + armSide * (14 + Math.round(lift * 3));
-        const handY = drawY + 23 - Math.round(lift * 13);
-
-        // 元画像の腕を黒で隠し、肩から手までを段階的に持ち上げる。
-        microPixelRect(shoulderX - (armSide < 0 ? 5 : 0), drawY + 18, 5, 13, '#050505');
-        line(shoulderX, drawY + 24, handX, handY + 4, '#dedede', 3);
-        microPixelRect(handX - 2, handY, 5, 4, '#ffffff');
-        microPixelRect(handX - 1, handY - 2, 2, 3, '#ffffff');
-        microPixelRect(handX + (armSide > 0 ? 2 : -1), handY - 1, 2, 3, '#dedede');
       }
       if (state === 'enemyTurn' && t < sansExpressionUntil) {
         if (sansExpression === 'focus') {
@@ -947,40 +977,47 @@
       const recoil = active ? Math.sin((bullet.age - bullet.warning) * 34) * 1.5 : 0;
       g.save();
       g.imageSmoothingEnabled = false;
-      if (bullet.orientation === 'angled') {
-        g.translate(bullet.x - Math.cos(bullet.angle) * recoil,
-          bullet.y - Math.sin(bullet.angle) * recoil);
-        // The source sprite faces downward, so rotate its forward axis to the beam angle.
-        g.rotate(bullet.angle - Math.PI / 2);
-      } else if (bullet.orientation === 'horizontal') {
+      if (bullet.orientation === 'horizontal') {
         const fromRight = bullet.side === 'right';
         g.translate(fromRight ? arena.right + 9 + recoil : arena.left - 9 - recoil, bullet.y);
         g.rotate(fromRight ? Math.PI / 2 : -Math.PI / 2);
-      } else {
+      } else if (bullet.orientation === 'vertical') {
         const fromBottom = bullet.side === 'bottom';
         g.translate(bullet.x, fromBottom ? arena.bottom + 9 + recoil : arena.top - 9 - recoil);
         if (fromBottom) g.rotate(Math.PI);
+      } else {
+        g.translate(bullet.x - Math.cos(bullet.angle) * recoil,
+          bullet.y - Math.sin(bullet.angle) * recoil);
+        g.rotate(bullet.angle - Math.PI / 2);
       }
       const chargeScale = .62 + charge * .38;
       g.scale(chargeScale, chargeScale);
       g.globalAlpha = active ? .98 : .58 + Math.sin(bullet.age * 28) * .18;
-      g.drawImage(blasterReferenceImage, -15, -19, 30, 38);
+
+      const sourceWidth = blasterReferenceImage.naturalWidth;
+      const sourceHeight = blasterReferenceImage.naturalHeight;
+      const split = Math.floor(sourceHeight * .57);
+      const jawOpen = active ? 5 : Math.round(charge * 4);
+      g.drawImage(blasterReferenceImage,
+        0, 0, sourceWidth, split,
+        -15, -19, 30, 22);
+      g.save();
+      g.translate(0, jawOpen);
+      if (active) g.rotate(Math.sin(bullet.age * 45) * .025);
+      g.drawImage(blasterReferenceImage,
+        0, split, sourceWidth, sourceHeight - split,
+        -15, 2, 30, 17);
+      g.restore();
+      if (charge > .55) {
+        rect(-3, 1 + jawOpen / 2, 6, 3, active ? '#ffffff' : '#8ff8ff');
+      }
       g.restore();
       return;
     }
 
-    // Low-detail fallback used only if the original embedded image cannot load.
     const c = '#fff';
     const glow = active ? '#8ff8ff' : '#a6b8ba';
-    if (bullet.orientation === 'angled') {
-      g.save();
-      g.translate(bullet.x, bullet.y);
-      g.rotate(bullet.angle);
-      rect(-7, -9, 14, 18, c);
-      rect(-5, -6, 10, 11, '#000');
-      rect(4, -2, 7, 5, glow);
-      g.restore();
-    } else if (bullet.orientation === 'horizontal') {
+    if (bullet.orientation === 'horizontal') {
       const fromRight = bullet.side === 'right';
       const x = fromRight ? 287 : 83;
       const y = bullet.y;
@@ -1012,7 +1049,7 @@
     const arena = battleArena();
     rect(arena.x, arena.y, arena.w, arena.h, '#fff');
     rect(arena.left, arena.top, arena.right - arena.left, arena.bottom - arena.top, '#000');
-    if (stage === 10 && attackPattern?.gravity) battleHeartShape(heart.x, heart.y, '#168bff');
+    if (stage === 10 && soulMode === 'blue') battleHeartShape(heart.x, heart.y, '#168bff');
     else heartShape(heart.x, heart.y, '#f5222d');
     for (const bullet of bullets) {
       if (bullet.kind === 'platform') {
@@ -1025,32 +1062,32 @@
           : 0;
         const pulse = .3 + Math.sin(bullet.age * 38) * .16;
         const beamWidth = stage === 10
-          ? 5 + (active && Math.floor(bullet.age * 36) % 2 ? 1 : 0)
+          ? Math.max(5, bullet.thickness || 5) + (active && Math.floor(bullet.age * 36) % 2 ? 1 : 0)
           : 9;
         const beamOffset = Math.floor(beamWidth / 2);
         g.globalAlpha = active ? 1 : pulse;
-        if (bullet.orientation === 'angled') {
-          const fullLength = bullet.length || Math.hypot(arena.right - arena.left, arena.bottom - arena.top) * 1.4;
-          const beamLength = active ? fullLength * fireProgress : fullLength;
-          g.save();
-          g.translate(bullet.x, bullet.y);
-          g.rotate(bullet.angle);
-          rect(0, -(active ? beamOffset : 1), beamLength, active ? beamWidth : 2,
-            active ? '#fff' : '#7cf5ff');
-          if (active) rect(0, -1, beamLength, 3, '#8ff8ff');
-          g.restore();
-        } else if (bullet.orientation === 'horizontal') {
+        if (bullet.orientation === 'horizontal') {
           const fullLength = arena.right - arena.left;
           const beamLength = active ? fullLength * fireProgress : fullLength;
           const beamX = bullet.side === 'right' ? arena.right - beamLength : arena.left;
           rect(beamX, bullet.y - (active ? beamOffset : 1), beamLength, active ? beamWidth : 2, active ? '#fff' : '#7cf5ff');
           if (active) rect(beamX, bullet.y - 1, beamLength, 3, '#8ff8ff');
-        } else {
+        } else if (bullet.orientation === 'vertical') {
           const fullLength = arena.bottom - arena.top;
           const beamLength = active ? fullLength * fireProgress : fullLength;
           const beamY = bullet.side === 'bottom' ? arena.bottom - beamLength : arena.top;
           rect(bullet.x - (active ? beamOffset : 1), beamY, active ? beamWidth : 2, beamLength, active ? '#fff' : '#7cf5ff');
           if (active) rect(bullet.x - 1, beamY, 3, beamLength, '#8ff8ff');
+        } else {
+          const fullLength = bullet.length || 260;
+          const beamLength = active ? fullLength * fireProgress : fullLength;
+          g.save();
+          g.translate(bullet.x, bullet.y);
+          g.rotate(bullet.angle);
+          rect(0, -(active ? beamOffset : 1), beamLength,
+            active ? beamWidth : 2, active ? '#fff' : '#7cf5ff');
+          if (active) rect(0, -1, beamLength, 3, '#8ff8ff');
+          g.restore();
         }
         g.globalAlpha = 1;
         drawBlasterHead(bullet, active);
@@ -1905,18 +1942,43 @@
     oscillator.stop(audio.currentTime + duration);
   }
 
+  function playNoiseBurst(duration = .16, volume = .035, highpassFrequency = 700) {
+    startAudio();
+    if (!audio || audio.state !== 'running') return;
+    const frameCount = Math.max(1, Math.floor(audio.sampleRate * duration));
+    const buffer = audio.createBuffer(1, frameCount, audio.sampleRate);
+    const channel = buffer.getChannelData(0);
+    for (let index = 0; index < frameCount; index++) {
+      const envelope = Math.pow(1 - index / frameCount, 2.2);
+      channel[index] = (Math.random() * 2 - 1) * envelope;
+    }
+    const source = audio.createBufferSource();
+    const filter = audio.createBiquadFilter();
+    const gain = audio.createGain();
+    filter.type = 'highpass';
+    filter.frequency.value = highpassFrequency;
+    gain.gain.setValueAtTime(volume, audio.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.001, audio.currentTime + duration);
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(audio.destination);
+    source.start();
+  }
+
   function playBoneEmergeSound() {
     playSweepSound('square', 150, 62, .11, .032);
   }
 
   function playBlasterChargeSound() {
-    playSweepSound('triangle', 145, 610, .34, .035);
-    window.setTimeout(() => playSweepSound('square', 230, 760, .18, .018), 90);
+    playSweepSound('triangle', 125, 720, .30, .034);
+    playSweepSound('sine', 220, 920, .23, .016);
+    window.setTimeout(() => playNoiseBurst(.10, .013, 1200), 95);
   }
 
   function playBlasterFireSound() {
-    playSweepSound('sawtooth', 520, 72, .2, .052);
-    playSweepSound('square', 190, 48, .16, .028);
+    playNoiseBurst(.22, .055, 360);
+    playSweepSound('sawtooth', 760, 62, .22, .050);
+    window.setTimeout(() => playSweepSound('square', 250, 48, .17, .030), 18);
   }
 
   function stageTrack() {
@@ -2016,6 +2078,14 @@
     state = next;
     stateAt = performance.now();
     if (lines) message = lines;
+    if (stage === 10) {
+      if (next === 'command' || next === 'result' || next === 'target'
+        || next === 'victory' || next === 'gameOver') {
+        soulMode = 'red';
+      } else if (next === 'enemyTurn' && attackPattern) {
+        soulMode = attackPattern.gravity ? 'blue' : 'red';
+      }
+    }
   }
 
   function scalePatternsForStage(patterns, stageNumber) {
@@ -2059,6 +2129,8 @@
     sansTurn = 0;
     sansPhaseCursor = 0;
     sansMercyProgress = 0;
+    soulMode = 'red';
+    sansBattleComplete = false;
     gravityDirection = 'down';
     sansGestureUntil = -10000;
     sansGestureStartedAt = -10000;
@@ -2112,7 +2184,8 @@
     } else if (menu === 1) {
       const chosen = alive[turnCount % alive.length];
       if (stage === 10) {
-        sansMercyProgress = Math.min(3, sansMercyProgress + 1);
+        const mercyGain = sansTurn >= SANS_ATTACK_SEQUENCE.length - 3 ? 2 : 1;
+        sansMercyProgress = Math.min(3, sansMercyProgress + mercyGain);
         if (sansMercyProgress >= 3) {
           setState('result', ['＊ サンズの まなざしが やわらいだ。', '＊ いまなら たたかわずに 道をあけてもらえそうだ。']);
         } else {
@@ -2138,7 +2211,8 @@
       }
     } else {
       const spareable = stage === 10
-        ? (sansMercyProgress >= 3 ? alive : [])
+        ? ((sansBattleComplete || sansMercyProgress >= 3
+          || sansTurn >= SANS_ATTACK_SEQUENCE.length) ? alive : [])
         : alive.filter(({ enemy }) => enemy.mood >= 2 || enemy.hp <= 10);
       if (spareable.length) {
         spareable.forEach(({ enemy }) => enemy.spared = true);
@@ -2204,13 +2278,24 @@
 
   function beginEnemyTurn() {
     if (!aliveEnemies().length) return finishVictory();
+    if (stage === 10 && (sansBattleComplete || sansTurn >= SANS_ATTACK_SEQUENCE.length)) {
+      sansBattleComplete = true;
+      sansMercyProgress = 3;
+      bullets = [];
+      soulMode = 'red';
+      setState('command', [
+        '＊ 最後の攻撃は おわった。',
+        '＊ たたかうことも みのがすことも できる。'
+      ]);
+      return;
+    }
     turnCount++;
     const attackers = aliveEnemies();
     const attacker = attackers[(turnCount - 1) % attackers.length].enemy;
     const patternIndex = (playerLevel - 1) * 3 + ((turnCount - 1) % 3);
     attackPattern = attacker.patterns[patternIndex];
     if (attacker.type === 'sans') {
-      const sequenceIndex = sansTurn % SANS_ATTACK_SEQUENCE.length;
+      const sequenceIndex = Math.min(sansTurn, SANS_ATTACK_SEQUENCE.length - 1);
       const sansPhase = SANS_ATTACK_SEQUENCE[sequenceIndex];
       attackPattern = {
         ...attackPattern,
@@ -2262,6 +2347,9 @@
     heart.jumpHold = 0;
     heart.jumpWasHeld = false;
     heart.slamActive = false;
+    soulMode = stage === 10 && (attackPattern?.gravity
+      || attackPattern?.sansPhase === 12 || attackPattern?.sansPhase === 22
+      || attackPattern?.sansPhase === 24) ? 'blue' : 'red';
     gravityDirection = 'down';
     sansWaveEvents = new Set();
     bullets = [];
@@ -2336,11 +2424,12 @@
       curve: extras.curve || 0,
       homing: extras.homing || 0,
       orientation: extras.orientation || (kind === 'bone' ? 'vertical' : 'horizontal'),
+      angle: extras.angle || 0,
+      thickness: extras.thickness || 0,
       length: extras.length || 0,
       warning: extras.warning || 0,
       life: extras.life || 5,
       side: extras.side || 'left',
-      angle: Number.isFinite(extras.angle) ? extras.angle : null,
       soundFired: false,
       age: 0
     });
@@ -2349,6 +2438,48 @@
   function aimedVelocity(x, y, speed, angleOffset = 0) {
     const angle = Math.atan2(heart.y - y, heart.x - x) + angleOffset;
     return { vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed };
+  }
+
+  function spawnHorizontalBoneTunnel(now, options = {}) {
+    const arena = battleArena();
+    const fromRight = options.fromRight ?? (volleyCount % 2 === 1);
+    const direction = fromRight ? -1 : 1;
+    const speed = options.speed || 172;
+    const columns = Math.max(2, options.columns || 5);
+    const spacing = options.spacing || 12;
+    const opening = options.opening || 18;
+    const wave = options.wave || 7;
+    const baseGap = options.gapCenter || (arena.top + arena.bottom) / 2;
+    const startX = fromRight ? arena.right + 8 : arena.left - 8;
+    const previousTransform = projectileTransform;
+    projectileTransform = null;
+
+    for (let column = 0; column < columns; column++) {
+      const phase = (column + (options.routeOffset || 0)) * .82;
+      const center = Math.max(arena.top + opening / 2 + 3,
+        Math.min(arena.bottom - opening / 2 - 3, baseGap + Math.sin(phase) * wave));
+      const gapTop = center - opening / 2;
+      const gapBottom = center + opening / 2;
+      const x = startX - direction * column * spacing;
+      addProjectile('bone', x, arena.top, direction * speed, 0, {
+        h: Math.max(4, gapTop - arena.top), fromTop: true, life: 5.2
+      });
+      addProjectile('bone', x, arena.bottom, direction * speed, 0, {
+        h: Math.max(4, arena.bottom - gapBottom), life: 5.2
+      });
+    }
+    projectileTransform = previousTransform;
+    playBoneEmergeSound();
+  }
+
+  function pointToSegmentDistance(px, py, x1, y1, x2, y2) {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const lengthSquared = dx * dx + dy * dy || 1;
+    const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / lengthSquared));
+    const nearestX = x1 + dx * t;
+    const nearestY = y1 + dy * t;
+    return Math.hypot(px - nearestX, py - nearestY);
   }
 
   function spawnSansVolley(pattern, now) {
@@ -2624,6 +2755,186 @@
             fromTop: fromCeiling
           });
       }
+    } else if (phase === 16) {
+      // Seven-platform run with alternating overhead bones.
+      soulMode = 'blue';
+      gravityDirection = GravityDirection.DOWN;
+      const platformY = [128, 116, 104, 122, 109, 129, 114][shot % 7];
+      const platformDirection = shot % 2 ? -1 : 1;
+      const platformX = platformDirection > 0 ? left - 12 : right + 12;
+      addProjectile('platform', platformX, platformY, platformDirection * speed, 0, {
+        w: 31 + (shot % 3) * 4, life: 5
+      });
+      if (shot % 3 !== 0) {
+        addProjectile('bone', platformX, platformY - 4,
+          platformDirection * speed, 0, {
+            h: shot % 2 ? 12 : 18,
+            fromTop: false,
+            life: 5
+          });
+      }
+    } else if (phase === 17) {
+      // Moving platform over a bone sea with three vertical blockers.
+      soulMode = 'blue';
+      gravityDirection = GravityDirection.DOWN;
+      const platformDirection = shot % 2 ? -1 : 1;
+      const platformX = platformDirection > 0 ? left - 12 : right + 12;
+      addProjectile('platform', platformX, 117 + Math.sin(shot * 1.3) * 8,
+        platformDirection * speed * .9, 0, { w: 30, life: 5 });
+      for (let blocker = 0; blocker < 3; blocker++) {
+        const blockerX = 132 + blocker * 52;
+        const fromCeiling = blocker === 1;
+        addProjectile('bone', blockerX,
+          fromCeiling ? top - 16 : bottom + 16,
+          0, fromCeiling ? speed * .55 : -speed * .55, {
+            h: blocker === 1 ? 18 : 13,
+            fromTop: fromCeiling,
+            life: 4
+          });
+      }
+    } else if (phase === 18) {
+      // Directional wall slam sequence 1.
+      soulMode = 'blue';
+      const sequence = [
+        GravityDirection.LEFT, GravityDirection.RIGHT, GravityDirection.UP,
+        GravityDirection.DOWN, GravityDirection.RIGHT, GravityDirection.UP,
+        GravityDirection.RIGHT, GravityDirection.DOWN, GravityDirection.UP
+      ];
+      slamSoul(sequence[shot % sequence.length]);
+    } else if (phase === 19) {
+      // Faster directional wall slam sequence 2.
+      soulMode = 'blue';
+      const sequence = [
+        GravityDirection.RIGHT, GravityDirection.LEFT, GravityDirection.RIGHT,
+        GravityDirection.RIGHT, GravityDirection.UP, GravityDirection.UP,
+        GravityDirection.DOWN, GravityDirection.RIGHT, GravityDirection.LEFT
+      ];
+      slamSoul(sequence[shot % sequence.length]);
+    } else if (phase === 20) {
+      // Red-SOUL vertical bone streams moving in opposite directions.
+      soulMode = 'red';
+      const laneOffset = (shot % 3) * 5;
+      for (let lane = 0; lane < 3; lane++) {
+        const leftX = left + 8 + lane * 7;
+        const rightX = right - 8 - lane * 7;
+        addProjectile('bone', leftX, top - 15 - laneOffset, 0, speed, {
+          h: 13, fromTop: true, life: 4
+        });
+        addProjectile('bone', rightX, bottom + 15 + laneOffset, 0, -speed, {
+          h: 13, life: 4
+        });
+      }
+    } else if (phase === 21) {
+      // Rapid screen-flicker family: each volley deliberately changes mechanic.
+      const step = shot % 5;
+      if (step <= 2) {
+        soulMode = 'blue';
+        gravityDirection = GravityDirection.DOWN;
+      } else {
+        soulMode = 'red';
+      }
+      if (step === 0) {
+        spawnHorizontalBoneTunnel(now, {
+          fromRight, speed: 195, columns: 4, opening: 19,
+          gapCenter: arena.bottom - 13, wave: 2
+        });
+      } else if (step === 1) {
+        spawnHorizontalBoneTunnel(now, {
+          fromRight, speed: 185, columns: 5, opening: 18,
+          gapCenter: arena.top + 20, wave: 5, routeOffset: shot
+        });
+      } else if (step === 2) {
+        movingBoneGate(shot % 2 ? 111 : 127, 18, 190);
+        addProjectile('bone', startX + direction * 22, top, direction * 190, 0, {
+          h: bottom - top, fromTop: true, blue: true, life: 4
+        });
+      } else if (step === 3) {
+        spawnHorizontalBoneTunnel(now, {
+          fromRight, speed: 205, columns: 7, opening: 17,
+          gapCenter: 117, wave: 9, routeOffset: shot
+        });
+      } else {
+        const angles = [Math.PI / 4, Math.PI * 3 / 4, Math.PI * 5 / 4, Math.PI * 7 / 4];
+        for (const angle of angles) {
+          const bx = 185 + Math.cos(angle) * 122;
+          const by = 117 + Math.sin(angle) * 58;
+          addProjectile('beam', bx, by, 0, 0, {
+            orientation: 'angled', angle: angle + Math.PI,
+            length: 260, warning: .48, life: .88, thickness: 5
+          });
+        }
+        playBlasterChargeSound();
+      }
+    } else if (phase === 22) {
+      // Final gauntlet: slams, vertical streams, a long tunnel and a closing route.
+      const step = shot % 9;
+      if (step < 4) {
+        soulMode = 'blue';
+        const directions = [
+          GravityDirection.RIGHT, GravityDirection.DOWN,
+          GravityDirection.DOWN, GravityDirection.LEFT
+        ];
+        slamSoul(directions[step]);
+      } else if (step === 4) {
+        soulMode = 'red';
+        for (let lane = 0; lane < 4; lane++) {
+          addProjectile('bone', left + 12 + lane * 12, top - lane * 7, 0, 180, {
+            h: 12, fromTop: true, life: 4
+          });
+          addProjectile('bone', right - 12 - lane * 12, bottom + lane * 7, 0, -180, {
+            h: 12, life: 4
+          });
+        }
+      } else if (step === 5) {
+        soulMode = 'red';
+        spawnHorizontalBoneTunnel(now, {
+          fromRight: false, speed: 218, columns: 9, spacing: 10,
+          opening: 18, gapCenter: 117, wave: 10, routeOffset: 1
+        });
+      } else if (step === 6) {
+        soulMode = 'red';
+        spawnHorizontalBoneTunnel(now, {
+          fromRight: true, speed: 225, columns: 8, spacing: 10,
+          opening: 15, gapCenter: 117, wave: 4, routeOffset: 4
+        });
+      } else if (step === 7) {
+        soulMode = 'blue';
+        gravityDirection = GravityDirection.RIGHT;
+        slamSoul(GravityDirection.RIGHT);
+      } else {
+        soulMode = 'red';
+        for (const beamX of [116, 185, 254]) {
+          addProjectile('beam', beamX, top, 0, 0, {
+            orientation: 'vertical', length: bottom - top,
+            warning: .42, life: .82,
+            side: beamX === 185 ? 'bottom' : 'top'
+          });
+        }
+        playBlasterChargeSound();
+      }
+    } else if (phase === 23) {
+      // Rotating Gaster Blaster spiral around the center of the board.
+      soulMode = 'red';
+      const baseAngle = shot * .48;
+      for (let index = 0; index < 2; index++) {
+        const angle = baseAngle + index * Math.PI;
+        const bx = 185 + Math.cos(angle) * 124;
+        const by = 117 + Math.sin(angle) * 57;
+        addProjectile('beam', bx, by, 0, 0, {
+          orientation: 'angled', angle: angle + Math.PI,
+          length: 270, warning: .33, life: .74, thickness: 5
+        });
+      }
+      playBlasterChargeSound();
+    } else if (phase === 24) {
+      // Final random-looking slams are deterministic and cannot reduce HP below 1.
+      soulMode = 'blue';
+      const directions = [
+        GravityDirection.LEFT, GravityDirection.DOWN,
+        GravityDirection.RIGHT, GravityDirection.UP,
+        GravityDirection.RIGHT, GravityDirection.DOWN
+      ];
+      slamSoul(directions[shot % directions.length]);
     } else {
       // Special mix: every volley changes its axis or bone route.
       const specialStep = shot % 6;
@@ -2660,306 +2971,161 @@
   function spawnSansBoneCorridor(pattern, now) {
     const phase = pattern.sansPhase || 0;
     const arena = battleArena();
-    const left = arena.left;
-    const right = arena.right;
-    const top = arena.top;
-    const bottom = arena.bottom;
-    const centerX = (left + right) / 2;
-    const centerY = (top + bottom) / 2;
-    const shot = volleyCount;
-    const fromRight = (shot + phase) % 2 === 1;
+    const sourceLeft = 79;
+    const sourceRight = 291;
+    const sourceTop = 96;
+    const sourceBottom = 140;
+    const fromRight = (volleyCount + phase) % 2 === 1;
     const direction = fromRight ? -1 : 1;
-    const speed = pattern.speed || 160;
-    const startX = fromRight ? right + 8 : left - 8;
+    const speed = Math.max(118, Math.min(224, 126 + phase * 5));
+    const startX = fromRight ? sourceRight + 8 : sourceLeft - 8;
+    const gapRoutes = [108, 120, 130, 115, 126, 111, 123, 132, 118, 106, 128, 114];
+    const routeIndex = (volleyCount + phase * 2) % gapRoutes.length;
+    const gapCenter = gapRoutes[routeIndex];
+    const gapSize = pattern.gravity ? 18 : 16;
+    const columns = 2;
+    const spacing = 11;
 
-    const addVerticalBone = (x, y, h, fromTop, vx = 0, vy = 0, extras = {}) => {
-      addProjectile('bone', x, y, vx, vy, { h, fromTop, life: extras.life || 5,
-        blue: extras.blue, boneType: extras.boneType, ...extras });
+    projectileTransform = {
+      sourceLeft,
+      sourceTop,
+      left: arena.left,
+      top: arena.top,
+      scaleX: (arena.right - arena.left) / (sourceRight - sourceLeft),
+      scaleY: (arena.bottom - arena.top) / (sourceBottom - sourceTop)
     };
-    const addHorizontalBone = (x, y, length, fromStart, vx = 0, vy = 0, extras = {}) => {
-      addProjectile('bone', x, y, vx, vy, { orientation: 'horizontal', length,
-        fromStart, life: extras.life || 5, blue: extras.blue,
-        boneType: extras.boneType, ...extras });
-    };
-    const addGapWall = (x, wallDirection, gapCenter, opening = 17, wallSpeed = speed,
-      columns = 2, spacing = 10, extras = {}) => {
-      const gapTop = gapCenter - opening / 2;
-      const gapBottom = gapCenter + opening / 2;
-      for (let column = 0; column < columns; column++) {
-        const wallX = x - wallDirection * column * spacing;
-        addVerticalBone(wallX, top, Math.max(4, gapTop - top), true,
-          wallDirection * wallSpeed, 0, extras);
-        addVerticalBone(wallX, bottom, Math.max(4, bottom - gapBottom), false,
-          wallDirection * wallSpeed, 0, extras);
-      }
-    };
-    const addLowFence = (height, count = 7, boneSpeed = speed, blueIndex = -1,
-      ceiling = false, gapIndex = -1) => {
-      for (let column = 0; column < count; column++) {
-        if (column === gapIndex) continue;
-        const x = startX - direction * column * 9;
-        addVerticalBone(x, ceiling ? top : bottom, height, ceiling,
-          direction * boneSpeed, 0, { blue: column === blueIndex });
-      }
-    };
-    const addPlatform = (y, platformDirection = direction, width = 34, multiplier = 1) => {
-      const x = platformDirection > 0 ? left - 16 : right + 16;
-      addProjectile('platform', x, y, platformDirection * speed * multiplier, 0,
-        { w: width, life: 5 });
-    };
-    const addBeam = (orientation, position, warning = .48, life = .84, side = null) => {
-      playBlasterChargeSound();
-      addProjectile('beam', orientation === 'horizontal' ? left : position,
-        orientation === 'horizontal' ? position : top, 0, 0, {
-          orientation,
-          length: orientation === 'horizontal' ? right - left : bottom - top,
-          warning,
-          life,
-          side: side || (orientation === 'horizontal'
-            ? (fromRight ? 'right' : 'left')
-            : (fromRight ? 'bottom' : 'top'))
+
+    const addWall = (wallX, wallDirection, center, wallSpeed, opening = gapSize, width = columns) => {
+      const gapTop = center - opening / 2;
+      const gapBottom = center + opening / 2;
+      const wallColumns = Math.min(2, width);
+      for (let column = 0; column < wallColumns; column++) {
+        const x = wallX - wallDirection * column * spacing;
+        addProjectile('bone', x, sourceTop, wallDirection * wallSpeed, 0, {
+          h: Math.max(5, gapTop - sourceTop),
+          fromTop: true,
+          life: 5
         });
-    };
-    const addAimedAxisBeam = (warning = .42, life = .78) => {
-      if (shot % 2 === 0) addBeam('horizontal', Math.max(top + 6, Math.min(bottom - 6, heart.y)), warning, life);
-      else addBeam('vertical', Math.max(left + 7, Math.min(right - 7, heart.x)), warning, life);
-    };
-    const slamPattern = (sequence, tall = false) => {
-      const slamDirection = sequence[shot % sequence.length];
-      slamSoul(slamDirection);
-      if (tall) {
-        const vertical = slamDirection === GravityDirection.DOWN || slamDirection === GravityDirection.UP;
-        for (let offset = -28; offset <= 28; offset += 8) {
-          if (Math.abs(offset) < 7) continue;
-          if (vertical) {
-            addVerticalBone(heart.x + offset,
-              slamDirection === GravityDirection.DOWN ? bottom : top,
-              13, slamDirection === GravityDirection.UP, 0, 0, { life: .72 });
-          } else {
-            addHorizontalBone(slamDirection === GravityDirection.RIGHT ? right : left,
-              heart.y + offset, 13, slamDirection === GravityDirection.LEFT, 0, 0, { life: .72 });
-          }
-        }
+        addProjectile('bone', x, sourceBottom, wallDirection * wallSpeed, 0, {
+          h: Math.max(5, sourceBottom - gapBottom),
+          life: 5
+        });
       }
+    };
+
+    const addFence = (height, blue = false, fromCeiling = false, width = 6) => {
+      for (let column = 0; column < width; column++) {
+        const x = startX - direction * column * 9;
+        addProjectile('bone', x, fromCeiling ? sourceTop : sourceBottom,
+          direction * speed, 0, {
+            h: height,
+            fromTop: fromCeiling,
+            blue,
+            life: 5
+          });
+      }
+    };
+
+    const addPlatform = (y, platformDirection = direction) => {
+      const x = platformDirection > 0 ? sourceLeft - 12 : sourceRight + 12;
+      addProjectile('platform', x, y, platformDirection * speed * .82, 0, {
+        w: 34,
+        life: 5
+      });
+    };
+
+    const addWarnedBeam = (horizontal, position) => {
+      playBlasterChargeSound();
+      addProjectile('beam', horizontal ? sourceLeft : position,
+        horizontal ? position : sourceTop, 0, 0, {
+          orientation: horizontal ? 'horizontal' : 'vertical',
+          length: horizontal ? sourceRight - sourceLeft : sourceBottom - sourceTop,
+          warning: .56,
+          life: .94,
+          side: horizontal ? (fromRight ? 'right' : 'left') : (fromRight ? 'bottom' : 'top')
+        });
     };
 
     switch (phase) {
-      case 0:
-        // The opening is run by runSansOpeningTimeline so this is a safety fallback.
-        addGapWall(startX, direction, [108, 126, 116][shot % 3], 16, 210, 2);
+      case 12: // Opening combination: fixed bone lanes followed by warned beams.
+        addWall(startX, direction, [108, 127, 116, 124][volleyCount % 4], speed * 1.08, 18, 5);
+        if (volleyCount % 4 === 2) addWarnedBeam(true, 104);
+        if (volleyCount % 4 === 3) addWarnedBeam(false, fromRight ? 244 : 126);
         break;
-      case 1: // Low jump rope.
-        gravityDirection = GravityDirection.DOWN;
-        addLowFence([10, 12, 11, 13][shot % 4], 7, speed);
+      case 0: // Fixed-height bone gaps for measured jumps.
+        addWall(startX, direction, [109, 124, 130, 116][volleyCount % 4], speed, 18, 4);
         break;
-      case 2: { // Blue/white alternating jump rope.
-        gravityDirection = GravityDirection.DOWN;
-        const blueBeat = shot % 2 === 0;
-        addLowFence(blueBeat ? 18 : 11, 6, speed, blueBeat ? 2 : -1);
+      case 5: // Alternating blue and short white bone groups.
+        addFence(volleyCount % 2 ? 10 : 20, volleyCount % 2 === 0, false, 7);
         break;
-      }
-      case 3: // High jump rope with assorted openings.
-        gravityDirection = GravityDirection.DOWN;
-        addGapWall(startX, direction, [106, 129, 113, 124][shot % 4], 16, speed, 2);
+      case 8: // Irregular-height gaps, always deterministic and readable.
+      case 4:
+        addWall(startX, direction, gapCenter, speed * 1.04, 17, 5);
         break;
-      case 4: // Left-to-right platform passage.
-        gravityDirection = GravityDirection.DOWN;
-        addPlatform([126, 113, 128, 108][shot % 4], 1, 36, .94);
-        if (shot % 4 === 2) addLowFence(9, 5, speed * .92, -1, true);
-        else addLowFence(8, 5, speed * .92);
+      case 13: // Moving platforms over a low bone floor.
+        addPlatform([110, 121, 129][volleyCount % 3]);
+        addFence(8, false, false, 7);
         break;
-      case 5: // Mirrored platform passage.
-        gravityDirection = GravityDirection.DOWN;
-        addPlatform([110, 126, 115, 129][shot % 4], -1, 36, .94);
-        if (shot % 4 === 3) addGapWall(startX, direction, 111, 20, speed * .9, 1);
-        else addLowFence(8, 5, speed * .92);
-        break;
-      case 6: // Alternating left/right bone platforms.
-        gravityDirection = GravityDirection.DOWN;
-        addPlatform(shot % 2 ? 108 : 126, shot % 2 ? -1 : 1, 34, 1.05);
-        addLowFence(8, 6, speed * 1.05);
-        break;
-      case 7: // First deterministic bone tunnel.
-        gravityDirection = GravityDirection.DOWN;
-        addGapWall(startX, direction, [108, 124, 115, 130][shot % 4], 18, speed, 3, 12);
-        break;
-      case 8: // Horizontal Gaster Blaster platforms.
-        gravityDirection = GravityDirection.DOWN;
-        addPlatform([126, 111, 123][shot % 3], direction, 38, .72);
-        addBeam('horizontal', [104, 118, 132][shot % 3], .58, .92);
-        break;
-      case 9: // Second, tighter bone tunnel.
-        gravityDirection = GravityDirection.DOWN;
-        addGapWall(startX, direction, [109, 127, 116, 130][shot % 4], 14, speed, 3, 11);
-        break;
-      case 10: // Fast low jump rope.
-        gravityDirection = GravityDirection.DOWN;
-        addLowFence([10, 12, 11][shot % 3], 8, speed * 1.06);
-        break;
-      case 11: { // Slot-to-slot conveyor.
-        gravityDirection = GravityDirection.DOWN;
-        const gap = 1 + shot % 4;
-        addLowFence(12, 7, speed, -1, false, gap);
-        addLowFence(12, 7, speed, -1, true, 6 - gap);
+      case 14: { // Opposing bone slides share one continuous opening.
+        addWall(startX, direction, gapCenter, speed, 18, 4);
+        const oppositeX = fromRight ? sourceLeft - 38 : sourceRight + 38;
+        addWall(oppositeX, -direction, gapCenter, speed * .9, 18, 4);
         break;
       }
-      case 12: // Fast high jump rope.
-        gravityDirection = GravityDirection.DOWN;
-        addGapWall(startX, direction, [106, 130, 112, 126][shot % 4], 14, speed, 2);
+      case 15: // Platform passage followed by a tall aligned bone gate.
+        addPlatform(volleyCount % 2 ? 126 : 111);
+        addWall(startX, direction, volleyCount % 2 ? 108 : 129, speed, 19, 4);
         break;
-      case 13: { // First dimensional-rift rotation.
-        gravityDirection = GravityDirection.DOWN;
-        const mode = shot % 4;
-        if (mode === 0) addGapWall(startX, direction, 111, 18, speed, 2);
-        else if (mode === 1) {
-          addGapWall(left - 8, 1, 126, 17, speed, 2);
-          addGapWall(right + 8, -1, 126, 17, speed, 2);
-        } else if (mode === 2) {
-          addBeam('horizontal', top + 10, .45, .78, 'left');
-          addBeam('vertical', right - 16, .45, .78, 'bottom');
-        } else {
-          addPlatform(119, direction, 40, .9);
-          addLowFence(9, 6, speed);
-        }
+      case 2: // Horizontal blaster cue plus a lower bone route.
+        addFence(9, false, false, 6);
+        if (volleyCount % 2 === 1) addWarnedBeam(true, 128);
         break;
-      }
-      case 14: // Small aimed blaster flurry, red SOUL.
-        gravityDirection = GravityDirection.DOWN;
-        addAimedAxisBeam(.38, .72);
+      case 10: // Even low rows intended for repeated small jumps.
+        addFence(11, false, false, 8);
         break;
-      case 15: { // Advanced dimensional-rift rotation.
-        gravityDirection = GravityDirection.DOWN;
-        const mode = shot % 5;
-        if (mode === 0) {
-          addLowFence(10, 7, speed);
-          addPlatform(118, direction, 32, 1.05);
-        } else if (mode === 1) {
-          addBeam('horizontal', centerY - 10, .42, .78, 'left');
-          addBeam('vertical', centerX + 34, .42, .78, 'top');
-        } else if (mode === 2) {
-          addGapWall(startX, direction, [108, 127][shot % 2], 14, speed * 1.08, 2);
-        } else if (mode === 3) {
-          addPlatform(109, 1, 30, .9);
-          addPlatform(127, -1, 30, .9);
-        } else {
-          addLowFence(10, 8, speed, shot % 2 ? 5 : -1);
-        }
+      case 3: // Vertical blaster cue with a fixed bone opening.
+        addWall(startX, direction, volleyCount % 2 ? 110 : 128, speed, 19, 4);
+        if (volleyCount % 3 === 2) addWarnedBeam(false, fromRight ? 247 : 123);
         break;
-      }
-      case 16: // First slam sequence: left, right, up, down, right, up, right, down, up.
-        slamPattern([
-          GravityDirection.LEFT, GravityDirection.RIGHT, GravityDirection.UP,
-          GravityDirection.DOWN, GravityDirection.RIGHT, GravityDirection.UP,
-          GravityDirection.RIGHT, GravityDirection.DOWN, GravityDirection.UP
-        ]);
+      case 6: // Low route and alternating moving platforms.
+      case 7:
+        addFence(8, false, false, 6);
+        addPlatform(volleyCount % 2 ? 108 : 125, phase === 7 ? -direction : direction);
         break;
-      case 17: // Second slam sequence.
-        slamPattern([
-          GravityDirection.RIGHT, GravityDirection.LEFT, GravityDirection.RIGHT,
-          GravityDirection.RIGHT, GravityDirection.UP, GravityDirection.UP,
-          GravityDirection.DOWN, GravityDirection.RIGHT, GravityDirection.LEFT
-        ]);
+      case 1: // Upper and lower combs leave a central moving gap.
+      case 11:
+        addFence(10 + volleyCount % 3, false, false, 7);
+        addFence(10 + (volleyCount + 1) % 3, false, true, 7);
         break;
-      case 18: // Large Gaster Blaster flurry, red SOUL.
-        addAimedAxisBeam(.32, .74);
-        if (shot % 3 === 2) {
-          if (shot % 2) addBeam('horizontal', heart.y < centerY ? bottom - 8 : top + 8, .34, .76);
-          else addBeam('vertical', heart.x < centerX ? right - 10 : left + 10, .34, .76);
-        }
+      case 9: // Position warning is paired with a bone wall, never shown alone.
+        addWall(startX, direction, gapCenter, speed, 18, 4);
+        if (volleyCount % 3 === 1) addWarnedBeam(true, Math.max(103, Math.min(132, heart.y)));
         break;
-      case 19: { // Train-station pattern: opposite sides climb/fall.
-        gravityDirection = GravityDirection.DOWN;
-        const lane = shot % 6;
-        const y = top + 5 + lane * (bottom - top - 10) / 5;
-        addHorizontalBone(left, y, 18, true, 0, -direction * speed * .55, { life: 2.6 });
-        addHorizontalBone(right, bottom - (y - top), 18, false, 0,
-          direction * speed * .55, { life: 2.6 });
-        if (shot % 2 === 0) addGapWall(startX, direction, centerY, 19, speed * .9, 1);
-        break;
-      }
-      case 20: { // Fast advanced-rift mix.
-        gravityDirection = GravityDirection.DOWN;
-        const mode = shot % 4;
-        if (mode === 0) addGapWall(startX, direction, [107, 128][shot % 2], 13, speed, 2);
-        else if (mode === 1) addAimedAxisBeam(.34, .70);
-        else if (mode === 2) {
-          addLowFence(9, 8, speed);
-          addPlatform(shot % 2 ? 110 : 127, -direction, 32, 1.08);
-        } else {
-          addBeam('horizontal', top + 9, .36, .70, 'right');
-          addBeam('vertical', left + 17, .36, .70, 'top');
-        }
-        break;
-      }
-      case 21: // Tall-bone slam sequence.
-        slamPattern([
-          GravityDirection.RIGHT, GravityDirection.DOWN, GravityDirection.DOWN,
-          GravityDirection.LEFT, GravityDirection.UP, GravityDirection.RIGHT,
-          GravityDirection.DOWN, GravityDirection.LEFT
-        ], true);
-        break;
-      case 22: { // Prefinal composite: train, slam, then rapid wavy tunnel.
-        gravityDirection = GravityDirection.DOWN;
-        const mode = shot % 6;
-        if (mode < 2) {
-          addHorizontalBone(mode ? right : left, centerY + (mode ? 12 : -12), 20,
-            mode === 0, 0, mode ? -speed * .48 : speed * .48, { life: 2.4 });
-        } else if (mode === 2) slamSoul(GravityDirection.RIGHT);
-        else if (mode === 3) slamSoul(GravityDirection.DOWN);
-        else {
-          const wave = centerY + Math.sin(shot * .88) * 13;
-          addGapWall(startX, direction, wave, 13, speed, 2);
-        }
-        break;
-      }
-      case 23: { // Final on-and-off gauntlet before the spiral.
-        const mode = shot % 4;
-        if (mode === 0) {
-          gravityDirection = GravityDirection.DOWN;
-          for (let x = left + 8; x <= right - 8; x += 9) {
-            if (Math.abs(x - heart.x) < 9) continue;
-            addVerticalBone(x, top, 10, true, 0, 0, { life: .64 });
-            addVerticalBone(x, bottom, 10, false, 0, 0, { life: .64 });
-          }
-        } else if (mode === 1) {
-          gravityDirection = GravityDirection.UP;
-          for (let y = top + 5; y <= bottom - 5; y += 8) {
-            if (Math.abs(y - heart.y) < 8) continue;
-            addHorizontalBone(left, y, 11, true, 0, 0, { life: .64 });
-            addVerticalBone(heart.x + 20, top, 10, true, 0, 0, { life: .64 });
-          }
-        } else if (mode === 2) {
-          gravityDirection = GravityDirection.RIGHT;
-          for (let y = top + 5; y <= bottom - 5; y += 8) {
-            if (Math.abs(y - heart.y) < 8) continue;
-            addHorizontalBone(right, y, 11, false, 0, 0, { life: .64 });
-            addVerticalBone(heart.x - 20, bottom, 10, false, 0, 0, { life: .64 });
-          }
-        } else {
-          gravityDirection = GravityDirection.LEFT;
-          for (let y = top + 5; y <= bottom - 5; y += 8) {
-            if (Math.abs(y - heart.y) < 8) continue;
-            addHorizontalBone(left, y, 12, true, 0, 0, { life: .68 });
-          }
-        }
-        playBoneEmergeSound();
-        break;
-      }
-      case 24:
-        // The final spiral is driven continuously by runSansFinalTimeline.
+      default:
+        addWall(startX, direction, gapCenter, speed, 18, 5);
         break;
     }
 
-    if (phase !== 14 && phase !== 18 && phase !== 24) playBoneEmergeSound();
-    if (shot % 3 === 0) {
-      sansGestureUntil = now + 330;
-      sansExpressionUntil = now + 390;
-      sansExpression = phase >= 21 ? 'strain' : 'focus';
+    playBoneEmergeSound();
+
+    if (volleyCount % 4 === 0) {
+      sansGestureStartedAt = now;
+      sansGestureUntil = now + 430;
+      sansExpressionUntil = now + 420;
+      sansExpression = routeIndex % 3 === 0 ? 'strain' : 'focus';
     }
+
+    // Keep successive groups separated while the previous group remains visible.
+    pattern.interval = Math.max(900, 1120 - Math.min(190, phase * 10));
+    projectileTransform = null;
   }
 
   function spawnPatternVolley(pattern, now) {
     const kind = pattern.kind;
+    if (stage === 10 && kind === 'bone') {
+      spawnSansVolley(pattern, now);
+      return;
+    }
     if (kind === 'bone') {
       spawnSansBoneCorridor(pattern, now);
       return;
@@ -3115,7 +3281,7 @@
 
   function spawnGuaranteedThreat(now) {
     if (stage === 10 && attackPattern) {
-      spawnSansBoneCorridor(attackPattern, now);
+      spawnSansVolley(attackPattern, now);
       volleyCount++;
       lastThreatAt = now;
       return;
@@ -3182,6 +3348,7 @@
   }
 
   function slamSoul(direction) {
+    soulMode = 'blue';
     gravityDirection = direction;
     const gravity = gravityVector(direction);
     heart.vx = gravity.x * 720;
@@ -3191,7 +3358,7 @@
     heart.slamActive = true;
     sansGestureDirection = direction;
     sansGestureStartedAt = performance.now();
-    sansGestureUntil = sansGestureStartedAt + 320;
+    sansGestureUntil = sansGestureStartedAt + 430;
   }
 
   function updateSoulPhysics(dt, arena, gravityEnabled) {
@@ -3234,22 +3401,31 @@
 
       const gravityVelocity = heart.vx * gravity.x + heart.vy * gravity.y;
       if (grounded && gravityVelocity >= 0) heart.isJumping = false;
+      const upwardGesture = stage === 10
+        && soulMode === 'blue'
+        && performance.now() < sansGestureUntil
+        && sansGestureDirection === GravityDirection.UP;
+      if (upwardGesture && !heart.slamActive) {
+        heart.y = Math.max(minY, heart.y - BLUE_SOUL_PRELIFT_SPEED * dt);
+        if (heart.vy > -BLUE_SOUL_PRELIFT_SPEED) heart.vy = -BLUE_SOUL_PRELIFT_SPEED;
+      }
+
       if (grounded && jumpHeld && !heart.jumpWasHeld) {
-        heart.vx = verticalGravity ? heart.vx : -gravity.x * 145;
-        heart.vy = verticalGravity ? -gravity.y * 145 : heart.vy;
+        heart.vx = verticalGravity ? heart.vx : -gravity.x * BLUE_SOUL_JUMP_VELOCITY;
+        heart.vy = verticalGravity ? -gravity.y * BLUE_SOUL_JUMP_VELOCITY : heart.vy;
         heart.isJumping = true;
         heart.jumpHold = 0;
       }
 
       // 押下時間に応じて反重力方向へ加速し、短押しと長押しの高度差を作る。
-      if (heart.isJumping && jumpHeld && heart.jumpHold < .12) {
+      if (heart.isJumping && jumpHeld && heart.jumpHold < .14) {
         heart.jumpHold += dt;
-        if (verticalGravity) heart.vy -= gravity.y * 250 * dt;
-        else heart.vx -= gravity.x * 250 * dt;
+        if (verticalGravity) heart.vy -= gravity.y * BLUE_SOUL_JUMP_HOLD_ACCEL * dt;
+        else heart.vx -= gravity.x * BLUE_SOUL_JUMP_HOLD_ACCEL * dt;
       }
 
-      heart.vx += gravity.x * 540 * dt;
-      heart.vy += gravity.y * 540 * dt;
+      heart.vx += gravity.x * BLUE_SOUL_GRAVITY * dt;
+      heart.vy += gravity.y * BLUE_SOUL_GRAVITY * dt;
       if (verticalGravity) heart.vy = Math.max(-360, Math.min(360, heart.vy));
       else heart.vx = Math.max(-360, Math.min(360, heart.vx));
       heart.x += heart.vx * dt;
@@ -3278,198 +3454,97 @@
   }
 
   function runSansOpeningTimeline(now) {
-    const elapsed = now - stateAt;
+    const frame = Math.floor((now - stateAt) * 60 / 1000);
+    const arena = battleArena();
     const once = (key, at, callback) => {
-      if (elapsed < at || sansWaveEvents.has(key)) return;
+      if (frame < at || sansWaveEvents.has(key)) return;
       sansWaveEvents.add(key);
       callback();
     };
-    const arena = battleArena();
 
-    once('opening-slam-down', 0, () => {
+    once('opening-slam-down', 1, () => {
+      soulMode = 'blue';
       sansExpression = 'eye';
-      sansExpressionUntil = now + 300;
+      sansExpressionUntil = now + 320;
       slamSoul(GravityDirection.DOWN);
     });
-    once('opening-slam-up', 420, () => slamSoul(GravityDirection.UP));
-    once('opening-slam-down-two', 840, () => slamSoul(GravityDirection.DOWN));
-    once('opening-tunnel-start', 1250, () => {
-      spawnSansBoneCorridor(attackPattern, now);
-      volleyCount++;
+    once('opening-rise-bones', 12, () => {
+      const previousTransform = projectileTransform;
+      projectileTransform = null;
+      for (let x = arena.left + 6; x <= arena.right - 6; x += 8) {
+        if (Math.abs(x - heart.x) < 8) continue;
+        addProjectile('bone', x, arena.bottom, 0, 0, { h: 10, life: .65 });
+      }
+      projectileTransform = previousTransform;
+      playBoneEmergeSound();
     });
-    for (let i = 0; i < 7; i++) {
-      once('opening-wave-' + i, 1750 + i * 430, () => {
-        const left = arena.left;
-        const right = arena.right;
-        const top = arena.top;
-        const bottom = arena.bottom;
-        const direction = i % 2 ? -1 : 1;
-        const x = direction > 0 ? left - 7 : right + 7;
-        const gapCenter = (top + bottom) / 2 + Math.sin(i * 1.1) * 13;
-        const gapTop = gapCenter - 7;
-        const gapBottom = gapCenter + 7;
-        addProjectile('bone', x, top, direction * 210, 0,
-          { h: gapTop - top, fromTop: true, life: 3 });
-        addProjectile('bone', x, bottom, direction * 210, 0,
-          { h: bottom - gapBottom, life: 3 });
-        playBoneEmergeSound();
+    once('opening-red-mode', 38, () => {
+      soulMode = 'red';
+      heart.x = (arena.left + arena.right) / 2;
+      heart.y = (arena.top + arena.bottom) / 2;
+      heart.vx = 0;
+      heart.vy = 0;
+      heart.slamActive = false;
+    });
+    once('opening-tunnel', 44, () => {
+      spawnHorizontalBoneTunnel(now, {
+        fromRight: false, speed: 210, columns: 9, spacing: 10,
+        opening: 18, gapCenter: (arena.top + arena.bottom) / 2,
+        wave: 8, routeOffset: 1
       });
-    }
-    const openingBlasters = [
-      ['horizontal', arena.top + 11, 'left'],
-      ['vertical', arena.right - 17, 'bottom'],
-      ['horizontal', arena.bottom - 11, 'right'],
-      ['vertical', arena.left + 17, 'top']
-    ];
-    openingBlasters.forEach(([orientation, position, side], index) => {
-      once('opening-blaster-' + index, 5200 + index * 580, () => {
+    });
+    once('opening-side-blasters', 92, () => {
+      for (const [orientation, position, side] of [
+        ['horizontal', arena.top + 9, 'left'],
+        ['horizontal', arena.bottom - 9, 'right'],
+        ['vertical', arena.left + 10, 'top'],
+        ['vertical', arena.right - 10, 'bottom']
+      ]) {
         addProjectile('beam', orientation === 'vertical' ? position : arena.left,
           orientation === 'horizontal' ? position : arena.top, 0, 0, {
-            orientation,
-            length: orientation === 'horizontal' ? arena.right - arena.left : arena.bottom - arena.top,
-            warning: .40,
-            life: .82,
-            side
+            orientation, warning: .38, life: .82, side,
+            length: orientation === 'horizontal'
+              ? arena.right - arena.left : arena.bottom - arena.top
           });
-        playBlasterChargeSound();
-      });
+      }
+      playBlasterChargeSound();
     });
-    if (elapsed >= SANS_TURN_DURATIONS[0]) {
+    once('opening-x-blasters', 124, () => {
+      for (const angle of [Math.PI / 4, Math.PI * 3 / 4,
+        Math.PI * 5 / 4, Math.PI * 7 / 4]) {
+        const bx = (arena.left + arena.right) / 2 + Math.cos(angle) * 120;
+        const by = (arena.top + arena.bottom) / 2 + Math.sin(angle) * 58;
+        addProjectile('beam', bx, by, 0, 0, {
+          orientation: 'angled', angle: angle + Math.PI,
+          length: 260, warning: .36, life: .78, thickness: 5
+        });
+      }
+      playBlasterChargeSound();
+    });
+    once('opening-side-repeat', 156, () => {
+      for (const y of [arena.top + 8, arena.bottom - 8]) {
+        addProjectile('beam', arena.left, y, 0, 0, {
+          orientation: 'horizontal', length: arena.right - arena.left,
+          warning: .34, life: .76, side: y < (arena.top + arena.bottom) / 2 ? 'left' : 'right'
+        });
+      }
+      playBlasterChargeSound();
+    });
+    once('opening-large-pair', 188, () => {
+      addProjectile('beam', arena.left, arena.top + 16, 0, 0, {
+        orientation: 'horizontal', length: arena.right - arena.left,
+        warning: .42, life: .88, side: 'left', thickness: 8
+      });
+      addProjectile('beam', arena.left, arena.bottom - 16, 0, 0, {
+        orientation: 'horizontal', length: arena.right - arena.left,
+        warning: .42, life: .88, side: 'right', thickness: 8
+      });
+      playBlasterChargeSound();
+    });
+    if (frame >= 244) {
       bullets = [];
+      soulMode = 'red';
       setState('command', ['＊ どうする？']);
-      return true;
-    }
-    return false;
-  }
-
-  function addFinalAngledBlaster(angle, warning = .36, life = .80) {
-    const arena = battleArena();
-    const centerX = (arena.left + arena.right) / 2;
-    const centerY = (arena.top + arena.bottom) / 2;
-    const radius = Math.hypot(arena.right - arena.left, arena.bottom - arena.top) * .62;
-    const directionX = Math.cos(angle);
-    const directionY = Math.sin(angle);
-    const x = centerX - directionX * radius;
-    const y = centerY - directionY * radius;
-    addProjectile('beam', x, y, 0, 0, {
-      orientation: 'angled',
-      angle,
-      length: radius * 2.05,
-      warning,
-      life
-    });
-    playBlasterChargeSound();
-  }
-
-  function runSansFinalTimeline(now) {
-    const elapsed = now - stateAt;
-    const arena = battleArena();
-    const once = (key, at, callback) => {
-      if (elapsed < at || sansWaveEvents.has(key)) return;
-      sansWaveEvents.add(key);
-      callback();
-    };
-
-    // Opening train-station movement and rapid slams.
-    for (let i = 0; i < 8; i++) {
-      once('final-train-' + i, 250 + i * 360, () => {
-        const fromRight = i % 2 === 1;
-        const x = fromRight ? arena.right + 8 : arena.left - 8;
-        const direction = fromRight ? -1 : 1;
-        const gap = (arena.top + arena.bottom) / 2 + Math.sin(i * .9) * 12;
-        addProjectile('bone', x, arena.top, direction * 228, 0,
-          { h: gap - 7 - arena.top, fromTop: true, life: 2.4 });
-        addProjectile('bone', x, arena.bottom, direction * 228, 0,
-          { h: arena.bottom - gap - 7, life: 2.4 });
-        playBoneEmergeSound();
-      });
-    }
-    const preSpiralSlams = [
-      GravityDirection.LEFT, GravityDirection.RIGHT, GravityDirection.UP,
-      GravityDirection.DOWN, GravityDirection.RIGHT, GravityDirection.UP
-    ];
-    preSpiralSlams.forEach((direction, index) => {
-      once('final-preslam-' + index, 3400 + index * 410, () => slamSoul(direction));
-    });
-
-    // Sideways wavy corridor and narrowing pillars.
-    for (let i = 0; i < 15; i++) {
-      once('final-wave-' + i, 6100 + i * 270, () => {
-        const direction = 1;
-        const x = arena.left - 8;
-        const gap = (arena.top + arena.bottom) / 2 + Math.sin(i * .78) * 13;
-        const opening = Math.max(10, 18 - i * .35);
-        addProjectile('bone', x, arena.top, direction * 238, 0,
-          { h: gap - opening / 2 - arena.top, fromTop: true, life: 2.2 });
-        addProjectile('bone', x, arena.bottom, direction * 238, 0,
-          { h: arena.bottom - gap - opening / 2, life: 2.2 });
-        playBoneEmergeSound();
-      });
-    }
-
-    // Four screen-flicker wall combinations from the original final gauntlet.
-    const wallSets = [
-      [GravityDirection.UP, GravityDirection.DOWN],
-      [GravityDirection.UP, GravityDirection.LEFT],
-      [GravityDirection.DOWN, GravityDirection.RIGHT],
-      [GravityDirection.LEFT]
-    ];
-    wallSets.forEach((walls, index) => {
-      once('final-wall-set-' + index, 10600 + index * 760, () => {
-        bullets = bullets.filter(bullet => bullet.kind === 'beam');
-        gravityDirection = walls[walls.length - 1];
-        for (const wall of walls) {
-          for (let offset = -36; offset <= 36; offset += 8) {
-            if (Math.abs(offset) < 8) continue;
-            if (wall === GravityDirection.UP || wall === GravityDirection.DOWN) {
-              addProjectile('bone', (arena.left + arena.right) / 2 + offset,
-                wall === GravityDirection.UP ? arena.top : arena.bottom, 0, 0,
-                { h: 13, fromTop: wall === GravityDirection.UP, life: .68 });
-            } else {
-              addProjectile('bone', wall === GravityDirection.LEFT ? arena.left : arena.right,
-                (arena.top + arena.bottom) / 2 + offset, 0, 0, {
-                  orientation: 'horizontal', length: 13,
-                  fromStart: wall === GravityDirection.LEFT, life: .68
-                });
-            }
-          }
-        }
-        playBoneEmergeSound();
-      });
-    });
-
-    // Five complete circles of Gaster Blasters, aimed through the center.
-    const spiralStart = 14000;
-    const spiralShots = 60;
-    for (let i = 0; i < spiralShots; i++) {
-      once('final-spiral-' + i, spiralStart + i * 150, () => {
-        const rotations = 5;
-        const angle = (i / spiralShots) * Math.PI * 2 * rotations;
-        addFinalAngledBlaster(angle, .30, .70);
-        sansExpression = 'eye';
-        sansExpressionUntil = now + 240;
-      });
-    }
-
-    // Forced post-spiral slams: damage cannot reduce the player below 1 HP.
-    const forcedSlams = [
-      GravityDirection.DOWN, GravityDirection.RIGHT, GravityDirection.UP,
-      GravityDirection.LEFT, GravityDirection.DOWN, GravityDirection.LEFT,
-      GravityDirection.UP, GravityDirection.RIGHT, GravityDirection.DOWN,
-      GravityDirection.RIGHT, GravityDirection.UP, GravityDirection.LEFT
-    ];
-    forcedSlams.forEach((direction, index) => {
-      once('final-forced-slam-' + index, 23800 + index * 510, () => {
-        slamSoul(direction);
-        if (!practiceGuardActive && hp > 1) hp--;
-        karmaHp = 0;
-      });
-    });
-
-    if (elapsed >= SANS_TURN_DURATIONS[24]) {
-      hp = Math.max(1, hp);
-      bullets = [];
-      setState('command', ['＊ サンズは つかれきっている。']);
       return true;
     }
     return false;
@@ -3479,9 +3554,13 @@
     // 連続接触中も約0.1秒ごとの判定に抑え、HPが一瞬で消えないようにする。
     if (now - lastSansDamageAt < 100) return;
     lastSansDamageAt = now;
-    const forcedFinalSlam = attackPattern?.sansPhase === 24 && now - stateAt >= 23800;
-    hp = forcedFinalSlam ? Math.max(1, hp - 1) : Math.max(0, hp - 1);
-    karmaHp = forcedFinalSlam ? 0 : Math.min(Math.max(0, hp - 1), karmaHp + 1);
+    if (attackPattern?.sansPhase === 24) {
+      hp = Math.max(1, hp - 1);
+      karmaHp = 0;
+    } else {
+      hp = Math.max(0, hp - 1);
+      karmaHp = Math.min(Math.max(0, hp - 1), karmaHp + 1);
+    }
     if (now - lastSansHitSoundAt > 70) {
       lastSansHitSoundAt = now;
       beep(110, .055);
@@ -3503,27 +3582,29 @@
     const fallbackIndex = (playerLevel - 1) * 3;
     const pattern = attackPattern || enemies[0].patterns[fallbackIndex];
     const arena = battleArena();
+    updateSoulPhysics(dt, arena, stage === 10 ? soulMode === 'blue' : pattern.gravity);
+
     const openingTimeline = stage === 10 && sansTurn === 1;
-    const finalTimeline = stage === 10 && attackPattern?.sansPhase === 24;
-    if (finalTimeline) {
-      const finalElapsed = now - stateAt;
-      pattern.gravity = finalElapsed < 14000 || finalElapsed >= 23800;
-    }
-    updateSoulPhysics(dt, arena, pattern.gravity);
-
     if (openingTimeline && runSansOpeningTimeline(now)) return;
-    if (finalTimeline && runSansFinalTimeline(now)) return;
 
-    if (!openingTimeline && !finalTimeline && now >= spawnAt) {
+    if (!openingTimeline && now >= spawnAt) {
       const countBeforeSpawn = bullets.length;
       spawnPatternVolley(pattern, now);
       volleyCount++;
-      if (bullets.length === countBeforeSpawn) spawnGuaranteedThreat(now);
-      else lastThreatAt = now;
+      if (stage === 10) {
+        // Slam phases intentionally create their wall bones on the following frame.
+        // Treat every scripted Sans volley as a real threat so it is not duplicated.
+        lastThreatAt = now;
+      } else if (bullets.length === countBeforeSpawn) {
+        spawnGuaranteedThreat(now);
+      } else {
+        lastThreatAt = now;
+      }
       spawnAt = now + pattern.interval;
     }
 
-    if (!openingTimeline && !finalTimeline && !bullets.length && now - lastThreatAt > Math.max(900, pattern.interval + 180)) {
+    if (!openingTimeline && stage !== 10 && !bullets.length
+      && now - lastThreatAt > Math.max(900, pattern.interval + 180)) {
       spawnGuaranteedThreat(now);
     }
 
@@ -3566,26 +3647,25 @@
         const active = bullet.age >= bullet.warning && bullet.age <= bullet.life;
         const beamHitRadius = stage === 10 ? 2.35 : 6;
         const fireProgress = Math.max(0, Math.min(1, (bullet.age - bullet.warning) / .085));
-        if (bullet.orientation === 'angled') {
-          const fullLength = bullet.length || Math.hypot(arena.right - arena.left, arena.bottom - arena.top) * 1.4;
-          const dx = heart.x - bullet.x;
-          const dy = heart.y - bullet.y;
-          const along = dx * Math.cos(bullet.angle) + dy * Math.sin(bullet.angle);
-          const perpendicular = Math.abs(-dx * Math.sin(bullet.angle) + dy * Math.cos(bullet.angle));
-          hit = active && along >= 0 && along <= fullLength * fireProgress
-            && perpendicular < beamHitRadius;
-        } else if (bullet.orientation === 'horizontal') {
+        if (bullet.orientation === 'horizontal') {
           const reach = (arena.right - arena.left) * fireProgress;
           const reachedHeart = bullet.side === 'right'
             ? heart.x >= arena.right - reach
             : heart.x <= arena.left + reach;
           hit = active && reachedHeart && Math.abs(bullet.y - heart.y) < beamHitRadius;
-        } else {
+        } else if (bullet.orientation === 'vertical') {
           const reach = (arena.bottom - arena.top) * fireProgress;
           const reachedHeart = bullet.side === 'bottom'
             ? heart.y >= arena.bottom - reach
             : heart.y <= arena.top + reach;
           hit = active && reachedHeart && Math.abs(bullet.x - heart.x) < beamHitRadius;
+        } else {
+          const reach = (bullet.length || 260) * fireProgress;
+          const endX = bullet.x + Math.cos(bullet.angle) * reach;
+          const endY = bullet.y + Math.sin(bullet.angle) * reach;
+          hit = active && pointToSegmentDistance(
+            heart.x, heart.y, bullet.x, bullet.y, endX, endY
+          ) < Math.max(2.35, (bullet.thickness || 5) / 2);
         }
       } else if (bullet.kind === 'bone') {
         const heartRadius = stage === 10 ? 2.25 : 4;
@@ -3660,7 +3740,19 @@
         setState('result', ['＊ ふっかつのしずくが かがやいた！', '＊ HPが ぜんかいした。']);
       } else finishDefeat();
     } else if (now - stateAt > pattern.duration) {
-      setState('command', ['＊ どうする？']);
+      if (stage === 10 && attackPattern?.sansPhase === 24
+        && sansTurn >= SANS_ATTACK_SEQUENCE.length) {
+        sansBattleComplete = true;
+        sansMercyProgress = 3;
+        bullets = [];
+        soulMode = 'red';
+        setState('command', [
+          '＊ サンズの 最後の攻撃を くぐりぬけた。',
+          '＊ 「みのがす」を 選べるようになった。'
+        ]);
+      } else {
+        setState('command', ['＊ どうする？']);
+      }
     }
   }
 
