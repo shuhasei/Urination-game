@@ -183,6 +183,8 @@
   let sansMercyProgress = 0;
   let gravityDirection = 'down';
   let sansGestureUntil = -10000;
+  let sansExpressionUntil = -10000;
+  let sansExpression = 'grin';
   let projectileTransform = null;
   let reviveItems = 1;
   let dodgeAt = -10000;
@@ -477,6 +479,17 @@
         microPixelRect(x + 15, drawY + 13, 3, 8, '#ffffff');
         microPixelRect(x + 14, drawY + 12, 5, 3, '#dedede');
         microPixelRect(x + 15, drawY + 20, 2, 7, '#dedede');
+      }
+      if (state === 'enemyTurn' && t < sansExpressionUntil) {
+        if (sansExpression === 'focus') {
+          microPixelRect(x - 6, drawY + 17, 12, 3, '#ffffff');
+          microPixelRect(x - 5, drawY + 18, 10, 1, '#050505');
+          microPixelRect(x - 9, drawY + 10, 5, 2, '#050505');
+        } else if (sansExpression === 'strain') {
+          microPixelRect(x - 6, drawY + 17, 12, 3, '#050505');
+          microPixelRect(x - 4, drawY + 17, 8, 1, '#ffffff');
+          microPixelRect(x + 4, drawY + 9, 4, 3, '#050505');
+        }
       }
       return;
     }
@@ -1933,6 +1946,8 @@
     sansMercyProgress = 0;
     gravityDirection = 'down';
     sansGestureUntil = -10000;
+    sansExpressionUntil = -10000;
+    sansExpression = 'grin';
     openingDoorProgress = 0;
     openingDoorHold = 0;
     openingDoorActive = false;
@@ -2519,10 +2534,74 @@
     projectileTransform = null;
   }
 
+  function spawnSansBoneCorridor(pattern, now) {
+    const phase = pattern.sansPhase || 0;
+    const arena = battleArena();
+    const sourceLeft = 79;
+    const sourceRight = 291;
+    const sourceTop = 96;
+    const sourceBottom = 140;
+    const fromRight = (volleyCount + phase) % 2 === 1;
+    const direction = fromRight ? -1 : 1;
+    const speed = Math.max(118, Math.min(224, 126 + phase * 5));
+    const startX = fromRight ? sourceRight + 8 : sourceLeft - 8;
+    const gapRoutes = [108, 120, 130, 115, 126, 111, 123, 132, 118, 106, 128, 114];
+    const routeIndex = (volleyCount + phase * 2) % gapRoutes.length;
+    const gapCenter = gapRoutes[routeIndex];
+    const gapSize = pattern.gravity ? 18 : 16;
+    const columns = phase >= 8 ? 5 : 4;
+    const spacing = phase >= 12 ? 7 : 8;
+
+    projectileTransform = {
+      sourceLeft,
+      sourceTop,
+      left: arena.left,
+      top: arena.top,
+      scaleX: (arena.right - arena.left) / (sourceRight - sourceLeft),
+      scaleY: (arena.bottom - arena.top) / (sourceBottom - sourceTop)
+    };
+
+    const addWall = (wallX, wallDirection, center, wallSpeed) => {
+      const gapTop = center - gapSize / 2;
+      const gapBottom = center + gapSize / 2;
+      for (let column = 0; column < columns; column++) {
+        const x = wallX - wallDirection * column * spacing;
+        addProjectile('bone', x, sourceTop, wallDirection * wallSpeed, 0, {
+          h: Math.max(5, gapTop - sourceTop),
+          fromTop: true,
+          life: 5
+        });
+        addProjectile('bone', x, sourceBottom, wallDirection * wallSpeed, 0, {
+          h: Math.max(5, sourceBottom - gapBottom),
+          life: 5
+        });
+      }
+    };
+
+    addWall(startX, direction, gapCenter, speed);
+
+    // Later phases send a second aligned wall. It keeps a continuous opening,
+    // so the route is difficult but never sealed by crossing bone hitboxes.
+    if (phase >= 8 && volleyCount % 3 === 2) {
+      const oppositeX = fromRight ? sourceLeft - 34 : sourceRight + 34;
+      addWall(oppositeX, -direction, gapCenter, speed * .88);
+    }
+
+    if (volleyCount % 4 === 0) {
+      sansGestureUntil = now + 360;
+      sansExpressionUntil = now + 420;
+      sansExpression = routeIndex % 3 === 0 ? 'strain' : 'focus';
+    }
+
+    // Bone groups overlap slightly in time, preventing completely empty turns.
+    pattern.interval = Math.max(420, 700 - Math.min(220, phase * 14));
+    projectileTransform = null;
+  }
+
   function spawnPatternVolley(pattern, now) {
     const kind = pattern.kind;
     if (kind === 'bone') {
-      spawnSansVolley(pattern, now);
+      spawnSansBoneCorridor(pattern, now);
       return;
     }
     const speed = pattern.speed;
@@ -2675,6 +2754,12 @@
   }
 
   function spawnGuaranteedThreat(now) {
+    if (stage === 10 && attackPattern) {
+      spawnSansBoneCorridor(attackPattern, now);
+      volleyCount++;
+      lastThreatAt = now;
+      return;
+    }
     const arena = battleArena();
     const horizontal = volleyCount % 2 === 0;
     if (horizontal) {
