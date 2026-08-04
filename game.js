@@ -187,6 +187,8 @@
   let karmaHp = 0;
   let karmaDrainFrames = 0;
   let lastSansHitSoundAt = -10000;
+  let practiceGuardTurns = 1;
+  let practiceGuardActive = false;
   let turnCount = 0;
   let stage = 1;
   let sansDodges = 0;
@@ -702,6 +704,9 @@
       text(hp + ' / ' + maxHp, 216, y, 7);
     } else {
       text(hp + ' / ' + maxHp, 202, y, 8);
+    }
+    if (practiceGuardActive && state === 'enemyTurn') {
+      text('GUARD', 297, y, 7, '#62f5ff', 'right');
     }
   }
 
@@ -2007,6 +2012,8 @@
     hp = maxHp;
     karmaHp = 0;
     karmaDrainFrames = 0;
+    practiceGuardTurns = 1;
+    practiceGuardActive = false;
     menu = 0;
     target = 0;
     bullets = [];
@@ -2230,6 +2237,8 @@
     volleyCount = 0;
     lastThreatAt = performance.now();
     invincible = 0;
+    practiceGuardActive = practiceGuardTurns > 0;
+    if (practiceGuardActive) practiceGuardTurns--;
     setState('enemyTurn');
   }
 
@@ -3043,17 +3052,17 @@
       const gravityVelocity = heart.vx * gravity.x + heart.vy * gravity.y;
       if (grounded && gravityVelocity >= 0) heart.isJumping = false;
       if (grounded && jumpHeld && !heart.jumpWasHeld) {
-        heart.vx = verticalGravity ? heart.vx : -gravity.x * 122;
-        heart.vy = verticalGravity ? -gravity.y * 122 : heart.vy;
+        heart.vx = verticalGravity ? heart.vx : -gravity.x * 145;
+        heart.vy = verticalGravity ? -gravity.y * 145 : heart.vy;
         heart.isJumping = true;
         heart.jumpHold = 0;
       }
 
       // 押下時間に応じて反重力方向へ加速し、短押しと長押しの高度差を作る。
-      if (heart.isJumping && jumpHeld && heart.jumpHold < .10) {
+      if (heart.isJumping && jumpHeld && heart.jumpHold < .12) {
         heart.jumpHold += dt;
-        if (verticalGravity) heart.vy -= gravity.y * 220 * dt;
-        else heart.vx -= gravity.x * 220 * dt;
+        if (verticalGravity) heart.vy -= gravity.y * 250 * dt;
+        else heart.vx -= gravity.x * 250 * dt;
       }
 
       heart.vx += gravity.x * 540 * dt;
@@ -3262,6 +3271,7 @@
         ? Math.abs(heart.y - safeLaneValue) < routeWidth
         : Math.abs(heart.x - safeLaneValue) < routeWidth + .8;
       if (stage !== 10 && inGuaranteedLane) hit = false;
+      if (practiceGuardActive) hit = false;
       if (stage === 10 && hit) {
         sansHitThisFrame = true;
       } else if (invincible <= 0 && hit) {
@@ -3272,7 +3282,7 @@
     }
 
     if (sansHitThisFrame) applySansDamage(now);
-    updateKarmaDrain(dt);
+    if (!practiceGuardActive) updateKarmaDrain(dt);
 
     bullets = bullets.filter(bullet => bullet.kind === 'beam'
       ? bullet.age < bullet.life
