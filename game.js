@@ -76,16 +76,30 @@
     'spotify:track:6YnPqvc66bdYGGOJIlDEz1'
   ];
   const MEGALOVANIA = 'spotify:track:1J03Vp93ybKIxfzYI4YJtL';
-  const SANS_ATTACK_SEQUENCE = [
-    12, 0, 5, 8, 13, 14, 15, 6,
-    2, 7, 10, 11, 4, 2, 7, 10,
-    11, 2, 7, 10, 11, 3, 9, 12
+  // Sans battle attack order, modeled after the original no-hit battle sequence.
+  // The numeric phase is used only by the attack scheduler; visual assets are unchanged.
+  const SANS_ATTACK_SEQUENCE = Array.from({ length: 25 }, (_, index) => index);
+  const SANS_PHASE_INTERVALS = [
+    760, 680, 720, 690, 860, 860, 760, 720, 760, 680,
+    560, 650, 540, 620, 520, 560, 520, 500, 460, 520,
+    430, 430, 390, 360, 120
   ];
-  const SANS_PHASE_INTERVALS = [980, 920, 1240, 1180, 1020, 1080, 1260, 1380, 1120, 1340, 1040, 1440, 1080, 980, 1180, 1040];
-  const SANS_PHASE_SPEEDS = [210, 165, 0, 0, 110, 200, 180, 0, 210, 0, 42, 0, 46, 126, 58, 118];
-  const SANS_GRAVITY_PHASES = new Set([0, 1, 4, 5, 6, 8, 10, 11, 12, 13, 14, 15]);
+  const SANS_PHASE_SPEEDS = [
+    176, 142, 148, 156, 104, 104, 122, 154, 0, 172,
+    188, 152, 196, 178, 0, 184, 0, 0, 0, 168,
+    202, 0, 220, 232, 0
+  ];
+  const SANS_GRAVITY_PHASES = new Set([
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
+    15, 16, 17, 19, 20, 21, 22, 23
+  ]);
+  const SANS_TURN_DURATIONS = [
+    8800, 7200, 7600, 7800, 9000, 9000, 8600, 8200, 9000, 8600,
+    7400, 8200, 7600, 9200, 9000, 9800, 7600, 7800, 9600, 9200,
+    10200, 9000, 11800, 12600, 36000
+  ];
   // 一回の通しテスト用。false に戻すと通常の被弾処理へ復帰する。
-  const TEST_PLAY_INVINCIBLE = true;
+  const TEST_PLAY_INVINCIBLE = false;
   const GravityDirection = Object.freeze({
     DOWN: 'down',
     UP: 'up',
@@ -933,7 +947,12 @@
       const recoil = active ? Math.sin((bullet.age - bullet.warning) * 34) * 1.5 : 0;
       g.save();
       g.imageSmoothingEnabled = false;
-      if (bullet.orientation === 'horizontal') {
+      if (bullet.orientation === 'angled') {
+        g.translate(bullet.x - Math.cos(bullet.angle) * recoil,
+          bullet.y - Math.sin(bullet.angle) * recoil);
+        // The source sprite faces downward, so rotate its forward axis to the beam angle.
+        g.rotate(bullet.angle - Math.PI / 2);
+      } else if (bullet.orientation === 'horizontal') {
         const fromRight = bullet.side === 'right';
         g.translate(fromRight ? arena.right + 9 + recoil : arena.left - 9 - recoil, bullet.y);
         g.rotate(fromRight ? Math.PI / 2 : -Math.PI / 2);
@@ -944,19 +963,24 @@
       }
       const chargeScale = .62 + charge * .38;
       g.scale(chargeScale, chargeScale);
-      if (active) {
-        g.globalAlpha = .98;
-      } else {
-        g.globalAlpha = .58 + Math.sin(bullet.age * 28) * .18;
-      }
+      g.globalAlpha = active ? .98 : .58 + Math.sin(bullet.age * 28) * .18;
       g.drawImage(blasterReferenceImage, -15, -19, 30, 38);
       g.restore();
       return;
     }
 
+    // Low-detail fallback used only if the original embedded image cannot load.
     const c = '#fff';
     const glow = active ? '#8ff8ff' : '#a6b8ba';
-    if (bullet.orientation === 'horizontal') {
+    if (bullet.orientation === 'angled') {
+      g.save();
+      g.translate(bullet.x, bullet.y);
+      g.rotate(bullet.angle);
+      rect(-7, -9, 14, 18, c);
+      rect(-5, -6, 10, 11, '#000');
+      rect(4, -2, 7, 5, glow);
+      g.restore();
+    } else if (bullet.orientation === 'horizontal') {
       const fromRight = bullet.side === 'right';
       const x = fromRight ? 287 : 83;
       const y = bullet.y;
@@ -1005,7 +1029,17 @@
           : 9;
         const beamOffset = Math.floor(beamWidth / 2);
         g.globalAlpha = active ? 1 : pulse;
-        if (bullet.orientation === 'horizontal') {
+        if (bullet.orientation === 'angled') {
+          const fullLength = bullet.length || Math.hypot(arena.right - arena.left, arena.bottom - arena.top) * 1.4;
+          const beamLength = active ? fullLength * fireProgress : fullLength;
+          g.save();
+          g.translate(bullet.x, bullet.y);
+          g.rotate(bullet.angle);
+          rect(0, -(active ? beamOffset : 1), beamLength, active ? beamWidth : 2,
+            active ? '#fff' : '#7cf5ff');
+          if (active) rect(0, -1, beamLength, 3, '#8ff8ff');
+          g.restore();
+        } else if (bullet.orientation === 'horizontal') {
           const fullLength = arena.right - arena.left;
           const beamLength = active ? fullLength * fireProgress : fullLength;
           const beamX = bullet.side === 'right' ? arena.right - beamLength : arena.left;
@@ -2178,12 +2212,6 @@
     if (attacker.type === 'sans') {
       const sequenceIndex = sansTurn % SANS_ATTACK_SEQUENCE.length;
       const sansPhase = SANS_ATTACK_SEQUENCE[sequenceIndex];
-      const turnDurations = [
-        15000, 14500, 16000, 15500, 16500, 16000,
-        16500, 15500, 17000, 16500, 17000, 17500,
-        18000, 18500, 19000, 19000, 19500, 20000,
-        20500, 21000, 21500, 22000, 26000, 38000
-      ];
       attackPattern = {
         ...attackPattern,
         sansPhase,
@@ -2192,7 +2220,7 @@
         interval: SANS_PHASE_INTERVALS[sansPhase],
         speed: SANS_PHASE_SPEEDS[sansPhase],
         damage: 1,
-        duration: turnDurations[sequenceIndex]
+        duration: SANS_TURN_DURATIONS[sequenceIndex]
       };
       safeLaneAxis = sansPhase % 2 === 0 ? 'y' : 'x';
       safeLaneValue = safeLaneAxis === 'y'
@@ -2312,6 +2340,7 @@
       warning: extras.warning || 0,
       life: extras.life || 5,
       side: extras.side || 'left',
+      angle: Number.isFinite(extras.angle) ? extras.angle : null,
       soundFired: false,
       age: 0
     });
@@ -2631,152 +2660,302 @@
   function spawnSansBoneCorridor(pattern, now) {
     const phase = pattern.sansPhase || 0;
     const arena = battleArena();
-    const sourceLeft = 79;
-    const sourceRight = 291;
-    const sourceTop = 96;
-    const sourceBottom = 140;
-    const fromRight = (volleyCount + phase) % 2 === 1;
+    const left = arena.left;
+    const right = arena.right;
+    const top = arena.top;
+    const bottom = arena.bottom;
+    const centerX = (left + right) / 2;
+    const centerY = (top + bottom) / 2;
+    const shot = volleyCount;
+    const fromRight = (shot + phase) % 2 === 1;
     const direction = fromRight ? -1 : 1;
-    const speed = Math.max(118, Math.min(224, 126 + phase * 5));
-    const startX = fromRight ? sourceRight + 8 : sourceLeft - 8;
-    const gapRoutes = [108, 120, 130, 115, 126, 111, 123, 132, 118, 106, 128, 114];
-    const routeIndex = (volleyCount + phase * 2) % gapRoutes.length;
-    const gapCenter = gapRoutes[routeIndex];
-    const gapSize = pattern.gravity ? 18 : 16;
-    const columns = 2;
-    const spacing = 11;
+    const speed = pattern.speed || 160;
+    const startX = fromRight ? right + 8 : left - 8;
 
-    projectileTransform = {
-      sourceLeft,
-      sourceTop,
-      left: arena.left,
-      top: arena.top,
-      scaleX: (arena.right - arena.left) / (sourceRight - sourceLeft),
-      scaleY: (arena.bottom - arena.top) / (sourceBottom - sourceTop)
+    const addVerticalBone = (x, y, h, fromTop, vx = 0, vy = 0, extras = {}) => {
+      addProjectile('bone', x, y, vx, vy, { h, fromTop, life: extras.life || 5,
+        blue: extras.blue, boneType: extras.boneType, ...extras });
     };
-
-    const addWall = (wallX, wallDirection, center, wallSpeed, opening = gapSize, width = columns) => {
-      const gapTop = center - opening / 2;
-      const gapBottom = center + opening / 2;
-      const wallColumns = Math.min(2, width);
-      for (let column = 0; column < wallColumns; column++) {
-        const x = wallX - wallDirection * column * spacing;
-        addProjectile('bone', x, sourceTop, wallDirection * wallSpeed, 0, {
-          h: Math.max(5, gapTop - sourceTop),
-          fromTop: true,
-          life: 5
-        });
-        addProjectile('bone', x, sourceBottom, wallDirection * wallSpeed, 0, {
-          h: Math.max(5, sourceBottom - gapBottom),
-          life: 5
-        });
+    const addHorizontalBone = (x, y, length, fromStart, vx = 0, vy = 0, extras = {}) => {
+      addProjectile('bone', x, y, vx, vy, { orientation: 'horizontal', length,
+        fromStart, life: extras.life || 5, blue: extras.blue,
+        boneType: extras.boneType, ...extras });
+    };
+    const addGapWall = (x, wallDirection, gapCenter, opening = 17, wallSpeed = speed,
+      columns = 2, spacing = 10, extras = {}) => {
+      const gapTop = gapCenter - opening / 2;
+      const gapBottom = gapCenter + opening / 2;
+      for (let column = 0; column < columns; column++) {
+        const wallX = x - wallDirection * column * spacing;
+        addVerticalBone(wallX, top, Math.max(4, gapTop - top), true,
+          wallDirection * wallSpeed, 0, extras);
+        addVerticalBone(wallX, bottom, Math.max(4, bottom - gapBottom), false,
+          wallDirection * wallSpeed, 0, extras);
       }
     };
-
-    const addFence = (height, blue = false, fromCeiling = false, width = 6) => {
-      for (let column = 0; column < width; column++) {
+    const addLowFence = (height, count = 7, boneSpeed = speed, blueIndex = -1,
+      ceiling = false, gapIndex = -1) => {
+      for (let column = 0; column < count; column++) {
+        if (column === gapIndex) continue;
         const x = startX - direction * column * 9;
-        addProjectile('bone', x, fromCeiling ? sourceTop : sourceBottom,
-          direction * speed, 0, {
-            h: height,
-            fromTop: fromCeiling,
-            blue,
-            life: 5
-          });
+        addVerticalBone(x, ceiling ? top : bottom, height, ceiling,
+          direction * boneSpeed, 0, { blue: column === blueIndex });
       }
     };
-
-    const addPlatform = (y, platformDirection = direction) => {
-      const x = platformDirection > 0 ? sourceLeft - 12 : sourceRight + 12;
-      addProjectile('platform', x, y, platformDirection * speed * .82, 0, {
-        w: 34,
-        life: 5
-      });
+    const addPlatform = (y, platformDirection = direction, width = 34, multiplier = 1) => {
+      const x = platformDirection > 0 ? left - 16 : right + 16;
+      addProjectile('platform', x, y, platformDirection * speed * multiplier, 0,
+        { w: width, life: 5 });
     };
-
-    const addWarnedBeam = (horizontal, position) => {
+    const addBeam = (orientation, position, warning = .48, life = .84, side = null) => {
       playBlasterChargeSound();
-      addProjectile('beam', horizontal ? sourceLeft : position,
-        horizontal ? position : sourceTop, 0, 0, {
-          orientation: horizontal ? 'horizontal' : 'vertical',
-          length: horizontal ? sourceRight - sourceLeft : sourceBottom - sourceTop,
-          warning: .56,
-          life: .94,
-          side: horizontal ? (fromRight ? 'right' : 'left') : (fromRight ? 'bottom' : 'top')
+      addProjectile('beam', orientation === 'horizontal' ? left : position,
+        orientation === 'horizontal' ? position : top, 0, 0, {
+          orientation,
+          length: orientation === 'horizontal' ? right - left : bottom - top,
+          warning,
+          life,
+          side: side || (orientation === 'horizontal'
+            ? (fromRight ? 'right' : 'left')
+            : (fromRight ? 'bottom' : 'top'))
         });
+    };
+    const addAimedAxisBeam = (warning = .42, life = .78) => {
+      if (shot % 2 === 0) addBeam('horizontal', Math.max(top + 6, Math.min(bottom - 6, heart.y)), warning, life);
+      else addBeam('vertical', Math.max(left + 7, Math.min(right - 7, heart.x)), warning, life);
+    };
+    const slamPattern = (sequence, tall = false) => {
+      const slamDirection = sequence[shot % sequence.length];
+      slamSoul(slamDirection);
+      if (tall) {
+        const vertical = slamDirection === GravityDirection.DOWN || slamDirection === GravityDirection.UP;
+        for (let offset = -28; offset <= 28; offset += 8) {
+          if (Math.abs(offset) < 7) continue;
+          if (vertical) {
+            addVerticalBone(heart.x + offset,
+              slamDirection === GravityDirection.DOWN ? bottom : top,
+              13, slamDirection === GravityDirection.UP, 0, 0, { life: .72 });
+          } else {
+            addHorizontalBone(slamDirection === GravityDirection.RIGHT ? right : left,
+              heart.y + offset, 13, slamDirection === GravityDirection.LEFT, 0, 0, { life: .72 });
+          }
+        }
+      }
     };
 
     switch (phase) {
-      case 12: // Opening combination: fixed bone lanes followed by warned beams.
-        addWall(startX, direction, [108, 127, 116, 124][volleyCount % 4], speed * 1.08, 18, 5);
-        if (volleyCount % 4 === 2) addWarnedBeam(true, 104);
-        if (volleyCount % 4 === 3) addWarnedBeam(false, fromRight ? 244 : 126);
+      case 0:
+        // The opening is run by runSansOpeningTimeline so this is a safety fallback.
+        addGapWall(startX, direction, [108, 126, 116][shot % 3], 16, 210, 2);
         break;
-      case 0: // Fixed-height bone gaps for measured jumps.
-        addWall(startX, direction, [109, 124, 130, 116][volleyCount % 4], speed, 18, 4);
+      case 1: // Low jump rope.
+        gravityDirection = GravityDirection.DOWN;
+        addLowFence([10, 12, 11, 13][shot % 4], 7, speed);
         break;
-      case 5: // Alternating blue and short white bone groups.
-        addFence(volleyCount % 2 ? 10 : 20, volleyCount % 2 === 0, false, 7);
-        break;
-      case 8: // Irregular-height gaps, always deterministic and readable.
-      case 4:
-        addWall(startX, direction, gapCenter, speed * 1.04, 17, 5);
-        break;
-      case 13: // Moving platforms over a low bone floor.
-        addPlatform([110, 121, 129][volleyCount % 3]);
-        addFence(8, false, false, 7);
-        break;
-      case 14: { // Opposing bone slides share one continuous opening.
-        addWall(startX, direction, gapCenter, speed, 18, 4);
-        const oppositeX = fromRight ? sourceLeft - 38 : sourceRight + 38;
-        addWall(oppositeX, -direction, gapCenter, speed * .9, 18, 4);
+      case 2: { // Blue/white alternating jump rope.
+        gravityDirection = GravityDirection.DOWN;
+        const blueBeat = shot % 2 === 0;
+        addLowFence(blueBeat ? 18 : 11, 6, speed, blueBeat ? 2 : -1);
         break;
       }
-      case 15: // Platform passage followed by a tall aligned bone gate.
-        addPlatform(volleyCount % 2 ? 126 : 111);
-        addWall(startX, direction, volleyCount % 2 ? 108 : 129, speed, 19, 4);
+      case 3: // High jump rope with assorted openings.
+        gravityDirection = GravityDirection.DOWN;
+        addGapWall(startX, direction, [106, 129, 113, 124][shot % 4], 16, speed, 2);
         break;
-      case 2: // Horizontal blaster cue plus a lower bone route.
-        addFence(9, false, false, 6);
-        if (volleyCount % 2 === 1) addWarnedBeam(true, 128);
+      case 4: // Left-to-right platform passage.
+        gravityDirection = GravityDirection.DOWN;
+        addPlatform([126, 113, 128, 108][shot % 4], 1, 36, .94);
+        if (shot % 4 === 2) addLowFence(9, 5, speed * .92, -1, true);
+        else addLowFence(8, 5, speed * .92);
         break;
-      case 10: // Even low rows intended for repeated small jumps.
-        addFence(11, false, false, 8);
+      case 5: // Mirrored platform passage.
+        gravityDirection = GravityDirection.DOWN;
+        addPlatform([110, 126, 115, 129][shot % 4], -1, 36, .94);
+        if (shot % 4 === 3) addGapWall(startX, direction, 111, 20, speed * .9, 1);
+        else addLowFence(8, 5, speed * .92);
         break;
-      case 3: // Vertical blaster cue with a fixed bone opening.
-        addWall(startX, direction, volleyCount % 2 ? 110 : 128, speed, 19, 4);
-        if (volleyCount % 3 === 2) addWarnedBeam(false, fromRight ? 247 : 123);
+      case 6: // Alternating left/right bone platforms.
+        gravityDirection = GravityDirection.DOWN;
+        addPlatform(shot % 2 ? 108 : 126, shot % 2 ? -1 : 1, 34, 1.05);
+        addLowFence(8, 6, speed * 1.05);
         break;
-      case 6: // Low route and alternating moving platforms.
-      case 7:
-        addFence(8, false, false, 6);
-        addPlatform(volleyCount % 2 ? 108 : 125, phase === 7 ? -direction : direction);
+      case 7: // First deterministic bone tunnel.
+        gravityDirection = GravityDirection.DOWN;
+        addGapWall(startX, direction, [108, 124, 115, 130][shot % 4], 18, speed, 3, 12);
         break;
-      case 1: // Upper and lower combs leave a central moving gap.
-      case 11:
-        addFence(10 + volleyCount % 3, false, false, 7);
-        addFence(10 + (volleyCount + 1) % 3, false, true, 7);
+      case 8: // Horizontal Gaster Blaster platforms.
+        gravityDirection = GravityDirection.DOWN;
+        addPlatform([126, 111, 123][shot % 3], direction, 38, .72);
+        addBeam('horizontal', [104, 118, 132][shot % 3], .58, .92);
         break;
-      case 9: // Position warning is paired with a bone wall, never shown alone.
-        addWall(startX, direction, gapCenter, speed, 18, 4);
-        if (volleyCount % 3 === 1) addWarnedBeam(true, Math.max(103, Math.min(132, heart.y)));
+      case 9: // Second, tighter bone tunnel.
+        gravityDirection = GravityDirection.DOWN;
+        addGapWall(startX, direction, [109, 127, 116, 130][shot % 4], 14, speed, 3, 11);
         break;
-      default:
-        addWall(startX, direction, gapCenter, speed, 18, 5);
+      case 10: // Fast low jump rope.
+        gravityDirection = GravityDirection.DOWN;
+        addLowFence([10, 12, 11][shot % 3], 8, speed * 1.06);
+        break;
+      case 11: { // Slot-to-slot conveyor.
+        gravityDirection = GravityDirection.DOWN;
+        const gap = 1 + shot % 4;
+        addLowFence(12, 7, speed, -1, false, gap);
+        addLowFence(12, 7, speed, -1, true, 6 - gap);
+        break;
+      }
+      case 12: // Fast high jump rope.
+        gravityDirection = GravityDirection.DOWN;
+        addGapWall(startX, direction, [106, 130, 112, 126][shot % 4], 14, speed, 2);
+        break;
+      case 13: { // First dimensional-rift rotation.
+        gravityDirection = GravityDirection.DOWN;
+        const mode = shot % 4;
+        if (mode === 0) addGapWall(startX, direction, 111, 18, speed, 2);
+        else if (mode === 1) {
+          addGapWall(left - 8, 1, 126, 17, speed, 2);
+          addGapWall(right + 8, -1, 126, 17, speed, 2);
+        } else if (mode === 2) {
+          addBeam('horizontal', top + 10, .45, .78, 'left');
+          addBeam('vertical', right - 16, .45, .78, 'bottom');
+        } else {
+          addPlatform(119, direction, 40, .9);
+          addLowFence(9, 6, speed);
+        }
+        break;
+      }
+      case 14: // Small aimed blaster flurry, red SOUL.
+        gravityDirection = GravityDirection.DOWN;
+        addAimedAxisBeam(.38, .72);
+        break;
+      case 15: { // Advanced dimensional-rift rotation.
+        gravityDirection = GravityDirection.DOWN;
+        const mode = shot % 5;
+        if (mode === 0) {
+          addLowFence(10, 7, speed);
+          addPlatform(118, direction, 32, 1.05);
+        } else if (mode === 1) {
+          addBeam('horizontal', centerY - 10, .42, .78, 'left');
+          addBeam('vertical', centerX + 34, .42, .78, 'top');
+        } else if (mode === 2) {
+          addGapWall(startX, direction, [108, 127][shot % 2], 14, speed * 1.08, 2);
+        } else if (mode === 3) {
+          addPlatform(109, 1, 30, .9);
+          addPlatform(127, -1, 30, .9);
+        } else {
+          addLowFence(10, 8, speed, shot % 2 ? 5 : -1);
+        }
+        break;
+      }
+      case 16: // First slam sequence: left, right, up, down, right, up, right, down, up.
+        slamPattern([
+          GravityDirection.LEFT, GravityDirection.RIGHT, GravityDirection.UP,
+          GravityDirection.DOWN, GravityDirection.RIGHT, GravityDirection.UP,
+          GravityDirection.RIGHT, GravityDirection.DOWN, GravityDirection.UP
+        ]);
+        break;
+      case 17: // Second slam sequence.
+        slamPattern([
+          GravityDirection.RIGHT, GravityDirection.LEFT, GravityDirection.RIGHT,
+          GravityDirection.RIGHT, GravityDirection.UP, GravityDirection.UP,
+          GravityDirection.DOWN, GravityDirection.RIGHT, GravityDirection.LEFT
+        ]);
+        break;
+      case 18: // Large Gaster Blaster flurry, red SOUL.
+        addAimedAxisBeam(.32, .74);
+        if (shot % 3 === 2) {
+          if (shot % 2) addBeam('horizontal', heart.y < centerY ? bottom - 8 : top + 8, .34, .76);
+          else addBeam('vertical', heart.x < centerX ? right - 10 : left + 10, .34, .76);
+        }
+        break;
+      case 19: { // Train-station pattern: opposite sides climb/fall.
+        gravityDirection = GravityDirection.DOWN;
+        const lane = shot % 6;
+        const y = top + 5 + lane * (bottom - top - 10) / 5;
+        addHorizontalBone(left, y, 18, true, 0, -direction * speed * .55, { life: 2.6 });
+        addHorizontalBone(right, bottom - (y - top), 18, false, 0,
+          direction * speed * .55, { life: 2.6 });
+        if (shot % 2 === 0) addGapWall(startX, direction, centerY, 19, speed * .9, 1);
+        break;
+      }
+      case 20: { // Fast advanced-rift mix.
+        gravityDirection = GravityDirection.DOWN;
+        const mode = shot % 4;
+        if (mode === 0) addGapWall(startX, direction, [107, 128][shot % 2], 13, speed, 2);
+        else if (mode === 1) addAimedAxisBeam(.34, .70);
+        else if (mode === 2) {
+          addLowFence(9, 8, speed);
+          addPlatform(shot % 2 ? 110 : 127, -direction, 32, 1.08);
+        } else {
+          addBeam('horizontal', top + 9, .36, .70, 'right');
+          addBeam('vertical', left + 17, .36, .70, 'top');
+        }
+        break;
+      }
+      case 21: // Tall-bone slam sequence.
+        slamPattern([
+          GravityDirection.RIGHT, GravityDirection.DOWN, GravityDirection.DOWN,
+          GravityDirection.LEFT, GravityDirection.UP, GravityDirection.RIGHT,
+          GravityDirection.DOWN, GravityDirection.LEFT
+        ], true);
+        break;
+      case 22: { // Prefinal composite: train, slam, then rapid wavy tunnel.
+        gravityDirection = GravityDirection.DOWN;
+        const mode = shot % 6;
+        if (mode < 2) {
+          addHorizontalBone(mode ? right : left, centerY + (mode ? 12 : -12), 20,
+            mode === 0, 0, mode ? -speed * .48 : speed * .48, { life: 2.4 });
+        } else if (mode === 2) slamSoul(GravityDirection.RIGHT);
+        else if (mode === 3) slamSoul(GravityDirection.DOWN);
+        else {
+          const wave = centerY + Math.sin(shot * .88) * 13;
+          addGapWall(startX, direction, wave, 13, speed, 2);
+        }
+        break;
+      }
+      case 23: { // Final on-and-off gauntlet before the spiral.
+        const mode = shot % 4;
+        if (mode === 0) {
+          gravityDirection = GravityDirection.DOWN;
+          for (let x = left + 8; x <= right - 8; x += 9) {
+            if (Math.abs(x - heart.x) < 9) continue;
+            addVerticalBone(x, top, 10, true, 0, 0, { life: .64 });
+            addVerticalBone(x, bottom, 10, false, 0, 0, { life: .64 });
+          }
+        } else if (mode === 1) {
+          gravityDirection = GravityDirection.UP;
+          for (let y = top + 5; y <= bottom - 5; y += 8) {
+            if (Math.abs(y - heart.y) < 8) continue;
+            addHorizontalBone(left, y, 11, true, 0, 0, { life: .64 });
+            addVerticalBone(heart.x + 20, top, 10, true, 0, 0, { life: .64 });
+          }
+        } else if (mode === 2) {
+          gravityDirection = GravityDirection.RIGHT;
+          for (let y = top + 5; y <= bottom - 5; y += 8) {
+            if (Math.abs(y - heart.y) < 8) continue;
+            addHorizontalBone(right, y, 11, false, 0, 0, { life: .64 });
+            addVerticalBone(heart.x - 20, bottom, 10, false, 0, 0, { life: .64 });
+          }
+        } else {
+          gravityDirection = GravityDirection.LEFT;
+          for (let y = top + 5; y <= bottom - 5; y += 8) {
+            if (Math.abs(y - heart.y) < 8) continue;
+            addHorizontalBone(left, y, 12, true, 0, 0, { life: .68 });
+          }
+        }
+        playBoneEmergeSound();
+        break;
+      }
+      case 24:
+        // The final spiral is driven continuously by runSansFinalTimeline.
         break;
     }
 
-    playBoneEmergeSound();
-
-    if (volleyCount % 4 === 0) {
-      sansGestureUntil = now + 360;
-      sansExpressionUntil = now + 420;
-      sansExpression = routeIndex % 3 === 0 ? 'strain' : 'focus';
+    if (phase !== 14 && phase !== 18 && phase !== 24) playBoneEmergeSound();
+    if (shot % 3 === 0) {
+      sansGestureUntil = now + 330;
+      sansExpressionUntil = now + 390;
+      sansExpression = phase >= 21 ? 'strain' : 'focus';
     }
-
-    // Keep successive groups separated while the previous group remains visible.
-    pattern.interval = Math.max(900, 1120 - Math.min(190, phase * 10));
-    projectileTransform = null;
   }
 
   function spawnPatternVolley(pattern, now) {
@@ -3099,45 +3278,198 @@
   }
 
   function runSansOpeningTimeline(now) {
-    const frame = Math.floor((now - stateAt) * 60 / 1000);
+    const elapsed = now - stateAt;
     const once = (key, at, callback) => {
-      if (frame < at || sansWaveEvents.has(key)) return;
+      if (elapsed < at || sansWaveEvents.has(key)) return;
       sansWaveEvents.add(key);
       callback();
     };
-    once('slam-down', 1, () => {
+    const arena = battleArena();
+
+    once('opening-slam-down', 0, () => {
       sansExpression = 'eye';
-      sansExpressionUntil = now + 280;
+      sansExpressionUntil = now + 300;
       slamSoul(GravityDirection.DOWN);
     });
-    once('bone-wall', 10, () => {
+    once('opening-slam-up', 420, () => slamSoul(GravityDirection.UP));
+    once('opening-slam-down-two', 840, () => slamSoul(GravityDirection.DOWN));
+    once('opening-tunnel-start', 1250, () => {
       spawnSansBoneCorridor(attackPattern, now);
       volleyCount++;
     });
-    once('slam-up', 40, () => slamSoul(GravityDirection.UP));
-    once('slam-down-two', 80, () => slamSoul(GravityDirection.DOWN));
-    once('cross-blasters', 120, () => {
-      const arena = battleArena();
-      const beams = [
-        ['horizontal', arena.top + 12, 'left'],
-        ['horizontal', arena.bottom - 12, 'right'],
-        ['vertical', arena.left + 12, 'top'],
-        ['vertical', arena.right - 12, 'bottom']
-      ];
-      for (const [orientation, position, side] of beams) {
+    for (let i = 0; i < 7; i++) {
+      once('opening-wave-' + i, 1750 + i * 430, () => {
+        const left = arena.left;
+        const right = arena.right;
+        const top = arena.top;
+        const bottom = arena.bottom;
+        const direction = i % 2 ? -1 : 1;
+        const x = direction > 0 ? left - 7 : right + 7;
+        const gapCenter = (top + bottom) / 2 + Math.sin(i * 1.1) * 13;
+        const gapTop = gapCenter - 7;
+        const gapBottom = gapCenter + 7;
+        addProjectile('bone', x, top, direction * 210, 0,
+          { h: gapTop - top, fromTop: true, life: 3 });
+        addProjectile('bone', x, bottom, direction * 210, 0,
+          { h: bottom - gapBottom, life: 3 });
+        playBoneEmergeSound();
+      });
+    }
+    const openingBlasters = [
+      ['horizontal', arena.top + 11, 'left'],
+      ['vertical', arena.right - 17, 'bottom'],
+      ['horizontal', arena.bottom - 11, 'right'],
+      ['vertical', arena.left + 17, 'top']
+    ];
+    openingBlasters.forEach(([orientation, position, side], index) => {
+      once('opening-blaster-' + index, 5200 + index * 580, () => {
         addProjectile('beam', orientation === 'vertical' ? position : arena.left,
           orientation === 'horizontal' ? position : arena.top, 0, 0, {
             orientation,
-            warning: .25,
-            life: .83,
+            length: orientation === 'horizontal' ? arena.right - arena.left : arena.bottom - arena.top,
+            warning: .40,
+            life: .82,
             side
           });
-      }
-      playBlasterChargeSound();
+        playBlasterChargeSound();
+      });
     });
-    if (frame >= 180) {
+    if (elapsed >= SANS_TURN_DURATIONS[0]) {
       bullets = [];
       setState('command', ['＊ どうする？']);
+      return true;
+    }
+    return false;
+  }
+
+  function addFinalAngledBlaster(angle, warning = .36, life = .80) {
+    const arena = battleArena();
+    const centerX = (arena.left + arena.right) / 2;
+    const centerY = (arena.top + arena.bottom) / 2;
+    const radius = Math.hypot(arena.right - arena.left, arena.bottom - arena.top) * .62;
+    const directionX = Math.cos(angle);
+    const directionY = Math.sin(angle);
+    const x = centerX - directionX * radius;
+    const y = centerY - directionY * radius;
+    addProjectile('beam', x, y, 0, 0, {
+      orientation: 'angled',
+      angle,
+      length: radius * 2.05,
+      warning,
+      life
+    });
+    playBlasterChargeSound();
+  }
+
+  function runSansFinalTimeline(now) {
+    const elapsed = now - stateAt;
+    const arena = battleArena();
+    const once = (key, at, callback) => {
+      if (elapsed < at || sansWaveEvents.has(key)) return;
+      sansWaveEvents.add(key);
+      callback();
+    };
+
+    // Opening train-station movement and rapid slams.
+    for (let i = 0; i < 8; i++) {
+      once('final-train-' + i, 250 + i * 360, () => {
+        const fromRight = i % 2 === 1;
+        const x = fromRight ? arena.right + 8 : arena.left - 8;
+        const direction = fromRight ? -1 : 1;
+        const gap = (arena.top + arena.bottom) / 2 + Math.sin(i * .9) * 12;
+        addProjectile('bone', x, arena.top, direction * 228, 0,
+          { h: gap - 7 - arena.top, fromTop: true, life: 2.4 });
+        addProjectile('bone', x, arena.bottom, direction * 228, 0,
+          { h: arena.bottom - gap - 7, life: 2.4 });
+        playBoneEmergeSound();
+      });
+    }
+    const preSpiralSlams = [
+      GravityDirection.LEFT, GravityDirection.RIGHT, GravityDirection.UP,
+      GravityDirection.DOWN, GravityDirection.RIGHT, GravityDirection.UP
+    ];
+    preSpiralSlams.forEach((direction, index) => {
+      once('final-preslam-' + index, 3400 + index * 410, () => slamSoul(direction));
+    });
+
+    // Sideways wavy corridor and narrowing pillars.
+    for (let i = 0; i < 15; i++) {
+      once('final-wave-' + i, 6100 + i * 270, () => {
+        const direction = 1;
+        const x = arena.left - 8;
+        const gap = (arena.top + arena.bottom) / 2 + Math.sin(i * .78) * 13;
+        const opening = Math.max(10, 18 - i * .35);
+        addProjectile('bone', x, arena.top, direction * 238, 0,
+          { h: gap - opening / 2 - arena.top, fromTop: true, life: 2.2 });
+        addProjectile('bone', x, arena.bottom, direction * 238, 0,
+          { h: arena.bottom - gap - opening / 2, life: 2.2 });
+        playBoneEmergeSound();
+      });
+    }
+
+    // Four screen-flicker wall combinations from the original final gauntlet.
+    const wallSets = [
+      [GravityDirection.UP, GravityDirection.DOWN],
+      [GravityDirection.UP, GravityDirection.LEFT],
+      [GravityDirection.DOWN, GravityDirection.RIGHT],
+      [GravityDirection.LEFT]
+    ];
+    wallSets.forEach((walls, index) => {
+      once('final-wall-set-' + index, 10600 + index * 760, () => {
+        bullets = bullets.filter(bullet => bullet.kind === 'beam');
+        gravityDirection = walls[walls.length - 1];
+        for (const wall of walls) {
+          for (let offset = -36; offset <= 36; offset += 8) {
+            if (Math.abs(offset) < 8) continue;
+            if (wall === GravityDirection.UP || wall === GravityDirection.DOWN) {
+              addProjectile('bone', (arena.left + arena.right) / 2 + offset,
+                wall === GravityDirection.UP ? arena.top : arena.bottom, 0, 0,
+                { h: 13, fromTop: wall === GravityDirection.UP, life: .68 });
+            } else {
+              addProjectile('bone', wall === GravityDirection.LEFT ? arena.left : arena.right,
+                (arena.top + arena.bottom) / 2 + offset, 0, 0, {
+                  orientation: 'horizontal', length: 13,
+                  fromStart: wall === GravityDirection.LEFT, life: .68
+                });
+            }
+          }
+        }
+        playBoneEmergeSound();
+      });
+    });
+
+    // Five complete circles of Gaster Blasters, aimed through the center.
+    const spiralStart = 14000;
+    const spiralShots = 60;
+    for (let i = 0; i < spiralShots; i++) {
+      once('final-spiral-' + i, spiralStart + i * 150, () => {
+        const rotations = 5;
+        const angle = (i / spiralShots) * Math.PI * 2 * rotations;
+        addFinalAngledBlaster(angle, .30, .70);
+        sansExpression = 'eye';
+        sansExpressionUntil = now + 240;
+      });
+    }
+
+    // Forced post-spiral slams: damage cannot reduce the player below 1 HP.
+    const forcedSlams = [
+      GravityDirection.DOWN, GravityDirection.RIGHT, GravityDirection.UP,
+      GravityDirection.LEFT, GravityDirection.DOWN, GravityDirection.LEFT,
+      GravityDirection.UP, GravityDirection.RIGHT, GravityDirection.DOWN,
+      GravityDirection.RIGHT, GravityDirection.UP, GravityDirection.LEFT
+    ];
+    forcedSlams.forEach((direction, index) => {
+      once('final-forced-slam-' + index, 23800 + index * 510, () => {
+        slamSoul(direction);
+        if (!practiceGuardActive && hp > 1) hp--;
+        karmaHp = 0;
+      });
+    });
+
+    if (elapsed >= SANS_TURN_DURATIONS[24]) {
+      hp = Math.max(1, hp);
+      bullets = [];
+      setState('command', ['＊ サンズは つかれきっている。']);
       return true;
     }
     return false;
@@ -3147,8 +3479,9 @@
     // 連続接触中も約0.1秒ごとの判定に抑え、HPが一瞬で消えないようにする。
     if (now - lastSansDamageAt < 100) return;
     lastSansDamageAt = now;
-    hp = Math.max(0, hp - 1);
-    karmaHp = Math.min(Math.max(0, hp - 1), karmaHp + 1);
+    const forcedFinalSlam = attackPattern?.sansPhase === 24 && now - stateAt >= 23800;
+    hp = forcedFinalSlam ? Math.max(1, hp - 1) : Math.max(0, hp - 1);
+    karmaHp = forcedFinalSlam ? 0 : Math.min(Math.max(0, hp - 1), karmaHp + 1);
     if (now - lastSansHitSoundAt > 70) {
       lastSansHitSoundAt = now;
       beep(110, .055);
@@ -3170,12 +3503,18 @@
     const fallbackIndex = (playerLevel - 1) * 3;
     const pattern = attackPattern || enemies[0].patterns[fallbackIndex];
     const arena = battleArena();
+    const openingTimeline = stage === 10 && sansTurn === 1;
+    const finalTimeline = stage === 10 && attackPattern?.sansPhase === 24;
+    if (finalTimeline) {
+      const finalElapsed = now - stateAt;
+      pattern.gravity = finalElapsed < 14000 || finalElapsed >= 23800;
+    }
     updateSoulPhysics(dt, arena, pattern.gravity);
 
-    const openingTimeline = stage === 10 && sansTurn === 1;
     if (openingTimeline && runSansOpeningTimeline(now)) return;
+    if (finalTimeline && runSansFinalTimeline(now)) return;
 
-    if (!openingTimeline && now >= spawnAt) {
+    if (!openingTimeline && !finalTimeline && now >= spawnAt) {
       const countBeforeSpawn = bullets.length;
       spawnPatternVolley(pattern, now);
       volleyCount++;
@@ -3184,7 +3523,7 @@
       spawnAt = now + pattern.interval;
     }
 
-    if (!openingTimeline && !bullets.length && now - lastThreatAt > Math.max(900, pattern.interval + 180)) {
+    if (!openingTimeline && !finalTimeline && !bullets.length && now - lastThreatAt > Math.max(900, pattern.interval + 180)) {
       spawnGuaranteedThreat(now);
     }
 
@@ -3227,7 +3566,15 @@
         const active = bullet.age >= bullet.warning && bullet.age <= bullet.life;
         const beamHitRadius = stage === 10 ? 2.35 : 6;
         const fireProgress = Math.max(0, Math.min(1, (bullet.age - bullet.warning) / .085));
-        if (bullet.orientation === 'horizontal') {
+        if (bullet.orientation === 'angled') {
+          const fullLength = bullet.length || Math.hypot(arena.right - arena.left, arena.bottom - arena.top) * 1.4;
+          const dx = heart.x - bullet.x;
+          const dy = heart.y - bullet.y;
+          const along = dx * Math.cos(bullet.angle) + dy * Math.sin(bullet.angle);
+          const perpendicular = Math.abs(-dx * Math.sin(bullet.angle) + dy * Math.cos(bullet.angle));
+          hit = active && along >= 0 && along <= fullLength * fireProgress
+            && perpendicular < beamHitRadius;
+        } else if (bullet.orientation === 'horizontal') {
           const reach = (arena.right - arena.left) * fireProgress;
           const reachedHeart = bullet.side === 'right'
             ? heart.x >= arena.right - reach
