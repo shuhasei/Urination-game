@@ -1806,6 +1806,36 @@
     oscillator.stop(audio.currentTime + duration);
   }
 
+  function playSweepSound(type, startFrequency, endFrequency, duration, volume) {
+    startAudio();
+    if (!audio || audio.state !== 'running') return;
+    const oscillator = audio.createOscillator();
+    const gain = audio.createGain();
+    oscillator.type = type;
+    oscillator.frequency.setValueAtTime(startFrequency, audio.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(endFrequency, audio.currentTime + duration);
+    gain.gain.setValueAtTime(volume, audio.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.001, audio.currentTime + duration);
+    oscillator.connect(gain);
+    gain.connect(audio.destination);
+    oscillator.start();
+    oscillator.stop(audio.currentTime + duration);
+  }
+
+  function playBoneEmergeSound() {
+    playSweepSound('square', 150, 62, .11, .032);
+  }
+
+  function playBlasterChargeSound() {
+    playSweepSound('triangle', 145, 610, .34, .035);
+    window.setTimeout(() => playSweepSound('square', 230, 760, .18, .018), 90);
+  }
+
+  function playBlasterFireSound() {
+    playSweepSound('sawtooth', 520, 72, .2, .052);
+    playSweepSound('square', 190, 48, .16, .028);
+  }
+
   function stageTrack() {
     if (stage === 10) return MEGALOVANIA;
     const choices = BATTLE_TRACKS.filter(track => track !== lastTrack);
@@ -2215,6 +2245,7 @@
       warning: extras.warning || 0,
       life: extras.life || 5,
       side: extras.side || 'left',
+      soundFired: false,
       age: 0
     });
   }
@@ -2545,8 +2576,8 @@
     const routeIndex = (volleyCount + phase * 2) % gapRoutes.length;
     const gapCenter = gapRoutes[routeIndex];
     const gapSize = pattern.gravity ? 18 : 16;
-    const columns = phase >= 8 ? 5 : 4;
-    const spacing = phase >= 12 ? 7 : 8;
+    const columns = 2;
+    const spacing = 11;
 
     projectileTransform = {
       sourceLeft,
@@ -2560,7 +2591,8 @@
     const addWall = (wallX, wallDirection, center, wallSpeed, opening = gapSize, width = columns) => {
       const gapTop = center - opening / 2;
       const gapBottom = center + opening / 2;
-      for (let column = 0; column < width; column++) {
+      const wallColumns = Math.min(2, width);
+      for (let column = 0; column < wallColumns; column++) {
         const x = wallX - wallDirection * column * spacing;
         addProjectile('bone', x, sourceTop, wallDirection * wallSpeed, 0, {
           h: Math.max(5, gapTop - sourceTop),
@@ -2596,6 +2628,7 @@
     };
 
     const addWarnedBeam = (horizontal, position) => {
+      playBlasterChargeSound();
       addProjectile('beam', horizontal ? sourceLeft : position,
         horizontal ? position : sourceTop, 0, 0, {
           orientation: horizontal ? 'horizontal' : 'vertical',
@@ -2666,14 +2699,16 @@
         break;
     }
 
+    playBoneEmergeSound();
+
     if (volleyCount % 4 === 0) {
       sansGestureUntil = now + 360;
       sansExpressionUntil = now + 420;
       sansExpression = routeIndex % 3 === 0 ? 'strain' : 'focus';
     }
 
-    // Bone groups overlap slightly in time, preventing completely empty turns.
-    pattern.interval = Math.max(440, 720 - Math.min(210, phase * 13));
+    // Keep successive groups separated while the previous group remains visible.
+    pattern.interval = Math.max(900, 1120 - Math.min(190, phase * 10));
     projectileTransform = null;
   }
 
@@ -2933,6 +2968,10 @@
         }
         hit = false;
       } else if (bullet.kind === 'beam') {
+        if (!bullet.soundFired && bullet.age >= bullet.warning) {
+          bullet.soundFired = true;
+          playBlasterFireSound();
+        }
         const active = bullet.age >= bullet.warning && bullet.age <= bullet.life;
         const beamHitRadius = stage === 10 ? 2.35 : 6;
         const fireProgress = Math.max(0, Math.min(1, (bullet.age - bullet.warning) / .085));
