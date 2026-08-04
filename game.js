@@ -84,6 +84,12 @@
   const SANS_PHASE_INTERVALS = [980, 920, 1240, 1180, 1020, 1080, 1260, 1380, 1120, 1340, 1040, 1440, 1080, 980, 1180, 1040];
   const SANS_PHASE_SPEEDS = [210, 165, 0, 0, 110, 200, 180, 0, 210, 0, 42, 0, 46, 126, 58, 118];
   const SANS_GRAVITY_PHASES = new Set([0, 1, 4, 5, 6, 8, 10, 11, 12, 13, 14, 15]);
+  const GravityDirection = Object.freeze({
+    DOWN: 'down',
+    UP: 'up',
+    LEFT: 'left',
+    RIGHT: 'right'
+  });
   const SANS_BATTLE_LINES = [
     'まずは 重さを 思い出してもらう。',
     '上下の隙間は 動いている。',
@@ -169,12 +175,18 @@
   let attackTarget = 0;
   let stateAt = performance.now();
   let last = stateAt;
-  let heart = { x: 160, y: 117, vy: 0 };
+  let heart = {
+    x: 160, y: 117, vx: 0, vy: 0,
+    isJumping: false, jumpHold: 0, jumpWasHeld: false, slamActive: false
+  };
   let bullets = [];
   let spawnAt = 0;
   let volleyCount = 0;
   let lastThreatAt = 0;
   let invincible = 0;
+  let karmaHp = 0;
+  let karmaDrainFrames = 0;
+  let lastSansHitSoundAt = -10000;
   let turnCount = 0;
   let stage = 1;
   let sansDodges = 0;
@@ -185,6 +197,7 @@
   let sansGestureUntil = -10000;
   let sansExpressionUntil = -10000;
   let sansExpression = 'grin';
+  let sansWaveEvents = new Set();
   let projectileTransform = null;
   let reviveItems = 1;
   let dodgeAt = -10000;
@@ -670,7 +683,17 @@
     const hpX = sansLayout ? 140 : 168;
     rect(hpX, y + 1, 36, 8, '#5e1d24');
     rect(hpX, y + 1, Math.max(0, 36 * hp / maxHp), 8, '#fff000');
-    text(hp + ' / ' + maxHp, sansLayout ? 181 : 202, y, 8);
+    if (sansLayout && karmaHp > 0) {
+      const hpWidth = Math.max(0, 36 * hp / maxHp);
+      const karmaWidth = Math.min(36 - hpWidth, 36 * karmaHp / maxHp);
+      rect(hpX + hpWidth, y + 1, karmaWidth, 8, '#d929a3');
+    }
+    if (sansLayout) {
+      text('KR ' + karmaHp, 181, y + 1, 5, karmaHp ? '#ff68c8' : '#aaa');
+      text(hp + ' / ' + maxHp, 216, y, 7);
+    } else {
+      text(hp + ' / ' + maxHp, 202, y, 8);
+    }
   }
 
   function drawPixelMenuIcon(index, x, y, color) {
@@ -948,7 +971,7 @@
     const arena = battleArena();
     rect(arena.x, arena.y, arena.w, arena.h, '#fff');
     rect(arena.left, arena.top, arena.right - arena.left, arena.bottom - arena.top, '#000');
-    if (stage === 10) battleHeartShape(heart.x, heart.y, '#168bff');
+    if (stage === 10 && attackPattern?.gravity) battleHeartShape(heart.x, heart.y, '#168bff');
     else heartShape(heart.x, heart.y, '#f5222d');
     for (const bullet of bullets) {
       if (bullet.kind === 'platform') {
@@ -986,16 +1009,25 @@
           g.globalAlpha = 1;
         }
       } else if (bullet.kind === 'bone') {
-        const boneImage = bullet.blue ? blueBoneProjectileImage : boneProjectileImage;
-        const boneTop = bullet.fromTop ? bullet.y : bullet.y - bullet.h;
-        if (boneImage.complete && boneImage.naturalWidth) {
-          const boneWidth = stage === 10 ? 5 : 9;
-          g.drawImage(boneImage, bullet.x - Math.floor(boneWidth / 2), boneTop, boneWidth, bullet.h);
+        const boneImage = bullet.boneType === 1 ? blueBoneProjectileImage : boneProjectileImage;
+        const boneColor = bullet.boneType === 1 ? '#00eeff'
+          : bullet.boneType === 2 ? '#ff9b21' : '#ffffff';
+        if (bullet.orientation === 'horizontal') {
+          const boneLength = bullet.length || bullet.h;
+          const boneLeft = bullet.fromStart ? bullet.x : bullet.x - boneLength;
+          rect(boneLeft, bullet.y - 1, boneLength, 3, boneColor);
+          rect(boneLeft, bullet.y - 2, 3, 5, boneColor);
+          rect(boneLeft + boneLength - 3, bullet.y - 2, 3, 5, boneColor);
         } else {
-          const boneColor = bullet.blue ? '#00eeff' : '#ffffff';
-          rect(bullet.x - 1, boneTop, 3, bullet.h, boneColor);
-          rect(bullet.x - 2, boneTop, 5, 3, boneColor);
-          rect(bullet.x - 2, boneTop + bullet.h - 3, 5, 3, boneColor);
+          const boneTop = bullet.fromTop ? bullet.y : bullet.y - bullet.h;
+          if (bullet.boneType !== 2 && boneImage.complete && boneImage.naturalWidth) {
+            const boneWidth = stage === 10 ? 5 : 9;
+            g.drawImage(boneImage, bullet.x - Math.floor(boneWidth / 2), boneTop, boneWidth, bullet.h);
+          } else {
+            rect(bullet.x - 1, boneTop, 3, bullet.h, boneColor);
+            rect(bullet.x - 2, boneTop, 5, 3, boneColor);
+            rect(bullet.x - 2, boneTop + bullet.h - 3, 5, 3, boneColor);
+          }
         }
       } else if (bullet.kind === 'drop') {
         rect(bullet.x - 2, bullet.y - 5, 5, 10, '#bffcff');
@@ -1962,7 +1994,10 @@
         number
       )
     }));
+    if (stage === 10) maxHp = 92;
     hp = maxHp;
+    karmaHp = 0;
+    karmaDrainFrames = 0;
     menu = 0;
     target = 0;
     bullets = [];
@@ -1974,6 +2009,7 @@
     sansGestureUntil = -10000;
     sansExpressionUntil = -10000;
     sansExpression = 'grin';
+    sansWaveEvents = new Set();
     openingDoorProgress = 0;
     openingDoorHold = 0;
     openingDoorActive = false;
@@ -2039,6 +2075,7 @@
         items--;
         const healed = Math.min(18, maxHp - hp);
         hp += healed;
+        if (stage === 10) karmaHp = Math.max(0, karmaHp - healed);
         setState('result', ['＊ きねんの ケーキを たべた。', '＊ HPが ' + healed + ' かいふくした。 のこり ' + items + 'こ。']);
       } else {
         setState('command', ['＊ アイテムは もう のこっていない。']);
@@ -2157,8 +2194,7 @@
 
     speakingEnemy = attacker;
     speechChars = 0;
-    // Keep the stage-10 track running under dialogue; other stages retain the pause.
-    if (spotifyController && stage !== 10) spotifyController.pause();
+    // Music is stage-scoped and continues across dialogue, commands, and attacks.
     const battleLine = SANS_BATTLE_LINES[(sansTurn - 1) % SANS_BATTLE_LINES.length];
     setState('enemySpeak', [
       '＊ ' + attacker.name + '「' + battleLine + '」',
@@ -2167,12 +2203,17 @@
   }
 
   function startEnemyAttack() {
-    if (spotifyController) spotifyController.play();
     const arena = battleArena();
     heart.x = arena.left + (arena.right - arena.left) / 2;
     heart.y = arena.top + (arena.bottom - arena.top) / 2;
+    heart.vx = 0;
     heart.vy = 0;
+    heart.isJumping = false;
+    heart.jumpHold = 0;
+    heart.jumpWasHeld = false;
+    heart.slamActive = false;
     gravityDirection = 'down';
+    sansWaveEvents = new Set();
     bullets = [];
     spawnAt = 0;
     volleyCount = 0;
@@ -2237,10 +2278,12 @@
       w: extras.w || (kind === 'platform' ? 28 : 0),
       h: extras.h || (kind === 'bone' ? 14 : 0),
       fromTop: extras.fromTop || false,
+      fromStart: extras.fromStart || false,
       blue: extras.blue || false,
+      boneType: extras.boneType ?? (extras.blue ? 1 : 0),
       curve: extras.curve || 0,
       homing: extras.homing || 0,
-      orientation: extras.orientation || 'horizontal',
+      orientation: extras.orientation || (kind === 'bone' ? 'vertical' : 'horizontal'),
       length: extras.length || 0,
       warning: extras.warning || 0,
       life: extras.life || 5,
@@ -2896,35 +2939,214 @@
     lastThreatAt = now;
   }
 
+  function gravityVector(direction) {
+    if (direction === GravityDirection.UP) return { x: 0, y: -1 };
+    if (direction === GravityDirection.LEFT) return { x: -1, y: 0 };
+    if (direction === GravityDirection.RIGHT) return { x: 1, y: 0 };
+    return { x: 0, y: 1 };
+  }
+
+  function triggerWallBones(direction) {
+    const arena = battleArena();
+    const verticalWall = direction === GravityDirection.DOWN || direction === GravityDirection.UP;
+    const tangent = verticalWall ? heart.x : heart.y;
+    const start = verticalWall ? arena.left + 4 : arena.top + 4;
+    const end = verticalWall ? arena.right - 4 : arena.bottom - 4;
+
+    // 着地点の周囲だけに狭い空間を残し、叩きつけと同時の確定被弾を防ぐ。
+    for (let position = start; position <= end; position += 7) {
+      if (Math.abs(position - tangent) < 7) continue;
+      if (verticalWall) {
+        addProjectile('bone', position,
+          direction === GravityDirection.DOWN ? arena.bottom : arena.top,
+          0, 0, {
+            h: 9,
+            fromTop: direction === GravityDirection.UP,
+            life: .62
+          });
+      } else {
+        addProjectile('bone',
+          direction === GravityDirection.RIGHT ? arena.right : arena.left,
+          position, 0, 0, {
+            orientation: 'horizontal',
+            length: 9,
+            fromStart: direction === GravityDirection.LEFT,
+            life: .62
+          });
+      }
+    }
+    playBoneEmergeSound();
+  }
+
+  function slamSoul(direction) {
+    gravityDirection = direction;
+    const gravity = gravityVector(direction);
+    heart.vx = gravity.x * 720;
+    heart.vy = gravity.y * 720;
+    heart.isJumping = false;
+    heart.jumpHold = 0;
+    heart.slamActive = true;
+    sansGestureUntil = performance.now() + 280;
+  }
+
+  function updateSoulPhysics(dt, arena, gravityEnabled) {
+    const left = keys.has('ArrowLeft');
+    const right = keys.has('ArrowRight');
+    const up = keys.has('ArrowUp');
+    const down = keys.has('ArrowDown');
+    const jumpHeld = gravityDirection === GravityDirection.DOWN ? up
+      : gravityDirection === GravityDirection.UP ? down
+        : gravityDirection === GravityDirection.LEFT ? right : left;
+
+    if (!gravityEnabled) {
+      let inputX = (right ? 1 : 0) - (left ? 1 : 0);
+      let inputY = (down ? 1 : 0) - (up ? 1 : 0);
+      const magnitude = Math.hypot(inputX, inputY) || 1;
+      inputX /= magnitude;
+      inputY /= magnitude;
+      heart.vx = inputX * 135;
+      heart.vy = inputY * 135;
+      heart.x += heart.vx * dt;
+      heart.y += heart.vy * dt;
+      heart.isJumping = false;
+    } else {
+      const gravity = gravityVector(gravityDirection);
+      const verticalGravity = gravity.x === 0;
+      const tangentInput = verticalGravity
+        ? (right ? 1 : 0) - (left ? 1 : 0)
+        : (down ? 1 : 0) - (up ? 1 : 0);
+      const minX = arena.left + 5;
+      const maxX = arena.right - 5;
+      const minY = arena.top + 5;
+      const maxY = arena.bottom - 5;
+      const grounded = gravityDirection === GravityDirection.DOWN ? heart.y >= maxY - .2
+        : gravityDirection === GravityDirection.UP ? heart.y <= minY + .2
+          : gravityDirection === GravityDirection.LEFT ? heart.x <= minX + .2
+            : heart.x >= maxX - .2;
+
+      if (verticalGravity) heart.vx = tangentInput * 126;
+      else heart.vy = tangentInput * 126;
+
+      const gravityVelocity = heart.vx * gravity.x + heart.vy * gravity.y;
+      if (grounded && gravityVelocity >= 0) heart.isJumping = false;
+      if (grounded && jumpHeld && !heart.jumpWasHeld) {
+        heart.vx = verticalGravity ? heart.vx : -gravity.x * 190;
+        heart.vy = verticalGravity ? -gravity.y * 190 : heart.vy;
+        heart.isJumping = true;
+        heart.jumpHold = 0;
+      }
+
+      // 押下時間に応じて反重力方向へ加速し、短押しと長押しの高度差を作る。
+      if (heart.isJumping && jumpHeld && heart.jumpHold < .16) {
+        heart.jumpHold += dt;
+        if (verticalGravity) heart.vy -= gravity.y * 390 * dt;
+        else heart.vx -= gravity.x * 390 * dt;
+      }
+
+      heart.vx += gravity.x * 540 * dt;
+      heart.vy += gravity.y * 540 * dt;
+      if (verticalGravity) heart.vy = Math.max(-360, Math.min(360, heart.vy));
+      else heart.vx = Math.max(-360, Math.min(360, heart.vx));
+      heart.x += heart.vx * dt;
+      heart.y += heart.vy * dt;
+    }
+
+    const minX = arena.left + 5;
+    const maxX = arena.right - 5;
+    const minY = arena.top + 5;
+    const maxY = arena.bottom - 5;
+    const hitGravityWall = heart.slamActive && (
+      (gravityDirection === GravityDirection.DOWN && heart.y >= maxY)
+      || (gravityDirection === GravityDirection.UP && heart.y <= minY)
+      || (gravityDirection === GravityDirection.LEFT && heart.x <= minX)
+      || (gravityDirection === GravityDirection.RIGHT && heart.x >= maxX)
+    );
+    heart.x = Math.max(minX, Math.min(maxX, heart.x));
+    heart.y = Math.max(minY, Math.min(maxY, heart.y));
+    if (heart.x === minX || heart.x === maxX) heart.vx = 0;
+    if (heart.y === minY || heart.y === maxY) heart.vy = 0;
+    if (hitGravityWall) {
+      heart.slamActive = false;
+      triggerWallBones(gravityDirection);
+    }
+    heart.jumpWasHeld = jumpHeld;
+  }
+
+  function runSansOpeningTimeline(now) {
+    const frame = Math.floor((now - stateAt) * 60 / 1000);
+    const once = (key, at, callback) => {
+      if (frame < at || sansWaveEvents.has(key)) return;
+      sansWaveEvents.add(key);
+      callback();
+    };
+    once('slam-down', 1, () => {
+      sansExpression = 'eye';
+      sansExpressionUntil = now + 280;
+      slamSoul(GravityDirection.DOWN);
+    });
+    once('bone-wall', 10, () => {
+      spawnSansBoneCorridor(attackPattern, now);
+      volleyCount++;
+    });
+    once('slam-up', 40, () => slamSoul(GravityDirection.UP));
+    once('slam-down-two', 80, () => slamSoul(GravityDirection.DOWN));
+    once('cross-blasters', 120, () => {
+      const arena = battleArena();
+      const beams = [
+        ['horizontal', arena.top + 12, 'left'],
+        ['horizontal', arena.bottom - 12, 'right'],
+        ['vertical', arena.left + 12, 'top'],
+        ['vertical', arena.right - 12, 'bottom']
+      ];
+      for (const [orientation, position, side] of beams) {
+        addProjectile('beam', orientation === 'vertical' ? position : arena.left,
+          orientation === 'horizontal' ? position : arena.top, 0, 0, {
+            orientation,
+            warning: .25,
+            life: .83,
+            side
+          });
+      }
+      playBlasterChargeSound();
+    });
+    if (frame >= 180) {
+      bullets = [];
+      setState('command', ['＊ どうする？']);
+      return true;
+    }
+    return false;
+  }
+
+  function applySansDamage(now) {
+    hp = Math.max(0, hp - 1);
+    karmaHp = Math.min(Math.max(0, hp - 1), karmaHp + 1);
+    if (now - lastSansHitSoundAt > 70) {
+      lastSansHitSoundAt = now;
+      beep(110, .055);
+    }
+  }
+
+  function updateKarmaDrain(dt) {
+    if (stage !== 10 || karmaHp <= 0) return;
+    karmaDrainFrames += dt * 60;
+    const period = karmaHp >= 30 ? 2 : karmaHp >= 15 ? 3 : 4;
+    while (karmaDrainFrames >= period && karmaHp > 0) {
+      karmaDrainFrames -= period;
+      karmaHp--;
+      if (hp > 1) hp--;
+    }
+  }
+
   function updateEnemyTurn(dt, now) {
     const fallbackIndex = (playerLevel - 1) * 3;
     const pattern = attackPattern || enemies[0].patterns[fallbackIndex];
     const arena = battleArena();
-    const moveSpeed = pattern.gravity ? 86 : 72;
+    updateSoulPhysics(dt, arena, pattern.gravity);
 
-    if (keys.has('ArrowLeft')) heart.x -= moveSpeed * dt;
-    if (keys.has('ArrowRight')) heart.x += moveSpeed * dt;
-    if (pattern.gravity) {
-      const floor = arena.bottom - 5;
-      const ceiling = arena.top + 5;
-      const gravitySign = gravityDirection === 'up' ? -1 : 1;
-      heart.vy += 215 * gravitySign * dt;
-      if (gravityDirection === 'up') {
-        if (keys.has('ArrowDown') && heart.y <= ceiling + 1) heart.vy = 118;
-      } else if (keys.has('ArrowUp') && heart.y >= floor - 1) {
-        heart.vy = -118;
-      }
-      heart.y += heart.vy * dt;
-      if (heart.y > floor) { heart.y = floor; heart.vy = 0; }
-      if (heart.y < ceiling) { heart.y = ceiling; heart.vy = 0; }
-    } else {
-      if (keys.has('ArrowUp')) heart.y -= moveSpeed * dt;
-      if (keys.has('ArrowDown')) heart.y += moveSpeed * dt;
-    }
-    heart.x = Math.max(arena.left + 5, Math.min(arena.right - 5, heart.x));
-    heart.y = Math.max(arena.top + 5, Math.min(arena.bottom - 5, heart.y));
+    const openingTimeline = stage === 10 && sansTurn === 1;
+    if (openingTimeline && runSansOpeningTimeline(now)) return;
 
-    if (now >= spawnAt) {
+    if (!openingTimeline && now >= spawnAt) {
       const countBeforeSpawn = bullets.length;
       spawnPatternVolley(pattern, now);
       volleyCount++;
@@ -2933,10 +3155,11 @@
       spawnAt = now + pattern.interval;
     }
 
-    if (!bullets.length && now - lastThreatAt > Math.max(900, pattern.interval + 180)) {
+    if (!openingTimeline && !bullets.length && now - lastThreatAt > Math.max(900, pattern.interval + 180)) {
       spawnGuaranteedThreat(now);
     }
 
+    let sansHitThisFrame = false;
     for (const bullet of bullets) {
       bullet.age += dt;
       if (bullet.homing > 0 && bullet.age < .85) {
@@ -2989,22 +3212,36 @@
           hit = active && reachedHeart && Math.abs(bullet.x - heart.x) < beamHitRadius;
         }
       } else if (bullet.kind === 'bone') {
-        const boneTop = bullet.fromTop ? bullet.y : bullet.y - bullet.h;
-        const boneBottom = boneTop + bullet.h;
         const heartRadius = stage === 10 ? 2.25 : 4;
-        hit = Math.abs(bullet.x - heart.x) < (stage === 10 ? 2.35 : 5)
-          && heart.y > boneTop - heartRadius
-          && heart.y < boneBottom + heartRadius;
+        if (bullet.orientation === 'horizontal') {
+          const boneLength = bullet.length || bullet.h;
+          const boneLeft = bullet.fromStart ? bullet.x : bullet.x - boneLength;
+          hit = Math.abs(bullet.y - heart.y) < (stage === 10 ? 2.35 : 5)
+            && heart.x > boneLeft - heartRadius
+            && heart.x < boneLeft + boneLength + heartRadius;
+        } else {
+          const boneTop = bullet.fromTop ? bullet.y : bullet.y - bullet.h;
+          const boneBottom = boneTop + bullet.h;
+          hit = Math.abs(bullet.x - heart.x) < (stage === 10 ? 2.35 : 5)
+            && heart.y > boneTop - heartRadius
+            && heart.y < boneBottom + heartRadius;
+        }
       } else {
         hit = Math.abs(bullet.x - heart.x) < 6 && Math.abs(bullet.y - heart.y) < 7;
       }
-      if (bullet.kind === 'bone' && bullet.blue) {
+      if (bullet.kind === 'bone' && bullet.boneType === 1) {
         const heartIsMoving = keys.has('ArrowLeft')
           || keys.has('ArrowRight')
           || keys.has('ArrowUp')
           || keys.has('ArrowDown')
-          || Math.abs(heart.vy) > 5;
+          || Math.abs(heart.vx) > 5
+          || Math.abs(heart.vy) > 5
+          || heart.isJumping;
         if (!heartIsMoving) hit = false;
+      }
+      if (bullet.kind === 'bone' && bullet.boneType === 2) {
+        const heartIsStationary = Math.abs(heart.vx) < 1 && Math.abs(heart.vy) < 1;
+        if (!heartIsStationary) hit = false;
       }
 
       const routeWidth = Math.max(2.4, 6.4 - (stage - 1) * .44);
@@ -3012,18 +3249,24 @@
         ? Math.abs(heart.y - safeLaneValue) < routeWidth
         : Math.abs(heart.x - safeLaneValue) < routeWidth + .8;
       if (stage !== 10 && inGuaranteedLane) hit = false;
-      if (invincible <= 0 && hit) {
+      if (stage === 10 && hit) {
+        sansHitThisFrame = true;
+      } else if (invincible <= 0 && hit) {
         hp = Math.max(0, hp - pattern.damage);
         invincible = bullet.kind === 'bone' ? .34 : .58;
         beep(110, .1);
       }
     }
 
+    if (sansHitThisFrame) applySansDamage(now);
+    updateKarmaDrain(dt);
+
     bullets = bullets.filter(bullet => bullet.kind === 'beam'
       ? bullet.age < bullet.life
-      : bullet.x > arena.left - 12 && bullet.x < arena.right + 12
+      : bullet.age < bullet.life
+        && bullet.x > arena.left - 12 && bullet.x < arena.right + 12
         && bullet.y > arena.top - 22 && bullet.y < arena.bottom + 22);
-    invincible -= dt;
+    invincible = stage === 10 ? 0 : invincible - dt;
     if (hp <= 0) {
       if (reviveItems > 0) {
         reviveItems--;
@@ -3031,7 +3274,10 @@
         bullets = [];
         heart.x = arena.left + (arena.right - arena.left) / 2;
         heart.y = arena.top + (arena.bottom - arena.top) / 2;
+        heart.vx = 0;
         heart.vy = 0;
+        heart.slamActive = false;
+        karmaHp = 0;
         beep(880, .18);
         setState('result', ['＊ ふっかつのしずくが かがやいた！', '＊ HPが ぜんかいした。']);
       } else finishDefeat();
