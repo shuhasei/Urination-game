@@ -1,0 +1,57 @@
+name: Apply final verified Sans battle
+
+on:
+  push:
+    paths:
+      - '.github/final-video-verified-trigger'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Decode and apply reviewed patch
+        run: |
+          base64 -d .github/final-video-verified.patch.gz.b64 | gzip -dc > /tmp/final-video-verified.patch
+          git apply --check /tmp/final-video-verified.patch
+          git apply /tmp/final-video-verified.patch
+
+      - name: Validate JavaScript and final sequence
+        run: |
+          node --check game.js
+          python3 - <<'PY'
+          from pathlib import Path
+
+          text = Path('game.js').read_text(encoding='utf-8')
+          checks = {
+              'sequential blaster helper': 'function spawnSequentialBlasterSpiral' in text,
+              'right-side start': 'startAngle: 0' in text,
+              'counter-clockwise 64-step ring': 'angleStep: -Math.PI / 32' in text,
+              'one-by-one fire interval': 'fireStep: .13' in text,
+              '64 sequential heads': 'count: 64' in text,
+              'bone arena clipping': 'function clipToBattleArena' in text,
+              'final warning sequence': 'function drawFinalAttackWarnings' in text,
+              'final down gravity hold': "sansGestureDirection = GravityDirection.DOWN" in text,
+              'test invincibility retained': 'const TEST_PLAY_INVINCIBLE = true;' in text,
+          }
+          failed = [name for name, ok in checks.items() if not ok]
+          if failed:
+              raise SystemExit('Final verification failed: ' + ', '.join(failed))
+          print('All final Sans sequence checks passed.')
+          PY
+
+      - name: Commit final reviewed game
+        run: |
+          rm -f .github/final-video-verified.patch.gz.b64
+          rm -f .github/final-video-verified-trigger
+          rm -f .github/workflows/apply-final-video-verified.yml
+          rm -f final_reviewed.patch
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Finalize sequential Sans barrage and arena clipping"
+          git push
