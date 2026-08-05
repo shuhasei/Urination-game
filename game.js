@@ -144,7 +144,7 @@
     { arena: 'square', soul: 'blue', gravity: true },
     { arena: 'square', soul: 'blue', gravity: true, final: true }
   ];
-  const TEST_PLAY_INVINCIBLE = false;
+  const TEST_PLAY_INVINCIBLE = true;
   const BLUE_SOUL_JUMP_VELOCITY = 168;
   const BLUE_SOUL_JUMP_HOLD_ACCEL = 325;
   const BLUE_SOUL_GRAVITY = 520;
@@ -180,6 +180,12 @@
     '終盤だ。四隅も見ておけ。',
     '長い一撃を 始める。',
     'これが 最後の周回だ。'
+  ];
+  const SANS_DEFEAT_DIALOGUE = [
+    ['＊ サンズは 傷口を押さえながら笑った。', '＊ 「……そうか。ここまで、なんだな」'],
+    ['＊ 「忠告しなかったとは 言わないでくれ」'],
+    ['＊ 「それじゃあ……グリルビーズへ行くよ」'],
+    ['＊ 「パピルス。何か ほしいものはあるか？」']
   ];
   const ROOM_THEMES = [
     { name: 'FLOWER', floor: '#3d3c49', corridor: '#474656', light: '#68677c', glow: '#d8d5e4', center: '#20bd50', accent: '#ffe523' },
@@ -263,6 +269,10 @@
   let sansMercyProgress = 0;
   let soulMode = 'red';
   let sansBattleComplete = false;
+  let sansEndingPhase = 'none';
+  let sansFinalDodgePending = false;
+  let sansEndingAt = -10000;
+  let sansFinalDialogueIndex = 0;
   let gravityDirection = 'down';
   let sansGestureUntil = -10000;
   let sansGestureStartedAt = -10000;
@@ -609,6 +619,9 @@
 
   function drawSans(x, y, t) {
     const idleBob = Math.round(Math.sin(t / 420));
+    const resting = stage === 10 && sansEndingPhase === 'sleeping';
+    const wounded = stage === 10
+      && (sansEndingPhase === 'wounded' || sansEndingPhase === 'walking');
     const finalSpecial = stage === 10
       && attackPattern?.finalSpecial === true
       && (state === 'enemyTurn' || state === 'enemySpeak');
@@ -630,7 +643,7 @@
     const gestureImage = horizontalPose ? sansPointRightImage : sansHandUpImage;
     const gestureFlip = direction === GravityDirection.LEFT;
     const footX = x;
-    const footY = y + 40 + idleBob;
+    const footY = y + 40 + idleBob + (resting ? 2 : 0);
     const moveX = direction === GravityDirection.LEFT ? -2 * poseBlend
       : direction === GravityDirection.RIGHT ? 2 * poseBlend : 0;
     const moveY = direction === GravityDirection.UP ? -2 * poseBlend
@@ -663,6 +676,31 @@
       rect(eyeX, eyeY, 2, 2, glow);
       rect(eyeX + 1, eyeY, 1, 1, '#fff');
     }
+
+    if (resting) {
+      // The video leaves Sans asleep during his final do-nothing turn.
+      const cycle = Math.floor(t / 460) % 3;
+      for (let i = 0; i < 3; i++) {
+        const alpha = i <= cycle ? 1 : .28;
+        g.globalAlpha = alpha;
+        text('Z', footX + 12 + i * 7, footY - 43 - i * 7, 7 - i, '#fff', 'center');
+      }
+      g.globalAlpha = 1;
+      // Two tiny dark lids make the existing sprite read as sleeping without
+      // replacing the user's embedded Sans artwork.
+      rect(footX - 7, footY - 39, 4, 2, '#000');
+      rect(footX + 3, footY - 39, 4, 2, '#000');
+      line(footX - 7, footY - 38, footX - 4, footY - 38, '#fff');
+      line(footX + 3, footY - 38, footX + 6, footY - 38, '#fff');
+    }
+
+    if (wounded) {
+      // Red diagonal wound and small drip seen after the automatic second hit.
+      line(footX - 11, footY - 31, footX + 10, footY - 9, '#5a0008', 4);
+      line(footX - 10, footY - 31, footX + 10, footY - 10, '#f12438', 2);
+      rect(footX + 7, footY - 8, 3, 4, '#d8172c');
+      rect(footX + 8, footY - 3, 2, 3, '#a70f1f');
+    }
   }
 
   function levelMaxHp(level) {
@@ -692,6 +730,11 @@
     for (const [index, enemy] of enemies.entries()) {
       if (enemy.hp > 0 && !enemy.spared) {
         let drawX = enemy.x;
+        if (stage === 10 && index === 0 && sansEndingPhase === 'walking') {
+          const walkProgress = clamp01((now - sansEndingAt) / 3200);
+          drawX -= smoothstep01(walkProgress) * 205;
+          drawX += Math.sin(walkProgress * Math.PI * 18) * 1.2;
+        }
         if (index === dodgeEnemy && dodgeElapsed >= 0 && dodgeElapsed < 650) {
           const progress = dodgeElapsed / 650;
           drawX += Math.sin(progress * Math.PI) * 34 * dodgeDirection;
@@ -1883,6 +1926,71 @@
     }, 860);
   }
 
+  function drawSansDefeatOverlay(now) {
+    if (state !== 'sansDefeatHit') return;
+    const elapsed = now - sansEndingAt;
+    const enemy = enemies[0];
+    if (!enemy) return;
+
+    if (elapsed < 760) {
+      const slashProgress = smoothstep01(elapsed / 230);
+      const sweep = -28 + slashProgress * 62;
+      line(enemy.x - 25 + sweep, 20, enemy.x + 4 + sweep, 70, '#ffffff', 4);
+      line(enemy.x - 22 + sweep, 19, enemy.x + 7 + sweep, 69, '#f02a3d', 2);
+    }
+
+    if (elapsed >= 170) {
+      const rise = Math.min(9, (elapsed - 170) / 75);
+      text('9999999', enemy.x, 21 - rise, 10, '#f32638', 'center');
+    }
+
+    if (elapsed < 150) {
+      g.globalAlpha = Math.max(0, 1 - elapsed / 150) * .55;
+      rect(0, 0, W, H, '#fff');
+      g.globalAlpha = 1;
+    }
+  }
+
+  function startSansDefeatSequence() {
+    sansFinalDodgePending = false;
+    sansEndingPhase = 'wounded';
+    sansEndingAt = performance.now();
+    bullets = [];
+    damageEnemy = -1;
+    damageAt = -10000;
+    beep(980, .07);
+    setTimeout(() => { if (state === 'sansDefeatHit') beep(185, .18); }, 85);
+    setState('sansDefeatHit');
+  }
+
+  function showSansFinalDialogue(index) {
+    sansFinalDialogueIndex = Math.max(0, Math.min(SANS_DEFEAT_DIALOGUE.length - 1, index));
+    setState('sansFinalDialogue', SANS_DEFEAT_DIALOGUE[sansFinalDialogueIndex]);
+  }
+
+  function advanceSansFinalDialogue() {
+    if (sansFinalDialogueIndex + 1 < SANS_DEFEAT_DIALOGUE.length) {
+      showSansFinalDialogue(sansFinalDialogueIndex + 1);
+      return;
+    }
+    sansEndingPhase = 'walking';
+    sansEndingAt = performance.now();
+    setState('sansWalkOff');
+  }
+
+  function updateSansEnding(now) {
+    if (state === 'sansDefeatHit' && now - sansEndingAt >= 1350) {
+      showSansFinalDialogue(0);
+      return;
+    }
+    if (state === 'sansWalkOff' && now - sansEndingAt >= 3300) {
+      const sans = enemies[0];
+      if (sans) sans.hp = 0;
+      sansEndingPhase = 'gone';
+      finishVictory();
+    }
+  }
+
   function drawEnding(victory) {
     rect(0, 0, W, H, '#000');
     text(victory ? 'BATTLE COMPLETE' : 'GAME OVER', 160, 58, 15, victory ? '#fff000' : '#f5222d', 'center');
@@ -1918,7 +2026,9 @@
       drawEnemies(now);
       if (state === 'attack') drawAttackGauge();
       else if (state === 'enemyTurn') drawEnemyTurn();
-      else if (!(stage === 10 && state === 'command')) drawMessageBox();
+      else if (!(stage === 10 && state === 'command')
+        && state !== 'sansDefeatHit' && state !== 'sansWalkOff') drawMessageBox();
+      if (state === 'sansDefeatHit') drawSansDefeatOverlay(now);
       drawStatus();
       drawMenu();
     }
@@ -2195,6 +2305,10 @@
     sansMercyProgress = 0;
     soulMode = 'red';
     sansBattleComplete = false;
+    sansEndingPhase = 'none';
+    sansFinalDodgePending = false;
+    sansEndingAt = -10000;
+    sansFinalDialogueIndex = 0;
     gravityDirection = 'down';
     sansGestureUntil = -10000;
     sansGestureStartedAt = -10000;
@@ -2299,6 +2413,21 @@
   function resolveAttack() {
     const center = 183;
     const accuracy = Math.max(0, 1 - Math.abs(attackX - center) / 101);
+    if (stage === 10 && sansBattleComplete
+      && sansEndingPhase === 'sleeping' && !sansFinalDodgePending) {
+      sansDodges++;
+      sansEndingPhase = 'awake';
+      sansFinalDodgePending = true;
+      dodgeAt = performance.now();
+      dodgeEnemy = attackTarget;
+      dodgeDirection = sansDodges % 2 ? 1 : -1;
+      beep(760, .07);
+      setState('result', [
+        '＊ サンズは 眠りから飛び起き、攻撃をかわした。',
+        '＊ 「まさか これで当たると――」'
+      ]);
+      return;
+    }
     if (stage === 10 && sansTurn < SANS_ATTACK_SEQUENCE.length) {
       sansDodges++;
       dodgeAt = performance.now();
@@ -2347,9 +2476,11 @@
       sansMercyProgress = 3;
       bullets = [];
       soulMode = 'red';
+      sansEndingPhase = 'sleeping';
+      sansFinalDodgePending = false;
       setState('command', [
-        '＊ 最後の攻撃は おわった。',
-        '＊ たたかうことも みのがすことも できる。'
+        '＊ サンズは 何もしてこない。',
+        '＊ そのまま 居眠りを始めた。'
       ]);
       return;
     }
@@ -4759,9 +4890,11 @@
         sansMercyProgress = 3;
         bullets = [];
         soulMode = 'red';
+        sansEndingPhase = 'sleeping';
+        sansFinalDodgePending = false;
         setState('command', [
-          '＊ サンズの 最後の攻撃を くぐりぬけた。',
-          '＊ 「みのがす」を 選べるようになった。'
+          '＊ サンズは 何もしてこない。',
+          '＊ そのまま 居眠りを始めた。'
         ]);
       } else {
         setState('command', ['＊ どうする？']);
@@ -4818,10 +4951,19 @@
       return;
     }
     if (state === 'result') {
+      if (sansFinalDodgePending) {
+        startSansDefeatSequence();
+        return;
+      }
       if (!aliveEnemies().length) finishVictory();
       else beginEnemyTurn();
       return;
     }
+    if (state === 'sansFinalDialogue') {
+      advanceSansFinalDialogue();
+      return;
+    }
+    if (state === 'sansDefeatHit' || state === 'sansWalkOff') return;
     if (state === 'stageClear') {
       if (clearChoice === 0) {
         startStage(stage);
@@ -4929,6 +5071,7 @@
     last = now;
     updateEnemySpeech(dt);
     handlePressed();
+    updateSansEnding(now);
     if (state === 'opening') {
       updateOpening(dt);
     } else if (state === 'soulBreak') {
