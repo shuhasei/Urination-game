@@ -2,6 +2,7 @@
   'use strict';
 
   const PATCH_URL = 'assets/final_video_verified.patch.gz.b64';
+  const CSV_REBUILD_PATCH_URL = 'assets/csv_rebuild_v6.patch.gz.b64';
   const GAME_URL = 'game.js';
   let fallbackStarted = false;
 
@@ -72,8 +73,8 @@
 
       if (actual.length !== oldLines.length
         || actual.some((line, lineIndex) => line !== oldLines[lineIndex])) {
-        const windowStart = Math.max(0, expectedPosition - 80);
-        const windowEnd = Math.min(sourceLines.length - oldLines.length, expectedPosition + 80);
+        const windowStart = Math.max(0, expectedPosition - 120);
+        const windowEnd = Math.min(sourceLines.length - oldLines.length, expectedPosition + 120);
         position = -1;
         for (let candidate = windowStart; candidate <= windowEnd; candidate++) {
           const candidateLines = sourceLines.slice(candidate, candidate + oldLines.length);
@@ -107,6 +108,12 @@
     return new Response(stream).text();
   };
 
+  const fetchDecodedPatch = async url => {
+    const response = await fetch(url + '?v=20260806-1', { cache: 'no-store' });
+    if (!response.ok) throw new Error(url + ': HTTP ' + response.status);
+    return decodeGzipBase64(await response.text());
+  };
+
   const appendExternalScript = (url, onError) => {
     const script = document.createElement('script');
     script.src = url;
@@ -131,7 +138,7 @@
 
   const executeReviewedSource = source => new Promise((resolve, reject) => {
     const blobUrl = URL.createObjectURL(new Blob([
-      source + '\n//# sourceURL=game-reviewed.js'
+      source + '\n//# sourceURL=game-reviewed-v6.js'
     ], { type: 'text/javascript' }));
     const script = document.createElement('script');
     script.src = blobUrl;
@@ -148,14 +155,22 @@
   });
 
   const load = async () => {
-    const sourceResponse = await fetch(GAME_URL, { cache: 'no-store' });
+    setHint('ゲームデータを読み込んでいます…');
+
+    const sourceResponse = await fetch(GAME_URL + '?v=20260806-1', { cache: 'no-store' });
     if (!sourceResponse.ok) throw new Error('game.js: HTTP ' + sourceResponse.status);
     const source = await sourceResponse.text();
 
-    const patchResponse = await fetch(PATCH_URL, { cache: 'no-store' });
-    if (!patchResponse.ok) throw new Error('review patch: HTTP ' + patchResponse.status);
-    const patch = await decodeGzipBase64(await patchResponse.text());
-    const reviewedSource = applyUnifiedPatch(source, patch);
+    const basePatch = await fetchDecodedPatch(PATCH_URL);
+    let reviewedSource = applyUnifiedPatch(source, basePatch);
+
+    try {
+      const csvRebuildPatch = await fetchDecodedPatch(CSV_REBUILD_PATCH_URL);
+      reviewedSource = applyUnifiedPatch(reviewedSource, csvRebuildPatch);
+    } catch (error) {
+      console.warn('CSV-based Sans attack rebuild was not applied; using the previous reviewed build.', error);
+    }
+
     await executeReviewedSource(reviewedSource);
   };
 
