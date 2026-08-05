@@ -96,19 +96,11 @@
     'spotify:track:6YnPqvc66bdYGGOJIlDEz1'
   ];
   const MEGALOVANIA = 'spotify:track:1J03Vp93ybKIxfzYI4YJtL';
-  // Sans attack order is reworked into a more video-like progression:
-  // opener -> bone lessons -> blue-platform section -> blaster section ->
-  // mirrored corridors -> aimed lasers -> slam section -> gauntlet -> finale.
+  // Sans attacks are now fully scripted turn-by-turn from the supplied video.
+  // Generic phase cycling is not used for the Sans battle.
   const SANS_ATTACK_SEQUENCE = [
-    12,
-    0, 1, 5, 0, 10,
-    13, 16, 17, 15,
-    6, 3, 2, 7,
-    8, 14, 4, 8,
-    9, 6, 2,
-    18, 19, 20,
-    21, 18, 21, 22,
-    23, 23, 22, 24
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+    12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22
   ];
   const SANS_PHASE_INTERVALS = [
     880, 900, 500, 520, 820, 860, 880, 760, 820, 720,
@@ -124,15 +116,34 @@
     0, 1, 4, 5, 6, 8, 10, 12, 13, 14, 15, 16, 17, 18, 19, 24
   ]);
   const SANS_TURN_DURATIONS = [
-    5200,
-    4300, 4400, 4300, 4200, 4400,
-    4800, 5000, 5000, 4800,
-    4600, 4400, 4200, 4600,
-    4600, 4800, 5000, 4600,
-    4000, 4200, 4100,
-    3600, 3600, 4000,
-    4200, 3200, 4200, 5000,
-    3600, 3600, 4600, 3800
+    6800, 6200, 6500, 6200, 7200, 8200, 8200, 7600,
+    7200, 7600, 7200, 7200, 6500, 8000, 7600, 8000,
+    9200, 7000, 7600, 6200, 11500, 6500, 49500
+  ];
+  const SANS_SCRIPT_META = [
+    { arena: 'square', soul: 'blue', gravity: true },
+    { arena: 'wide', soul: 'blue', gravity: true },
+    { arena: 'wide', soul: 'blue', gravity: true },
+    { arena: 'wide', soul: 'blue', gravity: true },
+    { arena: 'wideTall', soul: 'blue', gravity: true },
+    { arena: 'wideTall', soul: 'blue', gravity: true },
+    { arena: 'wideTall', soul: 'blue', gravity: true },
+    { arena: 'wideTall', soul: 'blue', gravity: true },
+    { arena: 'wideTall', soul: 'red', gravity: false },
+    { arena: 'wideTall', soul: 'blue', gravity: true },
+    { arena: 'wide', soul: 'blue', gravity: true },
+    { arena: 'wide', soul: 'blue', gravity: true },
+    { arena: 'wide', soul: 'blue', gravity: true },
+    { arena: 'wide', soul: 'blue', gravity: true },
+    { arena: 'medium', soul: 'red', gravity: false },
+    { arena: 'square', soul: 'red', gravity: false },
+    { arena: 'square', soul: 'blue', gravity: true },
+    { arena: 'square', soul: 'blue', gravity: true },
+    { arena: 'medium', soul: 'red', gravity: false },
+    { arena: 'square', soul: 'red', gravity: false },
+    { arena: 'wideTall', soul: 'blue', gravity: true },
+    { arena: 'square', soul: 'blue', gravity: true },
+    { arena: 'long', soul: 'blue', gravity: true, final: true }
   ];
   const TEST_PLAY_INVINCIBLE = false;
   const BLUE_SOUL_JUMP_VELOCITY = 168;
@@ -332,8 +343,41 @@
     g.strokeRect(x, y, w, h);
   }
 
+  const SANS_ARENA_PRESETS = Object.freeze({
+    square: { x: 128, y: 83, w: 64, h: 64 },
+    medium: { x: 102, y: 87, w: 116, h: 58 },
+    wide: { x: 61, y: 97, w: 198, h: 48 },
+    wideTall: { x: 56, y: 90, w: 208, h: 58 },
+    long: { x: 22, y: 102, w: 276, h: 38 }
+  });
+  let activeSansArena = null;
+
+  function resolveArenaBox(box) {
+    return {
+      x: box.x, y: box.y, w: box.w, h: box.h,
+      left: box.x + 3, right: box.x + box.w - 3,
+      top: box.y + 3, bottom: box.y + box.h - 3
+    };
+  }
+
+  function setSansArena(preset, recenterHeart = false) {
+    const source = typeof preset === 'string'
+      ? (SANS_ARENA_PRESETS[preset] || SANS_ARENA_PRESETS.square)
+      : preset;
+    activeSansArena = resolveArenaBox(source);
+    if (recenterHeart && typeof heart !== 'undefined') {
+      heart.x = (activeSansArena.left + activeSansArena.right) / 2;
+      heart.y = (activeSansArena.top + activeSansArena.bottom) / 2;
+      heart.vx = 0;
+      heart.vy = 0;
+      heart.slamActive = false;
+    }
+    return activeSansArena;
+  }
+
   function battleArena() {
-    return { x: 128, y: 83, w: 64, h: 64, left: 131, right: 189, top: 86, bottom: 144 };
+    if (stage === 10 && activeSansArena) return activeSansArena;
+    return resolveArenaBox(SANS_ARENA_PRESETS.square);
   }
 
   const HEART_PIXELS = [
@@ -967,8 +1011,8 @@
         const fromRight = bullet.side === 'right';
         g.translate(
           fromRight
-            ? arena.right + 13 + approach + recoil
-            : arena.left - 13 - approach - recoil,
+            ? arena.right + 9 + approach + recoil
+            : arena.left - 9 - approach - recoil,
           bullet.y
         );
         g.rotate(fromRight ? Math.PI / 2 : -Math.PI / 2);
@@ -977,8 +1021,8 @@
         g.translate(
           bullet.x,
           fromBottom
-            ? arena.bottom + 13 + approach + recoil
-            : arena.top - 13 - approach - recoil
+            ? arena.bottom + 9 + approach + recoil
+            : arena.top - 9 - approach - recoil
         );
         if (fromBottom) g.rotate(Math.PI);
       } else {
@@ -1015,10 +1059,18 @@
       if (charge > .42) {
         const coreAlpha = active ? 1 : smoothstep01((charge - .42) / .58);
         g.globalAlpha = coreAlpha * appear;
-        const coreY = Math.round(openAmount * 6);
-        rect(-5, coreY, 10, active ? 5 : 3,
+        const beamThickness = stage === 10
+          ? Math.max(5, bullet.thickness || 5)
+          : 9;
+        const localBeamWidth = Math.max(3,
+          Math.round(beamThickness / Math.max(.01, scale)));
+        const visibleCoreWidth = active
+          ? localBeamWidth
+          : Math.max(2, Math.round(localBeamWidth * chargeEase * .55));
+        const mouthY = drawY + Math.round(targetHeight * .72);
+        rect(-Math.floor(visibleCoreWidth / 2), mouthY,
+          visibleCoreWidth, active ? 3 : 2,
           active ? '#ffffff' : '#d7fbff');
-        if (active) rect(-3, coreY + 1, 6, 2, '#ffffff');
       }
       g.restore();
       return;
@@ -1071,7 +1123,7 @@
           : 0;
         const pulse = .3 + Math.sin(bullet.age * 38) * .16;
         const beamWidth = stage === 10
-          ? Math.max(5, bullet.thickness || 5) + (active && Math.floor(bullet.age * 36) % 2 ? 1 : 0)
+          ? Math.max(5, bullet.thickness || 5)
           : 9;
         const beamOffset = Math.floor(beamWidth / 2);
         g.globalAlpha = active ? 1 : pulse;
@@ -1093,9 +1145,12 @@
           g.save();
           g.translate(bullet.x, bullet.y);
           g.rotate(bullet.angle);
-          rect(0, -(active ? beamOffset : 1), beamLength,
+          const mouthLead = active ? 8 : 0;
+          rect(mouthLead, -(active ? beamOffset : 1),
+            Math.max(0, beamLength - mouthLead),
             active ? beamWidth : 2, active ? '#ffffff' : '#d7fbff');
-          if (active) rect(0, -1, beamLength, 3, '#ffffff');
+          if (active) rect(mouthLead, -1,
+            Math.max(0, beamLength - mouthLead), 3, '#ffffff');
           g.restore();
         }
         g.globalAlpha = 1;
@@ -2134,6 +2189,7 @@
     menu = 0;
     target = 0;
     bullets = [];
+    activeSansArena = null;
     sansDodges = 0;
     sansTurn = 0;
     sansPhaseCursor = 0;
@@ -2304,23 +2360,27 @@
     const patternIndex = (playerLevel - 1) * 3 + ((turnCount - 1) % 3);
     attackPattern = attacker.patterns[patternIndex];
     if (attacker.type === 'sans') {
-      const sequenceIndex = Math.min(sansTurn, SANS_ATTACK_SEQUENCE.length - 1);
-      const sansPhase = SANS_ATTACK_SEQUENCE[sequenceIndex];
+      const scriptIndex = Math.min(sansTurn, SANS_ATTACK_SEQUENCE.length - 1);
+      const meta = SANS_SCRIPT_META[scriptIndex] || SANS_SCRIPT_META[0];
+      const phaseForDamage = meta.final ? 24 : scriptIndex;
       attackPattern = {
         ...attackPattern,
-        sansPhase,
-        finalSpecial: sequenceIndex >= SANS_ATTACK_SEQUENCE.length - 2,
-        gravity: SANS_GRAVITY_PHASES.has(sansPhase),
-        interval: SANS_PHASE_INTERVALS[sansPhase],
-        speed: SANS_PHASE_SPEEDS[sansPhase],
+        scriptedSans: true,
+        sansScriptIndex: scriptIndex,
+        sansPhase: phaseForDamage,
+        finalSpecial: Boolean(meta.final),
+        arenaPreset: meta.arena,
+        initialSoul: meta.soul,
+        initialGravity: GravityDirection.DOWN,
+        gravity: Boolean(meta.gravity),
+        interval: Number.POSITIVE_INFINITY,
+        speed: 0,
         damage: 1,
-        duration: SANS_TURN_DURATIONS[sequenceIndex]
+        duration: SANS_TURN_DURATIONS[scriptIndex]
       };
-      safeLaneAxis = sansPhase % 2 === 0 ? 'y' : 'x';
-      safeLaneValue = safeLaneAxis === 'y'
-        ? 105 + (sequenceIndex % 3) * 12
-        : 112 + (sequenceIndex % 4) * 42;
-      sansPhaseCursor = sequenceIndex;
+      safeLaneAxis = 'y';
+      safeLaneValue = 117;
+      sansPhaseCursor = scriptIndex;
       sansTurn++;
     } else {
       safeLaneAxis = attackPattern.formation % 2 === 0 ? 'y' : 'x';
@@ -2347,6 +2407,9 @@
   }
 
   function startEnemyAttack() {
+    if (stage === 10 && attackPattern?.scriptedSans) {
+      setSansArena(attackPattern.arenaPreset || 'square');
+    }
     const arena = battleArena();
     heart.x = arena.left + (arena.right - arena.left) / 2;
     heart.y = arena.top + (arena.bottom - arena.top) / 2;
@@ -2356,13 +2419,16 @@
     heart.jumpHold = 0;
     heart.jumpWasHeld = false;
     heart.slamActive = false;
-    soulMode = stage === 10 && (attackPattern?.gravity
-      || attackPattern?.sansPhase === 12 || attackPattern?.sansPhase === 22
-      || attackPattern?.sansPhase === 24) ? 'blue' : 'red';
-    gravityDirection = 'down';
+    soulMode = stage === 10 && attackPattern?.scriptedSans
+      ? attackPattern.initialSoul
+      : stage === 10 && (attackPattern?.gravity
+        || attackPattern?.sansPhase === 12 || attackPattern?.sansPhase === 22
+        || attackPattern?.sansPhase === 24) ? 'blue' : 'red';
+    gravityDirection = attackPattern?.initialGravity || GravityDirection.DOWN;
     sansWaveEvents = new Set();
     bullets = [];
-    spawnAt = 0;
+    projectileTransform = null;
+    spawnAt = Number.POSITIVE_INFINITY;
     volleyCount = 0;
     lastThreatAt = performance.now();
     invincible = 0;
@@ -2419,25 +2485,9 @@
       };
     }
     if (stage === 10 && kind === 'beam') {
-      const gestureNow = performance.now();
-      const orientation = extras.orientation || 'horizontal';
-      if (orientation === 'horizontal') {
-        sansGestureDirection = extras.side === 'right'
-          ? GravityDirection.LEFT
-          : GravityDirection.RIGHT;
-      } else if (orientation === 'vertical') {
-        sansGestureDirection = extras.side === 'bottom'
-          ? GravityDirection.UP
-          : GravityDirection.DOWN;
-      } else {
-        const dx = Math.cos(extras.angle || 0);
-        const dy = Math.sin(extras.angle || 0);
-        sansGestureDirection = Math.abs(dx) >= Math.abs(dy)
-          ? (dx >= 0 ? GravityDirection.RIGHT : GravityDirection.LEFT)
-          : (dy >= 0 ? GravityDirection.DOWN : GravityDirection.UP);
-      }
-      sansGestureStartedAt = gestureNow;
-      sansGestureUntil = gestureNow + 330;
+      // Gaster Blasters fire independently. Sans stays in his normal idle pose.
+      sansGestureStartedAt = -10000;
+      sansGestureUntil = -10000;
     }
 
     bullets.push({
@@ -3486,101 +3536,589 @@
     heart.jumpWasHeld = jumpHeld;
   }
 
-  function runSansOpeningTimeline(now) {
-    const frame = Math.floor((now - stateAt) * 60 / 1000);
-    const arena = battleArena();
-    const once = (key, at, callback) => {
-      if (frame < at || sansWaveEvents.has(key)) return;
-      sansWaveEvents.add(key);
-      callback();
-    };
-
-    once('opening-slam-down', 1, () => {
-      soulMode = 'blue';
-      sansExpression = 'eye';
-      sansExpressionUntil = now + 320;
-      slamSoul(GravityDirection.DOWN);
-    });
-    once('opening-rise-bones', 12, () => {
-      const previousTransform = projectileTransform;
-      projectileTransform = null;
-      for (let x = arena.left + 6; x <= arena.right - 6; x += 8) {
-        if (Math.abs(x - heart.x) < 8) continue;
-        addProjectile('bone', x, arena.bottom, 0, 0, { h: 10, life: .65 });
-      }
-      projectileTransform = previousTransform;
-      playBoneEmergeSound();
-    });
-    once('opening-red-mode', 38, () => {
-      soulMode = 'red';
+  function setScriptSoul(mode, direction = GravityDirection.DOWN, recenter = false) {
+    soulMode = mode;
+    gravityDirection = direction;
+    if (recenter) {
+      const arena = battleArena();
       heart.x = (arena.left + arena.right) / 2;
       heart.y = (arena.top + arena.bottom) / 2;
       heart.vx = 0;
       heart.vy = 0;
       heart.slamActive = false;
-    });
-    once('opening-tunnel', 44, () => {
-      spawnHorizontalBoneTunnel(now, {
-        fromRight: false, speed: 210, columns: 9, spacing: 10,
-        opening: 18, gapCenter: (arena.top + arena.bottom) / 2,
-        wave: 8, routeOffset: 1
-      });
-    });
-    once('opening-side-blasters', 92, () => {
-      for (const [orientation, position, side] of [
-        ['horizontal', arena.top + 9, 'left'],
-        ['horizontal', arena.bottom - 9, 'right'],
-        ['vertical', arena.left + 10, 'top'],
-        ['vertical', arena.right - 10, 'bottom']
-      ]) {
-        addProjectile('beam', orientation === 'vertical' ? position : arena.left,
-          orientation === 'horizontal' ? position : arena.top, 0, 0, {
-            orientation, warning: .38, life: .82, side,
-            length: orientation === 'horizontal'
-              ? arena.right - arena.left : arena.bottom - arena.top
-          });
-      }
-      playBlasterChargeSound();
-    });
-    once('opening-x-blasters', 124, () => {
-      for (const angle of [Math.PI / 4, Math.PI * 3 / 4,
-        Math.PI * 5 / 4, Math.PI * 7 / 4]) {
-        const bx = (arena.left + arena.right) / 2 + Math.cos(angle) * 120;
-        const by = (arena.top + arena.bottom) / 2 + Math.sin(angle) * 58;
-        addProjectile('beam', bx, by, 0, 0, {
-          orientation: 'angled', angle: angle + Math.PI,
-          length: 260, warning: .36, life: .78, thickness: 5
-        });
-      }
-      playBlasterChargeSound();
-    });
-    once('opening-side-repeat', 156, () => {
-      for (const y of [arena.top + 8, arena.bottom - 8]) {
-        addProjectile('beam', arena.left, y, 0, 0, {
-          orientation: 'horizontal', length: arena.right - arena.left,
-          warning: .34, life: .76, side: y < (arena.top + arena.bottom) / 2 ? 'left' : 'right'
-        });
-      }
-      playBlasterChargeSound();
-    });
-    once('opening-large-pair', 188, () => {
-      addProjectile('beam', arena.left, arena.top + 16, 0, 0, {
-        orientation: 'horizontal', length: arena.right - arena.left,
-        warning: .42, life: .88, side: 'left', thickness: 8
-      });
-      addProjectile('beam', arena.left, arena.bottom - 16, 0, 0, {
-        orientation: 'horizontal', length: arena.right - arena.left,
-        warning: .42, life: .88, side: 'right', thickness: 8
-      });
-      playBlasterChargeSound();
-    });
-    if (frame >= 244) {
-      bullets = [];
-      soulMode = 'red';
-      setState('command', ['＊ どうする？']);
-      return true;
     }
-    return false;
+  }
+
+  function spawnFloorTeeth(options = {}) {
+    const arena = battleArena();
+    const spacing = options.spacing || 7;
+    const height = options.height || 8;
+    const gapX = options.gapX ?? heart.x;
+    const gapRadius = options.gapRadius ?? 7;
+    const vx = options.vx || 0;
+    const life = options.life || 4;
+    const boneType = options.boneType || 0;
+    for (let x = arena.left + 4; x <= arena.right - 4; x += spacing) {
+      if (options.keepGap !== false && Math.abs(x - gapX) < gapRadius) continue;
+      addProjectile('bone', x, arena.bottom, vx, 0, {
+        h: height,
+        life,
+        boneType
+      });
+    }
+    playBoneEmergeSound();
+  }
+
+  function spawnCeilingTeeth(options = {}) {
+    const arena = battleArena();
+    const spacing = options.spacing || 7;
+    const height = options.height || 8;
+    const gapX = options.gapX ?? heart.x;
+    const gapRadius = options.gapRadius ?? 7;
+    const vx = options.vx || 0;
+    const life = options.life || 4;
+    const boneType = options.boneType || 0;
+    for (let x = arena.left + 4; x <= arena.right - 4; x += spacing) {
+      if (options.keepGap !== false && Math.abs(x - gapX) < gapRadius) continue;
+      addProjectile('bone', x, arena.top, vx, 0, {
+        h: height,
+        fromTop: true,
+        life,
+        boneType
+      });
+    }
+    playBoneEmergeSound();
+  }
+
+  function spawnAlternatingPillars(options = {}) {
+    const arena = battleArena();
+    const fromRight = options.fromRight ?? true;
+    const direction = fromRight ? -1 : 1;
+    const speed = options.speed || 92;
+    const count = options.count || 7;
+    const spacing = options.spacing || 20;
+    const offset = options.offset || 0;
+    const life = options.life || 5;
+    const startX = fromRight ? arena.right + 9 : arena.left - 9;
+    const heights = options.heights || [16, 29, 21, 34, 18, 27, 23, 31];
+    for (let i = 0; i < count; i++) {
+      const fromTop = (i + offset) % 2 === 0;
+      const h = Math.min(arena.bottom - arena.top - 8, heights[(i + offset) % heights.length]);
+      const x = startX - direction * i * spacing;
+      addProjectile('bone', x, fromTop ? arena.top : arena.bottom,
+        direction * speed, 0, {
+          h,
+          fromTop,
+          life,
+          boneType: options.boneType || 0
+        });
+    }
+    playBoneEmergeSound();
+  }
+
+  function spawnVerticalDropSet(options = {}) {
+    const arena = battleArena();
+    const count = options.count || 6;
+    const speed = options.speed || 86;
+    const life = options.life || 3.5;
+    const margin = options.margin || 10;
+    const usable = arena.right - arena.left - margin * 2;
+    const heights = options.heights || [14, 24, 18, 29, 16, 26];
+    for (let i = 0; i < count; i++) {
+      const fromTop = (i + (options.offset || 0)) % 2 === 0;
+      const x = arena.left + margin + usable * (i + .5) / count;
+      const h = heights[(i + (options.offset || 0)) % heights.length];
+      const y = fromTop ? arena.top - h - 2 : arena.bottom + h + 2;
+      addProjectile('bone', x, y, 0, fromTop ? speed : -speed, {
+        h,
+        fromTop,
+        life,
+        boneType: options.boneType || 0
+      });
+    }
+    playBoneEmergeSound();
+  }
+
+  function spawnBlueWallPair(options = {}) {
+    const arena = battleArena();
+    const speed = options.speed || 74;
+    const life = options.life || 3.2;
+    const inset = options.inset || 0;
+    const h = arena.bottom - arena.top;
+    addProjectile('bone', arena.left - 8 - inset, arena.top, speed, 0, {
+      h, fromTop: true, boneType: 1, life
+    });
+    addProjectile('bone', arena.right + 8 + inset, arena.top, -speed, 0, {
+      h, fromTop: true, boneType: 1, life
+    });
+    playBoneEmergeSound();
+  }
+
+  function spawnPlatformPass(y, options = {}) {
+    const arena = battleArena();
+    const fromRight = options.fromRight ?? false;
+    const direction = fromRight ? -1 : 1;
+    const x = fromRight ? arena.right + 18 : arena.left - 18;
+    addProjectile('platform', x, y, direction * (options.speed || 74), 0, {
+      w: options.width || 30,
+      life: options.life || 5
+    });
+  }
+
+  function spawnHorizontalBlaster(y, options = {}) {
+    const arena = battleArena();
+    addProjectile('beam', arena.left, y, 0, 0, {
+      orientation: 'horizontal',
+      length: arena.right - arena.left,
+      warning: options.warning || .48,
+      life: options.life || .86,
+      thickness: options.thickness || 5,
+      side: options.side || 'left'
+    });
+    playBlasterChargeSound();
+  }
+
+  function spawnVerticalBlaster(x, options = {}) {
+    const arena = battleArena();
+    addProjectile('beam', x, arena.top, 0, 0, {
+      orientation: 'vertical',
+      length: arena.bottom - arena.top,
+      warning: options.warning || .48,
+      life: options.life || .86,
+      thickness: options.thickness || 5,
+      side: options.side || 'top'
+    });
+    playBlasterChargeSound();
+  }
+
+  function spawnAngledBlasterRing(options = {}) {
+    const arena = battleArena();
+    const count = options.count || 4;
+    const baseAngle = options.baseAngle || 0;
+    const radiusX = options.radiusX || (arena.right - arena.left) / 2 + 28;
+    const radiusY = options.radiusY || (arena.bottom - arena.top) / 2 + 24;
+    const centerX = (arena.left + arena.right) / 2;
+    const centerY = (arena.top + arena.bottom) / 2;
+    for (let i = 0; i < count; i++) {
+      const angle = baseAngle + i * Math.PI * 2 / count;
+      const bx = centerX + Math.cos(angle) * radiusX;
+      const by = centerY + Math.sin(angle) * radiusY;
+      addProjectile('beam', bx, by, 0, 0, {
+        orientation: 'angled',
+        angle: angle + Math.PI,
+        length: options.length || 280,
+        warning: options.warning || .42,
+        life: options.life || .82,
+        thickness: options.thickness || 5
+      });
+    }
+    playBlasterChargeSound();
+  }
+
+  function spawnBoneBorder(options = {}) {
+    const arena = battleArena();
+    const spacing = options.spacing || 7;
+    const h = options.height || 7;
+    const life = options.life || 8;
+    for (let x = arena.left + 4; x <= arena.right - 4; x += spacing) {
+      addProjectile('bone', x, arena.top, 0, 0, { h, fromTop: true, life });
+      addProjectile('bone', x, arena.bottom, 0, 0, { h, life });
+    }
+    for (let y = arena.top + 5; y <= arena.bottom - 5; y += spacing) {
+      addProjectile('bone', arena.left, y, 0, 0, {
+        orientation: 'horizontal', length: h, fromStart: true, life
+      });
+      addProjectile('bone', arena.right, y, 0, 0, {
+        orientation: 'horizontal', length: h, life
+      });
+    }
+    playBoneEmergeSound();
+  }
+
+  function spawnHorizontalBoneBar(y, options = {}) {
+    const arena = battleArena();
+    const fromRight = options.fromRight ?? false;
+    const length = options.length || 118;
+    const speed = options.speed || 132;
+    const x = fromRight ? arena.right + length + 8 : arena.left - length - 8;
+    addProjectile('bone', x, y, fromRight ? -speed : speed, options.vy || 0, {
+      orientation: 'horizontal',
+      length,
+      fromStart: !fromRight,
+      life: options.life || 3.2,
+      boneType: options.boneType || 0
+    });
+    playBoneEmergeSound();
+  }
+
+  function clearSansThreats() {
+    bullets = [];
+    heart.slamActive = false;
+    heart.vx = 0;
+    heart.vy = 0;
+  }
+
+  function runSansScriptedTurn(now) {
+    const scriptIndex = attackPattern?.sansScriptIndex;
+    if (!Number.isInteger(scriptIndex)) return false;
+    const elapsed = (now - stateAt) / 1000;
+    const once = (key, at, callback) => {
+      if (elapsed < at || sansWaveEvents.has(key)) return;
+      sansWaveEvents.add(key);
+      const countBefore = bullets.length;
+      const slamBefore = heart.slamActive;
+      callback();
+      if (bullets.length > countBefore || (heart.slamActive && !slamBefore)) {
+        lastThreatAt = now;
+      }
+    };
+
+    switch (scriptIndex) {
+      case 0: { // Opening: slam, bones, surrounding blasters, crosses and final beam.
+        once('s0-slam', .02, () => slamSoul(GravityDirection.DOWN));
+        once('s0-floor', .18, () => spawnFloorTeeth({ height: 10, spacing: 7, life: .9 }));
+        once('s0-pillars', .52, () => spawnVerticalDropSet({ count: 8, speed: 145, life: 1.35 }));
+        once('s0-red', 1.22, () => setScriptSoul('red', GravityDirection.DOWN, true));
+        once('s0-ring', 1.52, () => spawnAngledBlasterRing({ count: 6, warning: .38, life: .82 }));
+        once('s0-cross1', 2.28, () => {
+          const a = battleArena();
+          spawnHorizontalBlaster((a.top + a.bottom) / 2, { side: 'left', warning: .34, life: .78, thickness: 8 });
+          spawnVerticalBlaster((a.left + a.right) / 2, { side: 'top', warning: .34, life: .78, thickness: 8 });
+        });
+        once('s0-x', 3.12, () => spawnAngledBlasterRing({ count: 4, baseAngle: Math.PI / 4, warning: .34, life: .78, thickness: 7 }));
+        once('s0-cross2', 3.92, () => {
+          const a = battleArena();
+          spawnHorizontalBlaster((a.top + a.bottom) / 2, { side: 'right', warning: .32, life: .76, thickness: 8 });
+          spawnVerticalBlaster((a.left + a.right) / 2, { side: 'bottom', warning: .32, life: .76, thickness: 8 });
+        });
+        once('s0-pair', 4.72, () => {
+          const a = battleArena();
+          spawnHorizontalBlaster(a.top + 13, { side: 'left', warning: .32, life: .74 });
+          spawnHorizontalBlaster(a.bottom - 13, { side: 'right', warning: .32, life: .74 });
+        });
+        once('s0-thick-left', 5.32, () => spawnHorizontalBlaster((battleArena().top + battleArena().bottom) / 2, { side: 'left', warning: .28, life: .76, thickness: 12 }));
+        once('s0-thick-right', 5.88, () => spawnHorizontalBlaster((battleArena().top + battleArena().bottom) / 2, { side: 'right', warning: .25, life: .72, thickness: 14 }));
+        break;
+      }
+      case 1: { // Wide jump course with alternating vertical pillars.
+        once('s1-floor', .08, () => spawnFloorTeeth({ height: 5, spacing: 10, life: 5.8 }));
+        for (let i = 0; i < 4; i++) {
+          once('s1-wave-' + i, .38 + i * 1.35, () => spawnAlternatingPillars({
+            fromRight: i % 2 === 0, speed: 78 + i * 5, count: 6,
+            spacing: 25, offset: i, life: 4.2
+          }));
+        }
+        break;
+      }
+      case 2: { // Blue side walls mixed with white columns.
+        for (let i = 0; i < 3; i++) {
+          once('s2-blue-' + i, .22 + i * 1.9, () => spawnBlueWallPair({ speed: 68 + i * 5, life: 3 }));
+          once('s2-white-' + i, .82 + i * 1.9, () => spawnAlternatingPillars({
+            fromRight: i % 2 === 1, speed: 86, count: 5, spacing: 28,
+            offset: i + 1, life: 3.8
+          }));
+        }
+        break;
+      }
+      case 3: { // Repeating alternating columns with changing heights.
+        for (let i = 0; i < 5; i++) {
+          once('s3-wave-' + i, .22 + i * 1.12, () => spawnAlternatingPillars({
+            fromRight: i % 2 === 0, speed: 92 + i * 3,
+            count: 7, spacing: 22, offset: i,
+            heights: [14, 31, 19, 35, 16, 27, 22], life: 3.5
+          }));
+        }
+        break;
+      }
+      case 4: { // Bone floor conveyor and low platforms.
+        once('s4-floor', .08, () => spawnFloorTeeth({ height: 7, spacing: 7, life: 6.8 }));
+        for (let i = 0; i < 5; i++) {
+          once('s4-platform-' + i, .42 + i * 1.22, () => spawnPlatformPass(
+            battleArena().bottom - 12 - (i % 3) * 7,
+            { fromRight: i % 2 === 1, speed: 82 + i * 3, width: 28 + (i % 2) * 7 }
+          ));
+          if (i < 4) once('s4-pillar-' + i, .88 + i * 1.45, () => spawnAlternatingPillars({
+            fromRight: i % 2 === 0, speed: 80, count: 3,
+            spacing: 38, offset: i, heights: [18, 34, 22, 30], life: 3.4
+          }));
+        }
+        break;
+      }
+      case 5: { // Longer moving-platform passage over a continuous bone floor.
+        once('s5-floor', .06, () => spawnFloorTeeth({ height: 8, spacing: 6, life: 7.8 }));
+        for (let i = 0; i < 6; i++) {
+          once('s5-platform-' + i, .3 + i * 1.15, () => spawnPlatformPass(
+            battleArena().bottom - 11 - [0, 9, 4, 14, 6, 11][i],
+            { fromRight: i % 2 === 0, speed: 88, width: 30 }
+          ));
+          once('s5-block-' + i, .76 + i * 1.15, () => spawnVerticalDropSet({
+            count: 3, speed: 76, offset: i, heights: [15, 24, 19], life: 3
+          }));
+        }
+        break;
+      }
+      case 6: { // Floating platforms with floor and ceiling blockers.
+        once('s6-floor', .06, () => spawnFloorTeeth({ height: 6, spacing: 8, life: 7.7 }));
+        for (let i = 0; i < 6; i++) {
+          once('s6-platform-' + i, .35 + i * 1.16, () => spawnPlatformPass(
+            battleArena().top + 15 + (i % 3) * 10,
+            { fromRight: i % 2 === 1, speed: 80, width: 31 }
+          ));
+          once('s6-drop-' + i, .75 + i * 1.16, () => spawnVerticalDropSet({
+            count: 4, speed: 82, offset: i + 1, life: 2.9
+          }));
+        }
+        break;
+      }
+      case 7: { // Dense falling and rising columns above a low bone floor.
+        once('s7-floor', .05, () => spawnFloorTeeth({ height: 7, spacing: 7, life: 7.2 }));
+        for (let i = 0; i < 6; i++) {
+          once('s7-drops-' + i, .28 + i * 1.06, () => spawnVerticalDropSet({
+            count: 6, speed: 92 + i * 3, offset: i,
+            heights: [12, 25, 17, 29, 14, 23], life: 2.8
+          }));
+        }
+        break;
+      }
+      case 8: { // Horizontal Gaster Blaster sweep from alternating sides.
+        setScriptSoul('red', GravityDirection.DOWN, false);
+        const ys = [10, 38, 22, 45, 16, 34, 27];
+        for (let i = 0; i < ys.length; i++) {
+          once('s8-beam-' + i, .22 + i * .86, () => {
+            const a = battleArena();
+            spawnHorizontalBlaster(a.top + Math.min(a.bottom - a.top - 7, ys[i]), {
+              side: i % 2 ? 'right' : 'left', warning: .46, life: .84,
+              thickness: i === ys.length - 1 ? 8 : 5
+            });
+          });
+        }
+        break;
+      }
+      case 9: { // Platform/floor pattern with alternating tall gates.
+        once('s9-floor', .06, () => spawnFloorTeeth({ height: 7, spacing: 7, life: 7.2 }));
+        for (let i = 0; i < 5; i++) {
+          once('s9-platform-' + i, .35 + i * 1.34, () => spawnPlatformPass(
+            battleArena().bottom - 11 - (i % 2) * 11,
+            { fromRight: i % 2 === 1, speed: 84, width: 32 }
+          ));
+          once('s9-gate-' + i, .82 + i * 1.34, () => spawnHorizontalBoneTunnel(now, {
+            fromRight: i % 2 === 0, speed: 112, columns: 3,
+            spacing: 12, opening: 20,
+            gapCenter: battleArena().top + 17 + (i % 3) * 10,
+            wave: 2, routeOffset: i
+          }));
+        }
+        break;
+      }
+      case 10: { // Dense moving vertical gates.
+        for (let i = 0; i < 5; i++) {
+          once('s10-gate-' + i, .2 + i * 1.28, () => spawnHorizontalBoneTunnel(now, {
+            fromRight: i % 2 === 0, speed: 118 + i * 4,
+            columns: 4, spacing: 11, opening: 17,
+            gapCenter: battleArena().top + 13 + [0, 16, 8, 20, 5][i],
+            wave: 3, routeOffset: i
+          }));
+        }
+        break;
+      }
+      case 11: { // Alternating upper/lower combs.
+        for (let i = 0; i < 6; i++) {
+          once('s11-wave-' + i, .18 + i * 1.05, () => spawnAlternatingPillars({
+            fromRight: i % 2 === 1, speed: 102,
+            count: 8, spacing: 20, offset: i + 2,
+            heights: [20, 35, 16, 31, 22, 37, 18, 28], life: 3.4
+          }));
+        }
+        break;
+      }
+      case 12: { // Narrow-gap bone walls crossing from alternating sides.
+        const gaps = [108, 126, 114, 130, 119];
+        for (let i = 0; i < gaps.length; i++) {
+          once('s12-gate-' + i, .2 + i * 1.15, () => spawnHorizontalBoneTunnel(now, {
+            fromRight: i % 2 === 0, speed: 126,
+            columns: 5, spacing: 10, opening: 16,
+            gapCenter: Math.max(battleArena().top + 10,
+              Math.min(battleArena().bottom - 10, gaps[i])),
+            wave: 5, routeOffset: i
+          }));
+        }
+        break;
+      }
+      case 13: { // Second-half blue walls and tightly packed columns.
+        once('s13-floor', .05, () => spawnFloorTeeth({ height: 6, spacing: 8, life: 7.6 }));
+        for (let i = 0; i < 4; i++) {
+          once('s13-blue-' + i, .2 + i * 1.72, () => spawnBlueWallPair({ speed: 76 + i * 4, life: 2.8 }));
+          once('s13-pillars-' + i, .72 + i * 1.72, () => spawnAlternatingPillars({
+            fromRight: i % 2 === 0, speed: 96,
+            count: 7, spacing: 22, offset: i, life: 3.2
+          }));
+        }
+        break;
+      }
+      case 14: { // Diagonal blaster dance around a medium box.
+        setScriptSoul('red', GravityDirection.DOWN, false);
+        for (let i = 0; i < 8; i++) {
+          once('s14-ring-' + i, .18 + i * .84, () => spawnAngledBlasterRing({
+            count: 2,
+            baseAngle: Math.PI / 8 + i * Math.PI / 5,
+            warning: .48, life: .86, thickness: 6,
+            radiusX: 88, radiusY: 52
+          }));
+        }
+        break;
+      }
+      case 15: { // Small-box mix: side blasters, bones, cross and corner shots.
+        setScriptSoul('red', GravityDirection.DOWN, false);
+        once('s15-cardinal', .2, () => spawnAngledBlasterRing({ count: 4, baseAngle: 0, warning: .42, life: .82 }));
+        once('s15-gate', 1.35, () => spawnHorizontalBoneTunnel(now, {
+          fromRight: false, speed: 138, columns: 6, spacing: 9,
+          opening: 18, gapCenter: (battleArena().top + battleArena().bottom) / 2,
+          wave: 6, routeOffset: 1
+        }));
+        once('s15-cross', 2.45, () => {
+          const a = battleArena();
+          spawnHorizontalBlaster((a.top + a.bottom) / 2, { side: 'right', warning: .38, life: .8, thickness: 7 });
+          spawnVerticalBlaster((a.left + a.right) / 2, { side: 'bottom', warning: .38, life: .8, thickness: 7 });
+        });
+        once('s15-corners', 3.65, () => spawnAngledBlasterRing({ count: 4, baseAngle: Math.PI / 4, warning: .38, life: .82 }));
+        once('s15-drops', 4.9, () => spawnVerticalDropSet({ count: 7, speed: 122, offset: 1, life: 2.4 }));
+        once('s15-final-pair', 6.15, () => {
+          const a = battleArena();
+          spawnHorizontalBlaster(a.top + 12, { side: 'left', warning: .34, life: .76 });
+          spawnHorizontalBlaster(a.bottom - 12, { side: 'right', warning: .34, life: .76 });
+        });
+        break;
+      }
+      case 16: { // Rapid directional wall slams.
+        const directions = [
+          GravityDirection.RIGHT, GravityDirection.LEFT,
+          GravityDirection.UP, GravityDirection.DOWN,
+          GravityDirection.LEFT, GravityDirection.RIGHT,
+          GravityDirection.DOWN, GravityDirection.UP,
+          GravityDirection.RIGHT, GravityDirection.DOWN
+        ];
+        directions.forEach((direction, i) => once('s16-slam-' + i, .18 + i * .84, () => slamSoul(direction)));
+        break;
+      }
+      case 17: { // Strong floor/ceiling/side slams with bone bursts.
+        once('s17-down', .12, () => slamSoul(GravityDirection.DOWN));
+        once('s17-floor', .32, () => spawnFloorTeeth({ height: 10, spacing: 7, life: 1.1 }));
+        once('s17-up', 1.42, () => slamSoul(GravityDirection.UP));
+        once('s17-ceiling', 1.62, () => spawnCeilingTeeth({ height: 10, spacing: 7, life: 1.1 }));
+        once('s17-left', 2.72, () => slamSoul(GravityDirection.LEFT));
+        once('s17-right', 3.92, () => slamSoul(GravityDirection.RIGHT));
+        once('s17-down2', 5.08, () => slamSoul(GravityDirection.DOWN));
+        once('s17-up2', 6.12, () => slamSoul(GravityDirection.UP));
+        break;
+      }
+      case 18: { // Faster diagonal blaster rotation.
+        setScriptSoul('red', GravityDirection.DOWN, false);
+        for (let i = 0; i < 9; i++) {
+          once('s18-ring-' + i, .16 + i * .72, () => spawnAngledBlasterRing({
+            count: 2, baseAngle: i * .63,
+            warning: .4, life: .76, thickness: 6,
+            radiusX: 90, radiusY: 54
+          }));
+        }
+        break;
+      }
+      case 19: { // Long horizontal bone bars pass across the small box.
+        setScriptSoul('red', GravityDirection.DOWN, false);
+        const a = battleArena();
+        const ys = [a.top + 9, a.bottom - 10, a.top + 24, a.bottom - 25, a.top + 15, a.bottom - 16, (a.top + a.bottom) / 2];
+        ys.forEach((y, i) => once('s19-bar-' + i, .2 + i * .76, () => spawnHorizontalBoneBar(y, {
+          fromRight: i % 2 === 1,
+          speed: 144 + i * 4,
+          length: 122,
+          life: 2.7
+        })));
+        break;
+      }
+      case 20: { // Wide second-half mixed course: columns, blue walls, floors and platforms.
+        once('s20-floor', .05, () => spawnFloorTeeth({ height: 7, spacing: 7, life: 10.8 }));
+        for (let i = 0; i < 7; i++) {
+          once('s20-pillars-' + i, .22 + i * 1.42, () => spawnAlternatingPillars({
+            fromRight: i % 2 === 0, speed: 106 + i * 2,
+            count: 7, spacing: 22, offset: i,
+            heights: [16, 34, 22, 29, 18, 36, 20], life: 3.6
+          }));
+          if (i % 2 === 0) once('s20-blue-' + i, .72 + i * 1.42, () => spawnBlueWallPair({ speed: 84, life: 2.6 }));
+          if (i < 5) once('s20-platform-' + i, 1.0 + i * 1.75, () => spawnPlatformPass(
+            battleArena().bottom - 12 - (i % 3) * 8,
+            { fromRight: i % 2 === 1, speed: 86, width: 30 }
+          ));
+        }
+        break;
+      }
+      case 21: { // Short small-box slam sequence before the finale.
+        const directions = [
+          GravityDirection.DOWN, GravityDirection.RIGHT,
+          GravityDirection.UP, GravityDirection.LEFT,
+          GravityDirection.DOWN, GravityDirection.LEFT,
+          GravityDirection.RIGHT, GravityDirection.UP
+        ];
+        directions.forEach((direction, i) => once('s21-slam-' + i, .15 + i * .72, () => slamSoul(direction)));
+        break;
+      }
+      case 22: { // Final attack: corridor -> bone border -> blaster ring -> long slam loop.
+        once('s22-long-arena', .02, () => {
+          setSansArena('long', true);
+          setScriptSoul('blue', GravityDirection.DOWN, false);
+          spawnFloorTeeth({ height: 6, spacing: 7, gapRadius: 12, life: 8.2 });
+          spawnCeilingTeeth({ height: 6, spacing: 7, gapRadius: 10, life: 8.2 });
+        });
+        for (let i = 0; i < 9; i++) {
+          once('s22-corridor-' + i, .36 + i * .78, () => spawnHorizontalBoneTunnel(now, {
+            fromRight: i % 2 === 0,
+            speed: 148 + i * 3,
+            columns: 4,
+            spacing: 10,
+            opening: 17,
+            gapCenter: battleArena().top + 9 + [0, 8, 3, 12, 5, 14, 7, 2, 10][i],
+            wave: 3,
+            routeOffset: i
+          }));
+        }
+        once('s22-square', 8.0, () => {
+          clearSansThreats();
+          setSansArena('square', true);
+          setScriptSoul('blue', GravityDirection.DOWN, false);
+          spawnBoneBorder({ height: 7, spacing: 7, life: 11.7 });
+        });
+        for (let i = 0; i < 9; i++) {
+          once('s22-ring-' + i, 9.0 + i * 1.1, () => spawnAngledBlasterRing({
+            count: 12,
+            baseAngle: i * .27,
+            warning: .36,
+            life: .78,
+            thickness: 6,
+            radiusX: 74,
+            radiusY: 54,
+            length: 300
+          }));
+        }
+        once('s22-slam-start', 20.0, () => {
+          clearSansThreats();
+          setSansArena('square', true);
+          setScriptSoul('blue', GravityDirection.DOWN, false);
+        });
+        const finalDirections = [
+          GravityDirection.LEFT, GravityDirection.DOWN,
+          GravityDirection.RIGHT, GravityDirection.UP,
+          GravityDirection.RIGHT, GravityDirection.DOWN,
+          GravityDirection.LEFT, GravityDirection.UP,
+          GravityDirection.DOWN, GravityDirection.RIGHT,
+          GravityDirection.UP, GravityDirection.LEFT
+        ];
+        for (let i = 0; i < 37; i++) {
+          once('s22-final-slam-' + i, 20.15 + i * .74, () => slamSoul(finalDirections[i % finalDirections.length]));
+        }
+        break;
+      }
+      default:
+        break;
+    }
+    return true;
   }
 
   function applySansDamage(now) {
@@ -3617,28 +4155,62 @@
     const arena = battleArena();
     updateSoulPhysics(dt, arena, stage === 10 ? soulMode === 'blue' : pattern.gravity);
 
-    const openingTimeline = stage === 10 && sansTurn === 1;
-    if (openingTimeline && runSansOpeningTimeline(now)) return;
+    const scriptedSansTurn = stage === 10 && attackPattern?.scriptedSans;
+    if (scriptedSansTurn) runSansScriptedTurn(now);
 
-    if (!openingTimeline && now >= spawnAt) {
+    if (!scriptedSansTurn && now >= spawnAt) {
       const countBeforeSpawn = bullets.length;
+      const slamBeforeSpawn = heart.slamActive;
       spawnPatternVolley(pattern, now);
       volleyCount++;
-      if (stage === 10) {
-        // Slam phases intentionally create their wall bones on the following frame.
-        // Treat every scripted Sans volley as a real threat so it is not duplicated.
+      const createdProjectile = bullets.length > countBeforeSpawn;
+      const startedSlam = heart.slamActive && !slamBeforeSpawn;
+
+      if (createdProjectile || startedSlam) {
         lastThreatAt = now;
-      } else if (bullets.length === countBeforeSpawn) {
-        spawnGuaranteedThreat(now);
+      } else if (stage === 10) {
+        // Some phase steps can resolve to an empty beat. Replace that beat with
+        // a short, readable bone tunnel so every enemy turn contains an attack.
+        spawnHorizontalBoneTunnel(now, {
+          fromRight: volleyCount % 2 === 0,
+          speed: 188,
+          columns: 5,
+          spacing: 11,
+          opening: 19,
+          gapCenter: (arena.top + arena.bottom) / 2,
+          wave: 5,
+          routeOffset: volleyCount
+        });
+        lastThreatAt = now;
       } else {
-        lastThreatAt = now;
+        spawnGuaranteedThreat(now);
       }
-      spawnAt = now + pattern.interval;
+      const safeInterval = Number.isFinite(pattern.interval) && pattern.interval > 0
+        ? pattern.interval
+        : 700;
+      spawnAt = now + safeInterval;
     }
 
-    if (!openingTimeline && stage !== 10 && !bullets.length
-      && now - lastThreatAt > Math.max(900, pattern.interval + 180)) {
-      spawnGuaranteedThreat(now);
+    if (!scriptedSansTurn && !bullets.length && !heart.slamActive
+      && now - lastThreatAt > (stage === 10 ? 650 : Math.max(900, pattern.interval + 180))) {
+      if (stage === 10) {
+        // Watchdog for rare empty gaps after a projectile expires early.
+        spawnHorizontalBoneTunnel(now, {
+          fromRight: volleyCount % 2 === 1,
+          speed: 192,
+          columns: 4,
+          spacing: 12,
+          opening: 20,
+          gapCenter: (arena.top + arena.bottom) / 2,
+          wave: 4,
+          routeOffset: volleyCount + 1
+        });
+        volleyCount++;
+        lastThreatAt = now;
+        spawnAt = Math.max(spawnAt, now + 620);
+      } else {
+        spawnGuaranteedThreat(now);
+      }
     }
 
     let sansHitThisFrame = false;
@@ -3773,7 +4345,7 @@
         setState('result', ['＊ ふっかつのしずくが かがやいた！', '＊ HPが ぜんかいした。']);
       } else finishDefeat();
     } else if (now - stateAt > pattern.duration) {
-      if (stage === 10 && attackPattern?.sansPhase === 24
+      if (stage === 10 && attackPattern?.finalSpecial
         && sansTurn >= SANS_ATTACK_SEQUENCE.length) {
         sansBattleComplete = true;
         sansMercyProgress = 3;
