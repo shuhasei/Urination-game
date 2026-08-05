@@ -2510,6 +2510,7 @@
       warning: extras.warning || 0,
       life: extras.life || 5,
       side: extras.side || 'left',
+      impactBone: Boolean(extras.impactBone),
       soundFired: false,
       age: 0
     });
@@ -3413,7 +3414,8 @@
           0, 0, {
             h: 9,
             fromTop: direction === GravityDirection.UP,
-            life: .62
+            life: .42,
+            impactBone: true
           });
       } else {
         addProjectile('bone',
@@ -3422,7 +3424,8 @@
             orientation: 'horizontal',
             length: 9,
             fromStart: direction === GravityDirection.LEFT,
-            life: .62
+            life: .42,
+            impactBone: true
           });
       }
     }
@@ -3430,6 +3433,9 @@
   }
 
   function slamSoul(direction) {
+    // A new forced slam must never drag the soul through bones created by the
+    // previous impact. Remove only those short-lived impact bones.
+    bullets = bullets.filter(bullet => !bullet.impactBone);
     soulMode = 'blue';
     gravityDirection = direction;
     const gravity = gravityVector(direction);
@@ -3548,17 +3554,43 @@
     }
   }
 
+  function safeRouteWindow(arena, options = {}) {
+    const height = arena.bottom - arena.top;
+    const opening = Math.max(18, Math.min(height - 8, options.opening || 20));
+    let center = Number.isFinite(options.routeCenter) ? options.routeCenter : null;
+    if (center === null) {
+      if (soulMode === 'blue' && gravityDirection === GravityDirection.DOWN) {
+        center = arena.bottom - opening / 2 - 5;
+      } else if (soulMode === 'blue' && gravityDirection === GravityDirection.UP) {
+        center = arena.top + opening / 2 + 5;
+      } else {
+        center = (arena.top + arena.bottom) / 2;
+      }
+    }
+    center = Math.max(arena.top + opening / 2 + 3,
+      Math.min(arena.bottom - opening / 2 - 3, center));
+    return {
+      center,
+      opening,
+      top: center - opening / 2,
+      bottom: center + opening / 2
+    };
+  }
+
   function spawnFloorTeeth(options = {}) {
     const arena = battleArena();
     const spacing = options.spacing || 7;
     const height = options.height || 8;
     const gapX = options.gapX ?? heart.x;
-    const gapRadius = options.gapRadius ?? 7;
+    // Sans patterns always retain a visible landing pocket. This prevents a
+    // fully covered floor from causing damage on the first forced landing.
+    const gapRadius = Math.max(stage === 10 ? 10 : 0, options.gapRadius ?? 7);
+    const preserveSafeGap = stage === 10 || options.keepGap !== false;
     const vx = options.vx || 0;
     const life = options.life || 4;
     const boneType = options.boneType || 0;
     for (let x = arena.left + 4; x <= arena.right - 4; x += spacing) {
-      if (options.keepGap !== false && Math.abs(x - gapX) < gapRadius) continue;
+      if (preserveSafeGap && Math.abs(x - gapX) < gapRadius) continue;
       addProjectile('bone', x, arena.bottom, vx, 0, {
         h: height,
         life,
@@ -3573,12 +3605,13 @@
     const spacing = options.spacing || 7;
     const height = options.height || 8;
     const gapX = options.gapX ?? heart.x;
-    const gapRadius = options.gapRadius ?? 7;
+    const gapRadius = Math.max(stage === 10 ? 10 : 0, options.gapRadius ?? 7);
+    const preserveSafeGap = stage === 10 || options.keepGap !== false;
     const vx = options.vx || 0;
     const life = options.life || 4;
     const boneType = options.boneType || 0;
     for (let x = arena.left + 4; x <= arena.right - 4; x += spacing) {
-      if (options.keepGap !== false && Math.abs(x - gapX) < gapRadius) continue;
+      if (preserveSafeGap && Math.abs(x - gapX) < gapRadius) continue;
       addProjectile('bone', x, arena.top, vx, 0, {
         h: height,
         fromTop: true,
@@ -3600,9 +3633,16 @@
     const life = options.life || 5;
     const startX = fromRight ? arena.right + 9 : arena.left - 9;
     const heights = options.heights || [16, 29, 21, 34, 18, 27, 23, 31];
+    const route = safeRouteWindow(arena, options);
     for (let i = 0; i < count; i++) {
       const fromTop = (i + offset) % 2 === 0;
-      const h = Math.min(arena.bottom - arena.top - 8, heights[(i + offset) % heights.length]);
+      const requested = heights[(i + offset) % heights.length];
+      // All overlapping pillar waves share the same open route. Even when two
+      // groups meet from opposite sides, their bones cannot close this route.
+      const routeLimit = fromTop
+        ? Math.max(3, route.top - arena.top)
+        : Math.max(3, arena.bottom - route.bottom);
+      const h = Math.max(3, Math.min(requested, routeLimit));
       const x = startX - direction * i * spacing;
       addProjectile('bone', x, fromTop ? arena.top : arena.bottom,
         direction * speed, 0, {
@@ -3643,13 +3683,22 @@
     const speed = options.speed || 74;
     const life = options.life || 3.2;
     const inset = options.inset || 0;
-    const h = arena.bottom - arena.top;
-    addProjectile('bone', arena.left - 8 - inset, arena.top, speed, 0, {
-      h, fromTop: true, boneType: 1, life
+    const route = safeRouteWindow(arena, {
+      ...options,
+      opening: Math.max(20, options.opening || 20)
     });
-    addProjectile('bone', arena.right + 8 + inset, arena.top, -speed, 0, {
-      h, fromTop: true, boneType: 1, life
-    });
+    const topHeight = Math.max(3, route.top - arena.top);
+    const bottomHeight = Math.max(3, arena.bottom - route.bottom);
+    const addWall = (x, vx) => {
+      addProjectile('bone', x, arena.top, vx, 0, {
+        h: topHeight, fromTop: true, boneType: 1, life
+      });
+      addProjectile('bone', x, arena.bottom, vx, 0, {
+        h: bottomHeight, boneType: 1, life
+      });
+    };
+    addWall(arena.left - 8 - inset, speed);
+    addWall(arena.right + 8 + inset, -speed);
     playBoneEmergeSound();
   }
 
@@ -3759,15 +3808,18 @@
 
   function spawnFinalBoneTunnelTrain(options = {}) {
     const arena = battleArena();
-    const speed = options.speed || 108;
-    const life = options.life || 13.5;
+    const speed = options.speed || 142;
+    const life = options.life || 10.2;
     const startX = arena.right + 12;
     let cursor = 0;
 
     const addGate = (offset, gapCenter, gapSize) => {
+      const safeSize = Math.max(16, gapSize);
+      const center = Math.max(arena.top + safeSize / 2 + 3,
+        Math.min(arena.bottom - safeSize / 2 - 3, gapCenter));
       const x = startX + offset;
-      const gapTop = Math.max(arena.top + 3, gapCenter - gapSize / 2);
-      const gapBottom = Math.min(arena.bottom - 3, gapCenter + gapSize / 2);
+      const gapTop = center - safeSize / 2;
+      const gapBottom = center + safeSize / 2;
       addProjectile('bone', x, arena.top, -speed, 0, {
         h: Math.max(3, gapTop - arena.top),
         fromTop: true,
@@ -3781,44 +3833,44 @@
 
     const addSingleSide = (offset, fromTop, height) => {
       const x = startX + offset;
+      const maxHeight = Math.max(3, (arena.bottom - arena.top) - 18);
       addProjectile('bone', x, fromTop ? arena.top : arena.bottom, -speed, 0, {
-        h: height,
+        h: Math.min(height, maxHeight),
         fromTop,
         life
       });
     };
 
     const center = (arena.top + arena.bottom) / 2;
-    const lowGap = arena.bottom - 10;
-    const highGap = arena.top + 10;
+    const high = arena.top + 11;
+    const low = arena.bottom - 11;
 
-    // Segment 1: the dense ladder-like tunnel visible immediately after the box
-    // stretches horizontally. The opening moves slightly up and down but never
-    // disappears, so the player can weave through it continuously.
-    const firstCenters = [center, highGap, center - 3, lowGap, center + 2, highGap + 2];
-    for (let i = 0; i < 42; i++) {
-      addGate(cursor, firstCenters[i % firstCenters.length], 11 + (i % 3));
-      cursor += 8;
+    // Segment 1: a continuous wave. Columns are spaced far enough apart for
+    // the blue soul to move from one opening to the next.
+    const firstCenters = [low, low - 3, center + 3, center, center - 3, high + 3, high, center - 2, center + 2, low - 2];
+    for (let i = 0; i < 24; i++) {
+      addGate(cursor, firstCenters[i % firstCenters.length], 16 + (i % 2));
+      cursor += 18;
     }
 
-    // Segment 2: alternating groups of three long bones from the ceiling and
-    // floor, matching the grouped barriers in the middle of the video tunnel.
-    cursor += 16;
-    for (let group = 0; group < 9; group++) {
+    // Segment 2: grouped upper/lower bones with generous travel time between
+    // groups. The opposite side always remains open.
+    cursor += 14;
+    for (let group = 0; group < 7; group++) {
       const fromTop = group % 2 === 0;
-      const height = 15 + (group % 3) * 2;
+      const height = 11 + (group % 3) * 2;
       for (let column = 0; column < 3; column++) {
-        addSingleSide(cursor + column * 6, fromTop, height);
+        addSingleSide(cursor + column * 7, fromTop, height);
       }
       cursor += 48;
     }
 
-    // Segment 3: the final dense teeth section before the arena closes again.
-    cursor += 12;
-    const finalCenters = [highGap + 1, lowGap - 1, center, lowGap - 3, highGap + 3];
-    for (let i = 0; i < 30; i++) {
-      addGate(cursor, finalCenters[i % finalCenters.length], 10 + (i % 2));
-      cursor += 7;
+    // Segment 3: a shorter closing wave using the same reachable route.
+    cursor += 10;
+    const finalCenters = [high + 2, center - 2, center + 2, low - 2, center + 1, high + 3];
+    for (let i = 0; i < 11; i++) {
+      addGate(cursor, finalCenters[i % finalCenters.length], 16);
+      cursor += 18;
     }
 
     playBoneEmergeSound();
@@ -3836,9 +3888,12 @@
     const life = options.life || 5;
     const startX = fromRight ? arena.right + 8 : arena.left - 8;
     const heights = options.heights || [18, 22, 18, 25];
+    const route = safeRouteWindow(arena, options);
+    const routeLimit = fromTop
+      ? Math.max(3, route.top - arena.top)
+      : Math.max(3, arena.bottom - route.bottom);
     for (let i = 0; i < count; i++) {
-      const height = Math.min(arena.bottom - arena.top - 5,
-        heights[i % heights.length]);
+      const height = Math.max(3, Math.min(routeLimit, heights[i % heights.length]));
       const x = startX + (fromRight ? i : -i) * spacing;
       addProjectile('bone', x, fromTop ? arena.top : arena.bottom,
         direction * speed, 0, {
@@ -3860,12 +3915,24 @@
     const spacing = options.spacing || 21;
     const startX = fromRight ? arena.right + 8 : arena.left - 8;
     const life = options.life || 5;
-    const height = Math.max(8, arena.bottom - arena.top);
+    const route = safeRouteWindow(arena, {
+      ...options,
+      opening: Math.max(20, options.opening || 20)
+    });
     for (let i = 0; i < count; i++) {
       const x = startX + (fromRight ? i : -i) * spacing;
+      const wobble = Math.sin((i + (options.offset || 0)) * .72) * 2;
+      const center = Math.max(arena.top + route.opening / 2 + 3,
+        Math.min(arena.bottom - route.opening / 2 - 3, route.center + wobble));
+      const gapTop = center - route.opening / 2;
+      const gapBottom = center + route.opening / 2;
       addProjectile('bone', x, arena.top, direction * speed, 0, {
-        h: height,
+        h: Math.max(3, gapTop - arena.top),
         fromTop: true,
+        life
+      });
+      addProjectile('bone', x, arena.bottom, direction * speed, 0, {
+        h: Math.max(3, arena.bottom - gapBottom),
         life
       });
     }
@@ -3906,15 +3973,38 @@
   }
 
   function spawnMirroredPillarWave(options = {}) {
-    const common = {
-      speed: options.speed || 104,
-      count: options.count || 4,
-      spacing: options.spacing || 18,
-      life: options.life || 4.5,
-      heights: options.heights || [18, 35, 22, 31, 16, 28]
+    const arena = battleArena();
+    const speed = options.speed || 104;
+    const count = options.count || 4;
+    const spacing = options.spacing || 18;
+    const life = options.life || 4.5;
+    const route = safeRouteWindow(arena, {
+      ...options,
+      opening: Math.max(20, options.opening || 20)
+    });
+
+    const addSide = fromRight => {
+      const direction = fromRight ? -1 : 1;
+      const startX = fromRight ? arena.right + 8 : arena.left - 8;
+      for (let i = 0; i < count; i++) {
+        const x = startX + (fromRight ? i : -i) * spacing;
+        const wobble = Math.sin((i + (options.offset || 0)) * .68) * 2;
+        const center = Math.max(arena.top + route.opening / 2 + 3,
+          Math.min(arena.bottom - route.opening / 2 - 3, route.center + wobble));
+        const gapTop = center - route.opening / 2;
+        const gapBottom = center + route.opening / 2;
+        addProjectile('bone', x, arena.top, direction * speed, 0, {
+          h: Math.max(3, gapTop - arena.top), fromTop: true, life
+        });
+        addProjectile('bone', x, arena.bottom, direction * speed, 0, {
+          h: Math.max(3, arena.bottom - gapBottom), life
+        });
+      }
     };
-    spawnAlternatingPillars({ ...common, fromRight: false, offset: options.offset || 0 });
-    spawnAlternatingPillars({ ...common, fromRight: true, offset: (options.offset || 0) + 1 });
+
+    addSide(false);
+    addSide(true);
+    playBoneEmergeSound();
   }
 
   function spawnPlatformField(options = {}) {
@@ -4137,7 +4227,7 @@
         break;
       }
 
-      case 10: { // Full-height bars sweep from one edge, then reverse once.
+      case 10: { // Tall paired bone gates sweep from one edge, then reverse once.
         for (let i = 0; i < 6; i++) {
           once('s10-bars-' + i, .03 + i * .92, () => spawnFullHeightBarTrain({
             fromRight: i < 5,
@@ -4150,7 +4240,7 @@
         break;
       }
 
-      case 11: { // Mirrored pillar pairs close in from both sides.
+      case 11: { // Mirrored shared-gap bone gates close in from both sides.
         for (let i = 0; i < 8; i++) {
           once('s11-mirror-' + i, .02 + i * .68, () => spawnMirroredPillarWave({
             speed: 112,
