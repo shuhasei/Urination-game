@@ -1,23 +1,31 @@
 (() => {
   'use strict';
 
-  const decodeGzipBase64 = async encoded => {
-    const compact = encoded.replace(/\s+/g, '');
-    const bytes = Uint8Array.from(atob(compact), character => character.charCodeAt(0));
-    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
-    return new Response(stream).text();
+  const PATCH_URL = 'assets/final_video_verified.patch.gz.b64';
+  const GAME_URL = 'game.js';
+  let fallbackStarted = false;
+
+  const setHint = message => {
+    const hint = document.getElementById('start-hint');
+    if (!hint) return;
+    hint.textContent = message;
+    hint.classList.add('visible');
   };
 
   const parseRange = text => {
     const match = /^(\d+)(?:,(\d+))?$/.exec(text);
     if (!match) throw new Error('Invalid patch range: ' + text);
-    return { start: Number(match[1]), count: match[2] === undefined ? 1 : Number(match[2]) };
+    return {
+      start: Number(match[1]),
+      count: match[2] === undefined ? 1 : Number(match[2])
+    };
   };
 
   const applyUnifiedPatch = (source, patch) => {
     const sourceEndsWithNewline = source.endsWith('\n');
     const sourceLines = source.replace(/\r\n/g, '\n').split('\n');
     if (sourceEndsWithNewline) sourceLines.pop();
+
     const patchLines = patch.replace(/\r\n/g, '\n').split('\n');
     let offset = 0;
     let index = 0;
@@ -42,6 +50,7 @@
           index++;
           continue;
         }
+
         const prefix = line[0];
         const content = line.slice(1);
         if (prefix === ' ') {
@@ -57,15 +66,30 @@
         index++;
       }
 
-      const position = oldRange.start - 1 + offset;
-      const actual = sourceLines.slice(position, position + oldLines.length);
+      const expectedPosition = oldRange.start - 1 + offset;
+      let position = expectedPosition;
+      let actual = sourceLines.slice(position, position + oldLines.length);
+
       if (actual.length !== oldLines.length
         || actual.some((line, lineIndex) => line !== oldLines[lineIndex])) {
-        throw new Error('Patch context mismatch near original line ' + oldRange.start);
+        const windowStart = Math.max(0, expectedPosition - 80);
+        const windowEnd = Math.min(sourceLines.length - oldLines.length, expectedPosition + 80);
+        position = -1;
+        for (let candidate = windowStart; candidate <= windowEnd; candidate++) {
+          const candidateLines = sourceLines.slice(candidate, candidate + oldLines.length);
+          if (candidateLines.length === oldLines.length
+            && candidateLines.every((line, lineIndex) => line === oldLines[lineIndex])) {
+            position = candidate;
+            break;
+          }
+        }
+        if (position < 0) {
+          throw new Error('Patch context mismatch near original line ' + oldRange.start);
+        }
       }
 
       sourceLines.splice(position, oldLines.length, ...newLines);
-      offset += newLines.length - oldLines.length;
+      offset += newLines.length - oldLines.length + (position - expectedPosition);
       hunkCount++;
     }
 
@@ -73,26 +97,67 @@
     return sourceLines.join('\n') + (sourceEndsWithNewline ? '\n' : '');
   };
 
-  const showLoadError = error => {
-    console.error('Failed to start the reviewed game build:', error);
-    const hint = document.getElementById('start-hint');
-    if (hint) {
-      hint.textContent = 'ゲームデータを読み込めませんでした。';
-      hint.classList.add('visible');
+  const decodeGzipBase64 = async encoded => {
+    if (typeof DecompressionStream !== 'function') {
+      throw new Error('This browser does not support gzip decompression.');
     }
+    const compact = encoded.replace(/\s+/g, '');
+    const bytes = Uint8Array.from(atob(compact), character => character.charCodeAt(0));
+    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+    return new Response(stream).text();
   };
 
-  Promise.all([
-    fetch('game.js', { cache: 'no-store' }).then(response => {
-      if (!response.ok) throw new Error('game.js: HTTP ' + response.status);
-      return response.text();
-    }),
-    fetch('assets/final_video_verified.patch.gz.b64', { cache: 'no-store' }).then(response => {
-      if (!response.ok) throw new Error('review patch: HTTP ' + response.status);
-      return response.text();
-    }).then(decodeGzipBase64)
-  ]).then(([source, patch]) => {
+  const appendExternalScript = (url, onError) => {
+    const script = document.createElement('script');
+    script.src = url;
+    script.async = false;
+    if (onError) script.onerror = onError;
+    document.body.appendChild(script);
+  };
+
+  const startFallback = error => {
+    if (fallbackStarted) return;
+    fallbackStarted = true;
+    console.warn('Reviewed build failed; loading the stable game.js instead.', error);
+    setHint('安定版を読み込んでいます…');
+    appendExternalScript(
+      GAME_URL + '?fallback=' + Date.now(),
+      () => {
+        console.error('Stable game.js also failed to load.');
+        setHint('ゲームデータを読み込めませんでした。ページを再読み込みしてください。');
+      }
+    );
+  };
+
+  const executeReviewedSource = source => new Promise((resolve, reject) => {
+    const blobUrl = URL.createObjectURL(new Blob([
+      source + '\n//# sourceURL=game-reviewed.js'
+    ], { type: 'text/javascript' }));
+    const script = document.createElement('script');
+    script.src = blobUrl;
+    script.async = false;
+    script.onload = () => {
+      URL.revokeObjectURL(blobUrl);
+      resolve();
+    };
+    script.onerror = () => {
+      URL.revokeObjectURL(blobUrl);
+      reject(new Error('The reviewed script was blocked or could not execute.'));
+    };
+    document.body.appendChild(script);
+  });
+
+  const load = async () => {
+    const sourceResponse = await fetch(GAME_URL, { cache: 'no-store' });
+    if (!sourceResponse.ok) throw new Error('game.js: HTTP ' + sourceResponse.status);
+    const source = await sourceResponse.text();
+
+    const patchResponse = await fetch(PATCH_URL, { cache: 'no-store' });
+    if (!patchResponse.ok) throw new Error('review patch: HTTP ' + patchResponse.status);
+    const patch = await decodeGzipBase64(await patchResponse.text());
     const reviewedSource = applyUnifiedPatch(source, patch);
-    (0, eval)(reviewedSource);
-  }).catch(showLoadError);
+    await executeReviewedSource(reviewedSource);
+  };
+
+  load().catch(startFallback);
 })();
