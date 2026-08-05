@@ -118,7 +118,7 @@
   const SANS_TURN_DURATIONS = [
     6800, 6200, 6500, 6200, 7200, 8200, 8200, 7600,
     7200, 7600, 7200, 7200, 6500, 8000, 7600, 8000,
-    9200, 7000, 7600, 6200, 11500, 6500, 49500
+    9200, 7000, 7600, 6200, 11500, 6500, 52000
   ];
   const SANS_SCRIPT_META = [
     { arena: 'square', soul: 'blue', gravity: true },
@@ -143,7 +143,7 @@
     { arena: 'square', soul: 'red', gravity: false },
     { arena: 'wideTall', soul: 'blue', gravity: true },
     { arena: 'square', soul: 'blue', gravity: true },
-    { arena: 'long', soul: 'blue', gravity: true, final: true }
+    { arena: 'square', soul: 'blue', gravity: true, final: true }
   ];
   const TEST_PLAY_INVINCIBLE = false;
   const BLUE_SOUL_JUMP_VELOCITY = 168;
@@ -3758,6 +3758,73 @@
     heart.vy = 0;
   }
 
+  function spawnFinalBoneTunnelTrain(options = {}) {
+    const arena = battleArena();
+    const speed = options.speed || 108;
+    const life = options.life || 13.5;
+    const startX = arena.right + 12;
+    let cursor = 0;
+
+    const addGate = (offset, gapCenter, gapSize) => {
+      const x = startX + offset;
+      const gapTop = Math.max(arena.top + 3, gapCenter - gapSize / 2);
+      const gapBottom = Math.min(arena.bottom - 3, gapCenter + gapSize / 2);
+      addProjectile('bone', x, arena.top, -speed, 0, {
+        h: Math.max(3, gapTop - arena.top),
+        fromTop: true,
+        life
+      });
+      addProjectile('bone', x, arena.bottom, -speed, 0, {
+        h: Math.max(3, arena.bottom - gapBottom),
+        life
+      });
+    };
+
+    const addSingleSide = (offset, fromTop, height) => {
+      const x = startX + offset;
+      addProjectile('bone', x, fromTop ? arena.top : arena.bottom, -speed, 0, {
+        h: height,
+        fromTop,
+        life
+      });
+    };
+
+    const center = (arena.top + arena.bottom) / 2;
+    const lowGap = arena.bottom - 10;
+    const highGap = arena.top + 10;
+
+    // Segment 1: the dense ladder-like tunnel visible immediately after the box
+    // stretches horizontally. The opening moves slightly up and down but never
+    // disappears, so the player can weave through it continuously.
+    const firstCenters = [center, highGap, center - 3, lowGap, center + 2, highGap + 2];
+    for (let i = 0; i < 42; i++) {
+      addGate(cursor, firstCenters[i % firstCenters.length], 11 + (i % 3));
+      cursor += 8;
+    }
+
+    // Segment 2: alternating groups of three long bones from the ceiling and
+    // floor, matching the grouped barriers in the middle of the video tunnel.
+    cursor += 16;
+    for (let group = 0; group < 9; group++) {
+      const fromTop = group % 2 === 0;
+      const height = 15 + (group % 3) * 2;
+      for (let column = 0; column < 3; column++) {
+        addSingleSide(cursor + column * 6, fromTop, height);
+      }
+      cursor += 48;
+    }
+
+    // Segment 3: the final dense teeth section before the arena closes again.
+    cursor += 12;
+    const finalCenters = [highGap + 1, lowGap - 1, center, lowGap - 3, highGap + 3];
+    for (let i = 0; i < 30; i++) {
+      addGate(cursor, finalCenters[i % finalCenters.length], 10 + (i % 2));
+      cursor += 7;
+    }
+
+    playBoneEmergeSound();
+  }
+
   function runSansScriptedTurn(now) {
     const scriptIndex = attackPattern?.sansScriptIndex;
     if (!Number.isInteger(scriptIndex)) return false;
@@ -4060,33 +4127,73 @@
         directions.forEach((direction, i) => once('s21-slam-' + i, .15 + i * .72, () => slamSoul(direction)));
         break;
       }
-      case 22: { // Final attack: corridor -> bone border -> blaster ring -> long slam loop.
-        once('s22-long-arena', .02, () => {
-          setSansArena('long', true);
-          setScriptSoul('blue', GravityDirection.DOWN, false);
-          spawnFloorTeeth({ height: 6, spacing: 7, gapRadius: 12, life: 8.2 });
-          spawnCeilingTeeth({ height: 6, spacing: 7, gapRadius: 10, life: 8.2 });
-        });
-        for (let i = 0; i < 9; i++) {
-          once('s22-corridor-' + i, .36 + i * .78, () => spawnHorizontalBoneTunnel(now, {
-            fromRight: i % 2 === 0,
-            speed: 148 + i * 3,
-            columns: 4,
-            spacing: 10,
-            opening: 17,
-            gapCenter: battleArena().top + 9 + [0, 8, 3, 12, 5, 14, 7, 2, 10][i],
-            wave: 3,
-            routeOffset: i
-          }));
+      case 22: { // Final attack: square slams -> long bone tunnel -> blaster ring -> slam loop.
+        // 0.0-3.7 s: the first arena is a true square, as in the video.
+        if (elapsed < 3.72) {
+          activeSansArena = resolveArenaBox(SANS_ARENA_PRESETS.square);
+        } else if (elapsed < 4.92) {
+          // Smoothly stretch the square into the long, narrow tunnel box.
+          const p = smoothstep01((elapsed - 3.72) / 1.20);
+          const from = SANS_ARENA_PRESETS.square;
+          const to = SANS_ARENA_PRESETS.long;
+          activeSansArena = resolveArenaBox({
+            x: from.x + (to.x - from.x) * p,
+            y: from.y + (to.y - from.y) * p,
+            w: from.w + (to.w - from.w) * p,
+            h: from.h + (to.h - from.h) * p
+          });
+        } else if (elapsed < 13.55) {
+          activeSansArena = resolveArenaBox(SANS_ARENA_PRESETS.long);
         }
-        once('s22-square', 8.0, () => {
+
+        once('s22-square-start', .02, () => {
+          setSansArena('square', true);
+          setScriptSoul('blue', GravityDirection.DOWN, false);
+        });
+
+        const openingSlams = [
+          GravityDirection.DOWN,
+          GravityDirection.RIGHT,
+          GravityDirection.UP,
+          GravityDirection.LEFT,
+          GravityDirection.UP,
+          GravityDirection.RIGHT,
+          GravityDirection.DOWN
+        ];
+        openingSlams.forEach((direction, i) => {
+          once('s22-opening-slam-' + i, .10 + i * .52, () => slamSoul(direction));
+        });
+
+        once('s22-clear-for-stretch', 3.70, () => {
+          clearSansThreats();
+          setScriptSoul('blue', GravityDirection.DOWN, false);
+        });
+
+        once('s22-long-ready', 4.94, () => {
+          setSansArena('long', false);
+          setScriptSoul('blue', GravityDirection.DOWN, false);
+          const a = battleArena();
+          heart.x = a.left + 12;
+          heart.y = a.bottom - 6;
+          heart.vx = 0;
+          heart.vy = 0;
+        });
+
+        // The tunnel begins only after the long box is fully formed. One continuous
+        // train is used so there are no empty beats between separate volleys.
+        once('s22-full-bone-tunnel', 5.18, () => {
+          spawnFinalBoneTunnelTrain({ speed: 126, life: 10.8 });
+        });
+
+        once('s22-square-after-tunnel', 13.55, () => {
           clearSansThreats();
           setSansArena('square', true);
           setScriptSoul('blue', GravityDirection.DOWN, false);
-          spawnBoneBorder({ height: 7, spacing: 7, life: 11.7 });
+          spawnBoneBorder({ height: 7, spacing: 7, life: 9.4 });
         });
+
         for (let i = 0; i < 9; i++) {
-          once('s22-ring-' + i, 9.0 + i * 1.1, () => spawnAngledBlasterRing({
+          once('s22-ring-' + i, 14.25 + i * .92, () => spawnAngledBlasterRing({
             count: 12,
             baseAngle: i * .27,
             warning: .36,
@@ -4097,7 +4204,8 @@
             length: 300
           }));
         }
-        once('s22-slam-start', 20.0, () => {
+
+        once('s22-slam-start', 23.10, () => {
           clearSansThreats();
           setSansArena('square', true);
           setScriptSoul('blue', GravityDirection.DOWN, false);
@@ -4110,8 +4218,8 @@
           GravityDirection.DOWN, GravityDirection.RIGHT,
           GravityDirection.UP, GravityDirection.LEFT
         ];
-        for (let i = 0; i < 37; i++) {
-          once('s22-final-slam-' + i, 20.15 + i * .74, () => slamSoul(finalDirections[i % finalDirections.length]));
+        for (let i = 0; i < 38; i++) {
+          once('s22-final-slam-' + i, 23.25 + i * .74, () => slamSoul(finalDirections[i % finalDirections.length]));
         }
         break;
       }
