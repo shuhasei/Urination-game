@@ -1,0 +1,30 @@
+name: Apply no-idle motion patch
+
+on:
+  push:
+    paths:
+      - '.github/no-idle-trigger'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch
+        run: git apply --check no_idle_motion.patch && git apply no_idle_motion.patch
+      - name: Validate JavaScript
+        run: node --check game.js
+      - name: Commit result
+        run: |
+          rm -f no_idle_motion.patch
+          rm -f scripts/apply_sans_ending_test_mode.py
+          rm -f .github/no-idle-trigger
+          rm -f .github/workflows/apply-no-idle-motion.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Keep Sans battle animations moving"
+          git push
