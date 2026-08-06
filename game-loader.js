@@ -1,13 +1,20 @@
 (() => {
   'use strict';
 
-  const PATCH_URL = 'assets/final_video_verified.patch.gz.b64';
-  const CSV_REBUILD_PATCH_URL = 'assets/csv_rebuild_v6.patch.gz.b64';
-  const GAME_URL = 'game.js';
+  const VERSION = '20260806-final3';
+  const GAME_URL = `game.js?v=${VERSION}`;
+  const PATCH_PARTS = [
+    'assets/final-complete-v2/part_00.txt',
+    'assets/final-complete-v2/part_01.txt',
+    'assets/final-complete-v2/part_02.txt',
+    'assets/final-complete-v2/part_03.txt',
+    'assets/final-complete-v2/part_04.txt'
+  ];
+  const EXPECTED_SHA256 = '1bd7c9a00ecabf308901a4ed4038aa5f6f21ff0f94cb4c0b06e8471fabbe1bc7';
+  const hint = document.getElementById('start-hint');
   let fallbackStarted = false;
 
   const setHint = message => {
-    const hint = document.getElementById('start-hint');
     if (!hint) return;
     hint.textContent = message;
     hint.classList.add('visible');
@@ -15,7 +22,7 @@
 
   const parseRange = text => {
     const match = /^(\d+)(?:,(\d+))?$/.exec(text);
-    if (!match) throw new Error('Invalid patch range: ' + text);
+    if (!match) throw new Error(`Invalid patch range: ${text}`);
     return {
       start: Number(match[1]),
       count: match[2] === undefined ? 1 : Number(match[2])
@@ -62,7 +69,7 @@
         } else if (prefix === '+') {
           newLines.push(content);
         } else if (line !== '') {
-          throw new Error('Unsupported patch line: ' + line);
+          throw new Error(`Unsupported patch line: ${line.slice(0, 80)}`);
         }
         index++;
       }
@@ -73,8 +80,8 @@
 
       if (actual.length !== oldLines.length
         || actual.some((line, lineIndex) => line !== oldLines[lineIndex])) {
-        const windowStart = Math.max(0, expectedPosition - 120);
-        const windowEnd = Math.min(sourceLines.length - oldLines.length, expectedPosition + 120);
+        const windowStart = Math.max(0, expectedPosition - 160);
+        const windowEnd = Math.min(sourceLines.length - oldLines.length, expectedPosition + 160);
         position = -1;
         for (let candidate = windowStart; candidate <= windowEnd; candidate++) {
           const candidateLines = sourceLines.slice(candidate, candidate + oldLines.length);
@@ -85,7 +92,7 @@
           }
         }
         if (position < 0) {
-          throw new Error('Patch context mismatch near original line ' + oldRange.start);
+          throw new Error(`Patch context mismatch near original line ${oldRange.start}`);
         }
       }
 
@@ -108,10 +115,26 @@
     return new Response(stream).text();
   };
 
-  const fetchDecodedPatch = async url => {
-    const response = await fetch(url + '?v=20260806-1', { cache: 'no-store' });
-    if (!response.ok) throw new Error(url + ': HTTP ' + response.status);
-    return decodeGzipBase64(await response.text());
+  const sha256 = async text => {
+    if (!globalThis.crypto?.subtle) return null;
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+  };
+
+  const verifyReviewedSource = async source => {
+    const requiredMarkers = [
+      'const TEST_PLAY_INVINCIBLE = false;',
+      'sansWoundedWalkGifImage',
+      'aiGeneratedSansFallbackImage',
+      'function updateSansFinalBoxMove(dt)'
+    ];
+    if (!requiredMarkers.every(marker => source.includes(marker))) {
+      throw new Error('The completed game source did not pass its feature check.');
+    }
+    const digest = await sha256(source);
+    if (digest && digest !== EXPECTED_SHA256) {
+      throw new Error(`Completed game source checksum mismatch: ${digest}`);
+    }
   };
 
   const appendExternalScript = (url, onError) => {
@@ -125,10 +148,10 @@
   const startFallback = error => {
     if (fallbackStarted) return;
     fallbackStarted = true;
-    console.warn('Reviewed build failed; loading the stable game.js instead.', error);
+    console.warn('Completed Sans build failed; loading the stable game.js instead.', error);
     setHint('安定版を読み込んでいます…');
     appendExternalScript(
-      GAME_URL + '?fallback=' + Date.now(),
+      `${GAME_URL}&fallback=${Date.now()}`,
       () => {
         console.error('Stable game.js also failed to load.');
         setHint('ゲームデータを読み込めませんでした。ページを再読み込みしてください。');
@@ -136,9 +159,9 @@
     );
   };
 
-  const executeReviewedSource = source => new Promise((resolve, reject) => {
+  const executeCompletedSource = source => new Promise((resolve, reject) => {
     const blobUrl = URL.createObjectURL(new Blob([
-      source + '\n//# sourceURL=game-reviewed-v6.js'
+      `${source}\n//# sourceURL=game-completed-final3.js`
     ], { type: 'text/javascript' }));
     const script = document.createElement('script');
     script.src = blobUrl;
@@ -149,29 +172,31 @@
     };
     script.onerror = () => {
       URL.revokeObjectURL(blobUrl);
-      reject(new Error('The reviewed script was blocked or could not execute.'));
+      reject(new Error('The completed game script could not execute.'));
     };
     document.body.appendChild(script);
   });
 
+  const fetchText = async url => {
+    const separator = url.includes('?') ? '&' : '?';
+    const response = await fetch(`${url}${separator}v=${VERSION}`, { cache: 'no-store' });
+    if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);
+    return response.text();
+  };
+
   const load = async () => {
     setHint('ゲームデータを読み込んでいます…');
-
-    const sourceResponse = await fetch(GAME_URL + '?v=20260806-1', { cache: 'no-store' });
-    if (!sourceResponse.ok) throw new Error('game.js: HTTP ' + sourceResponse.status);
-    const source = await sourceResponse.text();
-
-    const basePatch = await fetchDecodedPatch(PATCH_URL);
-    let reviewedSource = applyUnifiedPatch(source, basePatch);
-
-    try {
-      const csvRebuildPatch = await fetchDecodedPatch(CSV_REBUILD_PATCH_URL);
-      reviewedSource = applyUnifiedPatch(reviewedSource, csvRebuildPatch);
-    } catch (error) {
-      console.warn('CSV-based Sans attack rebuild was not applied; using the previous reviewed build.', error);
+    const [source, ...parts] = await Promise.all([
+      fetchText('game.js'),
+      ...PATCH_PARTS.map(fetchText)
+    ]);
+    const patch = await decodeGzipBase64(parts.join(''));
+    const completedSource = applyUnifiedPatch(source, patch);
+    await verifyReviewedSource(completedSource);
+    await executeCompletedSource(completedSource);
+    if (hint && hint.textContent === 'ゲームデータを読み込んでいます…') {
+      hint.textContent = 'ENTER / Z / タップ';
     }
-
-    await executeReviewedSource(reviewedSource);
   };
 
   load().catch(startFallback);
