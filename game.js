@@ -35,6 +35,8 @@
   const sansIdleGifImage = new Image();
   sansIdleGifImage.src = 'data:image/gif;base64,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pC8zDhr1qGTTeMkuzZv5rWyXBicbppoY5G3drLXyFn2xOGnQnV8XX+7Q81rgGJ9zZh7ab2jmq8PGFut3eGrn2QNL/+euszVn32pROy19lyV5pZrP+l58/vvo+HqD491NOGd9k83tR1tNq/VV2H/yXRWdbepdx1ZMFK232WcORphbYVNZeOF4jiGY4YYaIuRTghV6eJJTQm00olFhfajieiTmtqKL54lW3lYxiqjhb9u5CKJOgL244YRYeRhedxgiKVxyFdLH4o0COvkZj5A192OSFA55IWCtBWndiWNhCSR2VRIHY3kYRsklcUV61x+aKEIZYJEnqtmeipPZeSebXsl2548rRqYnm9eB5yOgD3qZY4pkGoqlmvsxWFV7XWb4qIECtjkpn4IpGueAVybJop29jZXom3qOmuaTXaVo03ESos8knomI6ZZlZx3VhZ6RvKakK4AifYXcsMSWVWxtmYqK3q/A0pUqhKC6p6x/TsJka1KLzohofqxly+iZMnbrKVSHRgumW94uVu5r4aI77pYH5vksju9uuW6B8wL5Jb2YRgldi/ue2W+/BDo36bmnVrtSlQezmrC5MRn8KsIKV+wes9rGS7C1t7a7bom0LnikwxqXma9G7NGX8rEstxydy8ISa96/tU43cs3YSWtzg2iqdjKuVIYMdJ/TsoVUmOTpl6vImJ085cqzekSzffb9FxAAOw==';
   const sansEyeImage = new Image();
+  // Glowing-eye pose based on the supplied third reference image.
+  const providedSansEyeImage = sansEyeImage;
   sansEyeImage.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABqCAYAAAAr8NZmAAADSElEQVR42u1d2W7EIAzcifj/X56+VlW6scEXxDxV1TYL4xlfEAqSnx7z42oIGsAGsAFsAHvMjlFgDqtpAJqBzcBQxj09DycCyCQDoSXcUfjDBnBf8Og9h+slzONuAL6mxdNBpCCAVdnn4g+bgQ3gu0o5GMnf6jlbAAjlZ2nwPEQB2RIuDiCS1wfvOWQ1VK06Jsw2Vku4AUz2EY4nE6iUFhXRFFUkPpzB0yxCksKUKye9JIzERfMUCUsXA6FEucBatwidlcbAiDGMrDqiAfzGGAaznF4sPLEjfeS+sNZvMeA7tgEQD3KiE+tCQOxKZAMGUsFGi2gc6oOHs2wpAIxfZPdfjvhklLDAkiHhKqcVWImBs0W7laOfjexcZehwZhQeJr4qLwjnULYWlk7cq17lIsDL4EYdLoIBGCv+7g44k7IyshKRyM06qXaPyGPRuk8pxB0LYQyalQ+dek50PzB650zqRqaD2pW4IO/vCNnyrLaxbtWlYZQbGAsWxsTkKGAGDdkNhVwRASAFvkSz88abAKNJimejLKwIslM7KzMAmTDQcl/hTtZSFnrndqr6fCgsgUB2Sd2AV9f5b5WCCpWIdTDwTqFExumWvnMe6CVfbVOTgp89E3hGSljin6L2L6hsZpSrRE5LbVQMtKA9BCzFQnXj2e0WsXYUYAUXpTnjr818u6WEX3kJ12UMHgxl/sRyLPxtCIARkTIjCJiuZQgWSIda2NIHInNuV1GWbJMuXcoHWB2JwCJzEGBY0TqvSSu434bhGIgkr8pSaqgxYXlmySUx7zy2lEs35Fh4sFUZFdVdofB3KkYPAwvROEmW+qkVMGFVN7eEV3VufLQjbEM7sNx0k/BuSfdWr7tm1rehRnyTD3RJ/r33RFLZETGGA3hVQUJLOCdTSAVQXJRHLPZNDPx94IgN4MHjRADZAG6UE17GE4JD7VnaD/Y1yAdKmA2gTdVguVHUQaQZ2AD2uBse3ZhKgcj9YjIrBr72/AwC/jmp1UYTKxq42k3m27H8hCDCBnDjoOV58c63CIhgIN1u8hiOE/d+o1LrN6Wv0OJNEt46kdYcRcu6aZeVAayQiuAtAHp0qxlkpDI+kIasYCbroku5o0dH4cXxA+h0B+nfvzZ7AAAAAElFTkSuQmCC';
   const sansHandUpImage = new Image();
   sansHandUpImage.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFwAAABuCAYAAACqXXT+AAAD0UlEQVR42u1dy7bjMAgLOfn/X9ZsZtHb06bYBgEOXrt5CCEesV0BcPTgjbMhaMAb8B4NeAPeQzeuZM+zmjJJM5wHdjOcCLD8vx6yM34HDZdmeB7ZQDbDnJuxUm6ujQxx4tqA2XjTcc182Znh3R0jAg6lDLANGyYvUWnhq1tHeYAYGVcyMTzzgNHvkAVwZHXrBdCx+i7dvCIH/wb8IUFTDNkkLHZWBFwG5sHpvqPpo2llfBKBlkADrv7GrDptDX+IhpsUEQqtFqfnbIZXGeK88mqWvbjR3lUWjzzTKDiSieErlhWH64a0aKO++Fi+rEwafCTzECtD76DhmJyzJcO/FTAjGq2Zh8FiSYieRZeUX0BY9cU/SUS6r027fWKD8r5wYDIyMBwK1sPxnnfecxc0R4I7sjHcCkQsGCnNYqEM3cJRDQfhPm4GenJp/+jCx3JxDj7cZ1TDjycwHE9guBC2DUL5wnfZxV3jSpuVeIE91K7IsD7c80sQq+xXz78cmSzKl//WLl1J/WAwr7yGC8nNYTwvXZaCgd7GSIUoxvm1GMtIyrTwHXStO8PRq6zAnopBvT68mKRoW6Kf2ODRSmWtUymXh0cUHaFSwpQUs++BxtlISKWZdakbjI2SZsPstfgisxUZDt36EBA9TrzlZFbDfz2c9qGgMMoIcLMaDeN5aSrN1NlDRknxajbJB72d6cN4GquXK1cdZzC7NT0P3GQ8YpRT/8qOyu2AyNgSAPl+ag33/vY3u1fSujVACdLVNRxJvce88BmJ7Kt96hGGjrR8Q/b6X84s0ATb9zQQL4FxdTVsmmXKTEmRAq6OHSRFiC8NI2NLNYZjAezZzbNyrG28pUrMqXiR0Kj+1ErTG3Sr03m2AJy5cGYlr37PblCZ4Z6gy7HWq/E6OCFcUqq8FDI/7znBplcXRoPtn4cLEWjGOhNkB1zTh5hhGiZBQBWwWaV9dq0/KjBcm71Ylcvi4BkhCcEOizkfe2D7Hdu999xIUjK4Al6RdY/eNmgtY6VL+x2zjxCjsE9XTsu86oCH/s/CgH4LmwAn0aX7I8bB2YlscfJm+qZUl/YNeIjepgvSzfAGPMR70IDnLZhSAa45+siCjWVTzLMA67bK33fcASENeFwa2YB3WujDrh5EwLtJdTO8mlcZV2RJhudjHFCzYghxMurW/4ncsYAgKQwQSxpkt7QQT2K4Zk8kY9/kzIHstCOauvApyHAkcfHRXcsz28Sb4U8LmjN5dVRj6duJctRgHHlgu5CvlyKDifzTDc9/irU2bmt4pdz7j+XIvZQOmg0Bd/wDucsk7tkYSxAAAAAASUVORK5CYII=';
@@ -278,6 +280,9 @@
   let enemies = [];
 
   let state = 'title';
+  let playerName = localStorage.getItem('undertalePlayerName') || '';
+  let nameDraft = playerName;
+  let pacifistRoutePending = false;
   let menu = 0;
   let target = 0;
   let playerLevel = 1;
@@ -476,8 +481,34 @@
     }
   }
 
+
+  function isCompactBattleSoul() {
+    if (stage !== 10 || state !== 'enemyTurn' || !attackPattern?.finalSpecial) return false;
+    const arena = battleArena();
+    const elapsed = (performance.now() - stateAt) / 1000;
+    return arena.right - arena.left > 200 && elapsed >= 4.25 && elapsed <= 15.65;
+  }
+
+  function battleSoulScale() {
+    return isCompactBattleSoul() ? .72 : 1;
+  }
+
+  function battleSoulRadius() {
+    return isCompactBattleSoul() ? 1.65 : 2.25;
+  }
+
+  function battleSoulPadding() {
+    return isCompactBattleSoul() ? 3.25 : 5;
+  }
+
   function battleHeartShape(x, y, color) {
-    heartShape(x, y, color);
+    const scale = battleSoulScale();
+    if (scale === 1) { heartShape(x, y, color); return; }
+    g.save();
+    g.translate(Math.round(x), Math.round(y));
+    g.scale(scale, scale);
+    heartShape(0, 0, color);
+    g.restore();
   }
 
   function drawGrid() {
@@ -708,8 +739,8 @@
             : null;
     const baseImage = resting && sansSleepImage.complete
       ? sansSleepImage
-      : animatedIdleReady ? sansIdleGifImage
-        : finalSpecial && sansEyeImage.complete ? sansEyeImage
+      : finalSpecial && providedSansEyeImage.complete ? providedSansEyeImage
+        : animatedIdleReady ? sansIdleGifImage
           : sansReferenceImage.complete && sansReferenceImage.naturalWidth
             ? sansReferenceImage : aiGeneratedSansFallbackImage;
     const poseStarted = sansGestureStartedAt;
@@ -743,7 +774,10 @@
         footX, footY, 1, false, .5
       );
     } else {
-      drawAnchoredSprite(baseImage, 40, 104, footX, footY, 1 - poseBlend, false, .5);
+      // Fit every base sprite by its actual aspect ratio so Sans never stretches sideways.
+      const baseScale = 40 / Math.max(1, baseImage.naturalWidth);
+      drawAnchoredSprite(baseImage, baseImage.naturalWidth / 2, baseImage.naturalHeight,
+        footX, footY, 1 - poseBlend, false, baseScale);
       if (horizontalPose) {
         drawAnchoredSprite(
           gestureImage, 46, 104,
@@ -864,7 +898,7 @@
   function drawStatus() {
     const sansLayout = stage === 10;
     const y = 148;
-    text('すけ', sansLayout ? 53 : 74, y, 7);
+    text(playerName || 'すけ', sansLayout ? 53 : 74, y, 7);
     text('LV ' + playerLevel, sansLayout ? 78 : 96, y, 8);
     text('HP', sansLayout ? 127 : 155, y + 1, 6);
     const hpX = sansLayout ? 140 : 168;
@@ -1994,6 +2028,31 @@
     }
   }
 
+
+  function sanitizePlayerName(value) {
+    return Array.from(String(value || '').normalize('NFKC'))
+      .filter(character => /[A-Za-z0-9ぁ-んァ-ヶ一-龠々ー]/.test(character))
+      .slice(0, 8).join('');
+  }
+
+  function drawNameEntry() {
+    rect(0, 0, W, H, '#000');
+    text('なまえを きめてください', 160, 44, 10, '#fff', 'center');
+    frameBox(85, 72, 150, 30, '#fff', 2);
+    text(nameDraft || '＿', 160, 80, 12, '#fff', 'center');
+    text('キーボードで入力　ENTER / Z で決定', 160, 118, 7, '#aaa', 'center');
+    text('最大8文字　BACKSPACEで削除', 160, 133, 7, '#777', 'center');
+  }
+
+  function drawPacifistPass() {
+    rect(0, 0, W, H, '#000');
+    text((playerName || 'にんげん') + '　LV 1', 160, 42, 11, '#fff', 'center');
+    text('サンズは みちを あけた。', 160, 72, 10, '#fff', 'center');
+    text('つぎのボス戦へ すすみます。', 160, 92, 9, '#ffff00', 'center');
+    text('（ボス戦は じゅんびちゅう）', 160, 116, 8, '#aaa', 'center');
+    text('ENTER / Z', 160, 142, 8, '#fff', 'center');
+  }
+
   function drawTitle(now) {
     rect(0, 0, W, H, '#000');
     if (titleImage.complete && titleImage.naturalWidth) {
@@ -2188,6 +2247,10 @@
   function draw(now) {
     if (state === 'title') {
       drawTitle(now);
+    } else if (state === 'nameEntry') {
+      drawNameEntry();
+    } else if (state === 'pacifistPass' || state === 'nextBossPending') {
+      drawPacifistPass();
     } else if (state === 'opening') {
       drawOpening(now);
     } else if (state === 'soulBreak') {
@@ -2522,7 +2585,16 @@
     openingDoorActive = false;
     dodgeAt = -10000;
     dodgeEnemy = -1;
-    if (stage === 10) {
+    if (stage === 10 && playerLevel === 1) {
+      pacifistRoutePending = true;
+      bullets = [];
+      soulMode = 'red';
+      setState('pacifistPass', [
+        '＊ サンズは LV 1を たしかめた。',
+        '＊ たたかわずに みちを あけた。'
+      ]);
+    } else if (stage === 10) {
+      pacifistRoutePending = false;
       setState('intro', [
         '＊ 最後の審判役が 静かに道をふさいだ。',
         '＊ 笑顔の骨人が ポケットに手を入れた。'
@@ -2545,6 +2617,7 @@
     clearChoice = 1;
     turnCount = 0;
     lastTrack = '';
+    pacifistRoutePending = false;
     startStage(1);
   }
 
@@ -3875,7 +3948,14 @@
     playBoneEmergeSound();
   }
 
-  function slamSoul(direction, gestureDirection = direction, gestureDuration = 430) {
+  function oppositeGravityDirection(direction) {
+    if (direction === GravityDirection.DOWN) return GravityDirection.UP;
+    if (direction === GravityDirection.UP) return GravityDirection.DOWN;
+    if (direction === GravityDirection.LEFT) return GravityDirection.RIGHT;
+    return GravityDirection.LEFT;
+  }
+
+  function slamSoul(direction, gestureDirection = oppositeGravityDirection(direction), gestureDuration = 430) {
     // A new forced slam must never drag the soul through bones created by the
     // previous impact. Remove only those short-lived impact bones.
     bullets = bullets.filter(bullet => !bullet.impactBone);
@@ -3892,6 +3972,46 @@
     sansGestureDirection = gestureDirection;
     sansGestureStartedAt = performance.now();
     sansGestureUntil = sansGestureStartedAt + gestureDuration;
+  }
+
+
+  function adaptiveBlueJumpProfile(arena) {
+    const vertical = gravityDirection === GravityDirection.DOWN
+      || gravityDirection === GravityDirection.UP;
+    const span = (vertical ? arena.bottom - arena.top : arena.right - arena.left)
+      - battleSoulPadding() * 2;
+    const compact = isCompactBattleSoul();
+    const platformPhase = Number.isInteger(attackPattern?.sansScriptIndex)
+      && [4, 5, 6, 7, 8, 9].includes(attackPattern.sansScriptIndex);
+    let clearance = span;
+
+    if (vertical) {
+      for (const bullet of bullets) {
+        if (bullet.kind !== 'bone' || bullet.orientation === 'horizontal'
+          || Math.abs(bullet.x - heart.x) > 20) continue;
+        const extent = effectiveBoneExtent(bullet);
+        const top = bullet.fromTop ? bullet.y : bullet.y - extent;
+        const bottom = top + extent;
+        if (gravityDirection === GravityDirection.DOWN && top > heart.y) {
+          clearance = Math.min(clearance, top - heart.y - 4);
+        } else if (gravityDirection === GravityDirection.UP && bottom < heart.y) {
+          clearance = Math.min(clearance, heart.y - bottom - 4);
+        }
+      }
+    }
+
+    const maximumRise = compact ? 15 : platformPhase ? 29 : 23;
+    const riseRatio = compact ? .42 : platformPhase ? .72 : .58;
+    const rise = Math.max(9, Math.min(maximumRise, clearance - 2, span * riseRatio));
+    const gravity = compact ? 455 : platformPhase ? 480 : 500;
+    return {
+      velocity: Math.max(compact ? 105 : 132,
+        Math.min(platformPhase ? 190 : 178, Math.sqrt(2 * gravity * rise))),
+      holdAccel: compact ? 120 : platformPhase ? 250 : 205,
+      holdTime: compact ? .075 : platformPhase ? .135 : .105,
+      gravity,
+      release: compact ? .50 : .58
+    };
   }
 
   function updateSoulPhysics(dt, arena, gravityEnabled) {
@@ -3925,10 +4045,11 @@
       const tangentInput = verticalGravity
         ? (right ? 1 : 0) - (left ? 1 : 0)
         : (down ? 1 : 0) - (up ? 1 : 0);
-      const minX = arena.left + 5;
-      const maxX = arena.right - 5;
-      const minY = arena.top + 5;
-      const maxY = arena.bottom - 5;
+      const soulPadding = battleSoulPadding();
+      const minX = arena.left + soulPadding;
+      const maxX = arena.right - soulPadding;
+      const minY = arena.top + soulPadding;
+      const maxY = arena.bottom - soulPadding;
       const grounded = gravityDirection === GravityDirection.DOWN ? heart.y >= maxY - .35
         : gravityDirection === GravityDirection.UP ? heart.y <= minY + .35
           : gravityDirection === GravityDirection.LEFT ? heart.x <= minX + .35
@@ -3963,24 +4084,20 @@
         if (heart.vy > -BLUE_SOUL_PRELIFT_SPEED) heart.vy = -BLUE_SOUL_PRELIFT_SPEED;
       }
 
-      const gravitySpan = verticalGravity ? maxY - minY : maxX - minX;
-      // Narrow corridors use a lower jump profile, preventing a held jump from
-      // throwing the soul into the opposite wall while preserving full jumps
-      // in the taller platform arenas.
-      const jumpScale = Math.max(.64, Math.min(1, gravitySpan / 40));
+      const jumpProfile = adaptiveBlueJumpProfile(arena);
       if (heart.jumpBuffer > 0 && heart.coyoteTime > 0 && !heart.slamActive) {
-        if (verticalGravity) heart.vy = -gravity.y * BLUE_SOUL_JUMP_VELOCITY * jumpScale;
-        else heart.vx = -gravity.x * BLUE_SOUL_JUMP_VELOCITY * jumpScale;
+        if (verticalGravity) heart.vy = -gravity.y * jumpProfile.velocity;
+        else heart.vx = -gravity.x * jumpProfile.velocity;
         heart.isJumping = true;
         heart.jumpHold = 0;
         heart.jumpBuffer = 0;
         heart.coyoteTime = 0;
       }
 
-      if (heart.isJumping && jumpHeld && heart.jumpHold < BLUE_SOUL_JUMP_HOLD_TIME) {
+      if (heart.isJumping && jumpHeld && heart.jumpHold < jumpProfile.holdTime) {
         heart.jumpHold += dt;
-        if (verticalGravity) heart.vy -= gravity.y * BLUE_SOUL_JUMP_HOLD_ACCEL * jumpScale * dt;
-        else heart.vx -= gravity.x * BLUE_SOUL_JUMP_HOLD_ACCEL * jumpScale * dt;
+        if (verticalGravity) heart.vy -= gravity.y * jumpProfile.holdAccel * dt;
+        else heart.vx -= gravity.x * jumpProfile.holdAccel * dt;
       }
 
       // Releasing early cuts only the anti-gravity component, giving precise
@@ -3988,24 +4105,25 @@
       if (heart.isJumping && !jumpHeld && heart.jumpWasHeld) {
         const towardGravity = heart.vx * gravity.x + heart.vy * gravity.y;
         if (towardGravity < 0) {
-          const correction = -towardGravity * (1 - BLUE_SOUL_RELEASE_MULTIPLIER);
+          const correction = -towardGravity * (1 - jumpProfile.release);
           heart.vx += gravity.x * correction;
           heart.vy += gravity.y * correction;
         }
       }
 
-      heart.vx += gravity.x * BLUE_SOUL_GRAVITY * dt;
-      heart.vy += gravity.y * BLUE_SOUL_GRAVITY * dt;
+      heart.vx += gravity.x * jumpProfile.gravity * dt;
+      heart.vy += gravity.y * jumpProfile.gravity * dt;
       if (verticalGravity) heart.vy = Math.max(-360, Math.min(360, heart.vy));
       else heart.vx = Math.max(-360, Math.min(360, heart.vx));
       heart.x += heart.vx * dt;
       heart.y += heart.vy * dt;
     }
 
-    const minX = arena.left + 5;
-    const maxX = arena.right - 5;
-    const minY = arena.top + 5;
-    const maxY = arena.bottom - 5;
+    const finalPadding = battleSoulPadding();
+    const minX = arena.left + finalPadding;
+    const maxX = arena.right - finalPadding;
+    const minY = arena.top + finalPadding;
+    const maxY = arena.bottom - finalPadding;
     const hitGravityWall = heart.slamActive && (
       (gravityDirection === GravityDirection.DOWN && heart.y >= maxY)
       || (gravityDirection === GravityDirection.UP && heart.y <= minY)
@@ -5671,6 +5789,41 @@
     }
   }
 
+
+  function enforceMinimumSansPassage() {
+    if (stage !== 10 || state !== 'enemyTurn') return;
+    const requiredGap = battleSoulRadius() * 2 + (isCompactBattleSoul() ? 3.5 : 6);
+    const columns = new Map();
+    for (const bullet of bullets) {
+      if (bullet.kind !== 'bone' || bullet.orientation === 'horizontal') continue;
+      const key = Math.round(bullet.x / 3) * 3;
+      const column = columns.get(key) || [];
+      column.push(bullet);
+      columns.set(key, column);
+    }
+    for (const column of columns.values()) {
+      const top = column.find(bullet => bullet.fromTop);
+      const bottom = column.find(bullet => !bullet.fromTop);
+      if (!top || !bottom) continue;
+      const gap = (bottom.y - effectiveBoneExtent(bottom))
+        - (top.y + effectiveBoneExtent(top));
+      if (gap >= requiredGap) continue;
+      const trim = (requiredGap - gap) / 2 + .25;
+      top.h = Math.max(2, top.h - trim);
+      bottom.h = Math.max(2, bottom.h - trim);
+    }
+  }
+
+  function keepSoulClearOfImpactWall(arena) {
+    if (!heart.slamActive) return;
+    const padding = battleSoulPadding();
+    if (gravityDirection === GravityDirection.DOWN || gravityDirection === GravityDirection.UP) {
+      heart.x = Math.max(arena.left + padding, Math.min(arena.right - padding, heart.x));
+    } else {
+      heart.y = Math.max(arena.top + padding, Math.min(arena.bottom - padding, heart.y));
+    }
+  }
+
   function updateEnemyTurn(dt, now) {
     const fallbackIndex = (playerLevel - 1) * 3;
     const pattern = attackPattern || enemies[0].patterns[fallbackIndex];
@@ -5679,6 +5832,8 @@
 
     const scriptedSansTurn = stage === 10 && attackPattern?.scriptedSans;
     if (scriptedSansTurn) runSansScriptedTurn(now);
+    enforceMinimumSansPassage();
+    keepSoulClearOfImpactWall(arena);
 
     if (!scriptedSansTurn && now >= spawnAt) {
       const countBeforeSpawn = bullets.length;
@@ -5784,7 +5939,7 @@
           playBlasterFireSound();
         }
         const active = bullet.age >= bullet.warning && bullet.age <= bullet.life;
-        const beamHitRadius = stage === 10 ? 2.35 : 6;
+        const beamHitRadius = stage === 10 ? battleSoulRadius() : 6;
         const fireProgress = Math.max(0, Math.min(1, (bullet.age - bullet.warning) / .085));
         if (bullet.orientation === 'horizontal') {
           const reach = (arena.right - arena.left) * fireProgress;
@@ -5807,20 +5962,20 @@
           ) < Math.max(2.35, (bullet.thickness || 5) / 2);
         }
       } else if (bullet.kind === 'bone') {
-        const heartRadius = stage === 10 ? 2.25 : 4;
+        const heartRadius = stage === 10 ? battleSoulRadius() : 4;
         const extent = effectiveBoneExtent(bullet);
         if (bullet.orientation === 'horizontal') {
           const boneLength = extent;
           const boneLeft = bullet.fromStart ? bullet.x : bullet.x - boneLength;
           hit = boneLength >= 1
-            && Math.abs(bullet.y - heart.y) < (stage === 10 ? 2.35 : 5)
+            && Math.abs(bullet.y - heart.y) < (stage === 10 ? battleSoulRadius() : 5)
             && heart.x > boneLeft - heartRadius
             && heart.x < boneLeft + boneLength + heartRadius;
         } else {
           const boneTop = bullet.fromTop ? bullet.y : bullet.y - extent;
           const boneBottom = boneTop + extent;
           hit = extent >= 1
-            && Math.abs(bullet.x - heart.x) < (stage === 10 ? 2.35 : 5)
+            && Math.abs(bullet.x - heart.x) < (stage === 10 ? battleSoulRadius() : 5)
             && heart.y > boneTop - heartRadius
             && heart.y < boneBottom + heartRadius;
         }
@@ -5898,6 +6053,17 @@
     startAudio();
     if (spotifyController && state === 'title') spotifyController.play();
     if (state === 'title') {
+      nameDraft = playerName;
+      setState('nameEntry');
+      hint.classList.remove('visible');
+      touch.classList.remove('show');
+      return;
+    }
+    if (state === 'nameEntry') {
+      nameDraft = sanitizePlayerName(nameDraft);
+      if (!nameDraft) { beep(120, .05); return; }
+      playerName = nameDraft;
+      localStorage.setItem('undertalePlayerName', playerName);
       playerLevel = 1;
       maxHp = levelMaxHp(playerLevel);
       hp = maxHp;
@@ -5914,6 +6080,14 @@
       setState('opening');
       hint.classList.remove('visible');
       touch.classList.add('show');
+      return;
+    }
+    if (state === 'pacifistPass') {
+      setState('nextBossPending');
+      return;
+    }
+    if (state === 'nextBossPending') {
+      beep(520, .05);
       return;
     }
     if (state === 'intro') {
@@ -6042,6 +6216,18 @@
   }
 
   window.addEventListener('keydown', event => {
+    if (state === 'nameEntry') {
+      if (event.code === 'Backspace') {
+        nameDraft = Array.from(nameDraft).slice(0, -1).join('');
+        event.preventDefault();
+        return;
+      }
+      if (event.key && event.key.length === 1) {
+        nameDraft = sanitizePlayerName(nameDraft + event.key);
+        event.preventDefault();
+        return;
+      }
+    }
     if (!keyDown(event.code)) event.preventDefault();
   });
   window.addEventListener('keyup', event => keys.delete(normalizedKeyCode(event.code)));
