@@ -1,0 +1,52 @@
+name: Verify and clean final Sans build
+
+on:
+  push:
+    paths:
+      - 'assets/final-build-verify/trigger.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-final-sans-build
+  cancel-in-progress: false
+
+jobs:
+  verify-and-clean:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify final files and remove installer debris
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          printf '%s  %s\n' 'a704f281a21fb771b115394cdd7f02d26f352d962a2521863ff3e84d184b27d6' 'game.js' | sha256sum --check --strict
+          printf '%s  %s\n' '1fbebbb84ccaedef440be614640b41e3d0e50cdb30ac325e78b536ba773a271d' 'game-loader.js' | sha256sum --check --strict
+          printf '%s  %s\n' '9736cbef433cdb94a1a6dabdec0a9d1e0f577ab0098a0606add9934e9401e279' 'index.html' | sha256sum --check --strict
+          printf '%s  %s\n' 'f71b7f3100351b5878be38b26d0e31c5ffe1382ab688bab6750ea73d4556c2e3' 'README.md' | sha256sum --check --strict
+          node --check game.js
+          node --check game-loader.js
+
+          rm -rf assets/final-build-verify assets/final-build-v5 assets/final-build-v4 assets/final-build-v3 assets/final-complete assets/final-complete-v2
+          rm -f test-deploy-key-note.txt test-deploy-key-note-2.txt
+          rm -f release-tool-probe.txt release-tool-probe-2.txt release-tool-probe-3.txt release-tool-probe-4.txt
+          rm -f push-files-probe.txt delete-tool-probe.txt
+          rm -f .github/workflows/apply-final-build-v3.yml
+          rm -f .github/workflows/apply-final-build-v4.yml
+          rm -f .github/workflows/apply-final-build-v5.yml
+          rm -f .github/workflows/verify-and-clean-final-build.yml
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m 'Clean final Sans build installer files [skip ci]'
+            git push origin HEAD:main
+          fi
