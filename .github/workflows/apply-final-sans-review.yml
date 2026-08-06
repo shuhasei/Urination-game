@@ -1,0 +1,64 @@
+name: Apply final Sans review
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/apply_final_sans_review.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Apply final gameplay and route review
+        run: python .github/scripts/apply_final_sans_review.py
+
+      - name: JavaScript syntax check
+        run: node --check game.js
+
+      - name: Verify required safety features
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          text = Path('game.js').read_text(encoding='utf-8')
+          required = [
+              "function adaptiveBlueJumpProfile",
+              "function isCompactBattleSoul",
+              "function enforceMinimumSansPassage",
+              "function keepSoulClearOfImpactWall",
+              "state === 'nameEntry'",
+              "state === 'pacifistPass'",
+              "state === 'nextBossPending'",
+              "playerLevel === 1",
+              "const TEST_PLAY_INVINCIBLE = true;",
+              "providedSansEyeImage",
+          ]
+          missing = [item for item in required if item not in text]
+          if missing:
+              raise SystemExit('Missing final-review features: ' + ', '.join(missing))
+          print('Final safety feature check passed.')
+          PY
+
+      - name: Commit generated game files
+        run: |
+          if git diff --quiet -- game.js game-loader.js index.html; then
+            echo "No generated changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add game.js game-loader.js index.html
+          git commit -m "Finalize Sans controls, safety, naming, and LV1 route"
+          git push
