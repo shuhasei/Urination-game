@@ -96,11 +96,14 @@
     'spotify:track:6YnPqvc66bdYGGOJIlDEz1'
   ];
   const MEGALOVANIA = 'spotify:track:1J03Vp93ybKIxfzYI4YJtL';
-  // Twenty-two Sans attacks are scripted in the exact observed video order.
-  // Off-screen projectile trains are retained until they enter the battle box.
+  // Opening attack + 22 subsequent attacks. Each turn is scripted separately.
+  // Timings/coordinates are ported from the original attack CSV event data and
+  // checked against the supplied no-hit video, rather than generated generically.
+  // The previous build accidentally omitted the sixth first-phase attack (Platforms 3),
+  // which shifted every later pattern out of order.
   const SANS_ATTACK_SEQUENCE = [
-    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-    11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+    12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22
   ];
   const SANS_PHASE_INTERVALS = [
     880, 900, 500, 520, 820, 860, 880, 760, 820, 720,
@@ -116,32 +119,33 @@
     0, 1, 4, 5, 6, 8, 10, 12, 13, 14, 15, 16, 17, 18, 19, 24
   ]);
   const SANS_TURN_DURATIONS = [
-    7000, 6500, 4700, 5700, 7600, 7600, 6500, 8200,
-    6800, 5900, 6500, 5900, 7600, 6900, 8600, 9200,
-    7600, 7600, 5700, 9300, 5000, 49500
+    7200, 6700, 6500, 7100, 8400, 9900, 8300, 7500,
+    9200, 7500, 6500, 7800, 7100, 8900, 8700, 9000,
+    9000, 7800, 8600, 6100, 9000, 5200, 50000
   ];
   const SANS_SCRIPT_META = [
-    { arena: 'square', soul: 'blue', gravity: true },
-    { arena: 'wide', soul: 'blue', gravity: true },
-    { arena: 'wide', soul: 'blue', gravity: true },
-    { arena: 'wide', soul: 'blue', gravity: true },
-    { arena: 'wideTall', soul: 'blue', gravity: true },
-    { arena: 'wideTall', soul: 'blue', gravity: true },
-    { arena: 'wideTall', soul: 'blue', gravity: true },
-    { arena: 'wideTall', soul: 'blue', gravity: true },
-    { arena: 'wideTall', soul: 'blue', gravity: true },
-    { arena: 'wide', soul: 'blue', gravity: true },
-    { arena: 'wide', soul: 'blue', gravity: true },
-    { arena: 'wide', soul: 'blue', gravity: true },
-    { arena: 'wideTall', soul: 'blue', gravity: true },
-    { arena: 'medium', soul: 'red', gravity: false },
-    { arena: 'square', soul: 'red', gravity: false },
-    { arena: 'square', soul: 'blue', gravity: true },
-    { arena: 'square', soul: 'blue', gravity: true },
-    { arena: 'medium', soul: 'red', gravity: false },
-    { arena: 'square', soul: 'red', gravity: false },
-    { arena: 'wide', soul: 'blue', gravity: true },
-    { arena: 'square', soul: 'blue', gravity: true },
+    { arena: 'square', soul: 'blue', gravity: true },       // opening
+    { arena: 'wide', soul: 'blue', gravity: true },         // bone gap
+    { arena: 'wide', soul: 'blue', gravity: true },         // blue bone
+    { arena: 'wide', soul: 'blue', gravity: true },         // random bone lines
+    { arena: 'wide', soul: 'blue', gravity: true },         // platforms 1
+    { arena: 'wide', soul: 'blue', gravity: true },         // platforms 2
+    { arena: 'wide', soul: 'blue', gravity: true },         // platforms 3
+    { arena: 'wideTall', soul: 'blue', gravity: true },     // platforms 4
+    { arena: 'wide', soul: 'blue', gravity: true },         // platform blasters
+    { arena: 'wideTall', soul: 'blue', gravity: true },     // platforms 4 hard
+    { arena: 'wide', soul: 'blue', gravity: true },         // bone gap hard
+    { arena: 'wide', soul: 'blue', gravity: true },         // horizontal slides
+    { arena: 'wide', soul: 'blue', gravity: true },         // random lines hard
+    { arena: 'wide', soul: 'blue', gravity: true },         // screen flicker 1
+    { arena: 'medium', soul: 'red', gravity: false },       // blaster barrage 1
+    { arena: 'square', soul: 'red', gravity: false },       // screen flicker 2
+    { arena: 'square', soul: 'blue', gravity: true },       // wall slam 1
+    { arena: 'square', soul: 'blue', gravity: true },       // wall slam 2
+    { arena: 'medium', soul: 'red', gravity: false },       // blaster barrage 2
+    { arena: 'square', soul: 'red', gravity: false },       // vertical bone lines
+    { arena: 'wide', soul: 'blue', gravity: true },         // screen flicker 3
+    { arena: 'square', soul: 'blue', gravity: true },       // wall slam 3
     { arena: 'square', soul: 'blue', gravity: true, final: true }
   ];
   const TEST_PLAY_INVINCIBLE = true;
@@ -254,6 +258,8 @@
   let spawnAt = 0;
   let volleyCount = 0;
   let lastThreatAt = 0;
+  let lastVisibleBattleMotionAt = 0;
+  let motionFillerCount = 0;
   let invincible = 0;
   let karmaHp = 0;
   let karmaDrainFrames = 0;
@@ -353,11 +359,15 @@
   }
 
   const SANS_ARENA_PRESETS = Object.freeze({
-    square: { x: 128, y: 83, w: 64, h: 64 },
-    medium: { x: 102, y: 87, w: 116, h: 58 },
-    wide: { x: 61, y: 97, w: 198, h: 48 },
-    wideTall: { x: 56, y: 90, w: 208, h: 58 },
-    long: { x: 22, y: 102, w: 276, h: 38 }
+    // Video-space presets. The first box remains visually square.
+    square: { x: 129, y: 84, w: 62, h: 62 },
+    wide: { x: 89, y: 94, w: 142, h: 47 },
+    wideTall: { x: 82, y: 87, w: 164, h: 54 },
+    medium: { x: 85, y: 72, w: 153, h: 69 },
+    secondWide: { x: 85, y: 102, w: 153, h: 39 },
+    secondMid: { x: 104, y: 102, w: 115, h: 39 },
+    sineSquare: { x: 107, y: 85, w: 85, h: 56 },
+    long: { x: 36, y: 98, w: 248, h: 35 }
   });
   let activeSansArena = null;
 
@@ -1035,17 +1045,20 @@
   }
 
   function drawBlasterHead(bullet, active) {
+    if (bullet.age < (bullet.visibleAt || 0)) return;
     if (blasterAnimationFrames[0]?.complete && blasterAnimationFrames[0]?.naturalWidth) {
       const arena = battleArena();
       const warning = Math.max(.01, bullet.warning);
-      const charge = clamp01(bullet.age / warning);
+      const chargeStart = Math.min(warning - .01, Math.max(0, bullet.chargeStart || 0));
+      const chargeDuration = Math.max(.01, warning - chargeStart);
+      const charge = clamp01((bullet.age - chargeStart) / chargeDuration);
       const chargeEase = smoothstep01(charge);
-      const appear = smoothstep01(bullet.age / .11);
+      const appear = smoothstep01((bullet.age - (bullet.visibleAt || 0)) / .11);
       const openAmount = active
         ? 1
         : smoothstep01((charge - .18) / .82);
       const recoil = active ? Math.sin((bullet.age - warning) * 36) * 1.15 : 0;
-      const approach = (1 - appear) * 11;
+      const approach = (1 - appear) * 6;
 
       g.save();
       g.imageSmoothingEnabled = false;
@@ -1068,9 +1081,21 @@
         );
         if (fromBottom) g.rotate(Math.PI);
       } else {
+        const hasRecordedStart = Number.isFinite(bullet.blasterStartX)
+          && Number.isFinite(bullet.blasterStartY);
+        const travelWindow = Math.max(.08, warning * .62);
+        const travel = hasRecordedStart
+          ? smoothstep01((bullet.age - (bullet.visibleAt || 0)) / travelWindow)
+          : 1;
+        const headX = hasRecordedStart
+          ? bullet.blasterStartX + (bullet.x - bullet.blasterStartX) * travel
+          : bullet.x;
+        const headY = hasRecordedStart
+          ? bullet.blasterStartY + (bullet.y - bullet.blasterStartY) * travel
+          : bullet.y;
         g.translate(
-          bullet.x - Math.cos(bullet.angle) * (approach + recoil),
-          bullet.y - Math.sin(bullet.angle) * (approach + recoil)
+          headX - Math.cos(bullet.angle) * (approach + recoil),
+          headY - Math.sin(bullet.angle) * (approach + recoil)
         );
         g.rotate(bullet.angle - Math.PI / 2);
       }
@@ -1079,7 +1104,9 @@
       g.scale(scale, scale);
       const pulseAlpha = active
         ? .98
-        : (.34 + chargeEase * .58 + Math.sin(bullet.age * 28) * .06) * appear;
+        : bullet.brightHead
+          ? (.96 + chargeEase * .02) * appear
+          : (.34 + chargeEase * .58 + Math.sin(bullet.age * 28) * .06) * appear;
 
       const frameProgress = active ? 1 : clamp01((charge - .02) / .98);
       const frameIndex = Math.max(
@@ -1090,8 +1117,12 @@
         )
       );
       const frameImage = blasterAnimationFrames[frameIndex] || blasterReferenceImage;
-      const targetHeight = 58 + Math.round(openAmount * 4);
-      const targetWidth = Math.max(18, Math.round(frameImage.naturalWidth / frameImage.naturalHeight * targetHeight));
+      const sizeFactor = bullet.blasterSize >= 2
+        ? 1.72
+        : bullet.blasterSize <= 0 ? .72 : 1;
+      const targetHeight = Math.round((36 + openAmount * 4) * sizeFactor);
+      const targetWidth = Math.max(14,
+        Math.round(frameImage.naturalWidth / frameImage.naturalHeight * targetHeight));
       const drawX = -Math.round(targetWidth / 2);
       const drawY = -Math.round(targetHeight * .58) + Math.round(openAmount * 2);
 
@@ -1148,18 +1179,72 @@
     }
   }
 
+  function clipToBattleArena(arena) {
+    g.beginPath();
+    g.rect(
+      Math.ceil(arena.left),
+      Math.ceil(arena.top),
+      Math.max(0, Math.floor(arena.right - arena.left)),
+      Math.max(0, Math.floor(arena.bottom - arena.top))
+    );
+    g.clip();
+  }
+
+  function drawFinalAttackWarnings(now, arena) {
+    if (stage !== 10 || state !== 'enemyTurn'
+      || attackPattern?.sansScriptIndex !== 22) return;
+    const elapsed = (now - stateAt) / 1000;
+    const warning = '#8f1025';
+    const left = Math.ceil(arena.left);
+    const right = Math.floor(arena.right) - 1;
+    const top = Math.ceil(arena.top);
+    const bottom = Math.floor(arena.bottom) - 1;
+    const inset = 12;
+
+    if (elapsed >= 15.58 && elapsed < 16.30) {
+      line(left, top + inset, right, top + inset, warning);
+      line(left, bottom - inset, right, bottom - inset, warning);
+    } else if (elapsed >= 16.82 && elapsed < 17.30) {
+      line(left + inset, top, left + inset, bottom, warning);
+      line(left, top + inset, right, top + inset, warning);
+    } else if (elapsed >= 17.80 && elapsed < 18.30) {
+      line(right - inset, top, right - inset, bottom, warning);
+      line(left, bottom - inset, right, bottom - inset, warning);
+    } else if (elapsed >= 18.82 && elapsed < 19.22) {
+      line(left + inset, top, left + inset, bottom, warning);
+    }
+  }
+
+  function effectiveBoneExtent(bullet) {
+    const base = bullet.orientation === 'horizontal'
+      ? (bullet.length || bullet.h)
+      : bullet.h;
+    if (!bullet.pulseBone) return Math.max(0, base);
+    const grow = smoothstep01(bullet.age / Math.max(.01, bullet.growDuration || .11));
+    const retract = smoothstep01((bullet.life - bullet.age)
+      / Math.max(.01, bullet.retractDuration || .11));
+    return Math.max(0, base * Math.min(grow, retract));
+  }
+
   function drawEnemyTurn() {
     const arena = battleArena();
     rect(arena.x, arena.y, arena.w, arena.h, '#fff');
     rect(arena.left, arena.top, arena.right - arena.left, arena.bottom - arena.top, '#000');
+    drawFinalAttackWarnings(performance.now(), arena);
     if (stage === 10 && soulMode === 'blue') battleHeartShape(heart.x, heart.y, '#168bff');
     else heartShape(heart.x, heart.y, '#f5222d');
     for (const bullet of bullets) {
       if (bullet.kind === 'platform') {
+        g.save();
+        clipToBattleArena(arena);
         rect(bullet.x - bullet.w / 2, bullet.y, bullet.w, 2, '#55e69a');
         rect(bullet.x - bullet.w / 2 + 2, bullet.y + 2, bullet.w - 4, 2, '#176641');
+        g.restore();
       } else if (bullet.kind === 'beam') {
+        if (bullet.age < (bullet.visibleAt || 0)) continue;
         const active = bullet.age >= bullet.warning;
+        const warningVisible = !bullet.hideWarningLine
+          && bullet.age >= Math.max(bullet.visibleAt || 0, bullet.chargeStart || 0);
         const fireProgress = active
           ? Math.max(0, Math.min(1, (bullet.age - bullet.warning) / .085))
           : 0;
@@ -1168,32 +1253,34 @@
           ? Math.max(5, bullet.thickness || 5)
           : 9;
         const beamOffset = Math.floor(beamWidth / 2);
-        g.globalAlpha = active ? 1 : pulse;
-        if (bullet.orientation === 'horizontal') {
-          const fullLength = arena.right - arena.left;
-          const beamLength = active ? fullLength * fireProgress : fullLength;
-          const beamX = bullet.side === 'right' ? arena.right - beamLength : arena.left;
-          rect(beamX, bullet.y - (active ? beamOffset : 1), beamLength, active ? beamWidth : 2, active ? '#ffffff' : '#d7fbff');
-          if (active) rect(beamX, bullet.y - 1, beamLength, 3, '#ffffff');
-        } else if (bullet.orientation === 'vertical') {
-          const fullLength = arena.bottom - arena.top;
-          const beamLength = active ? fullLength * fireProgress : fullLength;
-          const beamY = bullet.side === 'bottom' ? arena.bottom - beamLength : arena.top;
-          rect(bullet.x - (active ? beamOffset : 1), beamY, active ? beamWidth : 2, beamLength, active ? '#ffffff' : '#d7fbff');
-          if (active) rect(bullet.x - 1, beamY, 3, beamLength, '#ffffff');
-        } else {
-          const fullLength = bullet.length || 260;
-          const beamLength = active ? fullLength * fireProgress : fullLength;
-          g.save();
-          g.translate(bullet.x, bullet.y);
-          g.rotate(bullet.angle);
-          const mouthLead = active ? 8 : 0;
-          rect(mouthLead, -(active ? beamOffset : 1),
-            Math.max(0, beamLength - mouthLead),
-            active ? beamWidth : 2, active ? '#ffffff' : '#d7fbff');
-          if (active) rect(mouthLead, -1,
-            Math.max(0, beamLength - mouthLead), 3, '#ffffff');
-          g.restore();
+        g.globalAlpha = active ? 1 : (warningVisible ? pulse : 0);
+        if (active || warningVisible) {
+          if (bullet.orientation === 'horizontal') {
+            const fullLength = arena.right - arena.left;
+            const beamLength = active ? fullLength * fireProgress : fullLength;
+            const beamX = bullet.side === 'right' ? arena.right - beamLength : arena.left;
+            rect(beamX, bullet.y - (active ? beamOffset : 1), beamLength, active ? beamWidth : 2, active ? '#ffffff' : '#d7fbff');
+            if (active) rect(beamX, bullet.y - 1, beamLength, 3, '#ffffff');
+          } else if (bullet.orientation === 'vertical') {
+            const fullLength = arena.bottom - arena.top;
+            const beamLength = active ? fullLength * fireProgress : fullLength;
+            const beamY = bullet.side === 'bottom' ? arena.bottom - beamLength : arena.top;
+            rect(bullet.x - (active ? beamOffset : 1), beamY, active ? beamWidth : 2, beamLength, active ? '#ffffff' : '#d7fbff');
+            if (active) rect(bullet.x - 1, beamY, 3, beamLength, '#ffffff');
+          } else {
+            const fullLength = bullet.length || 260;
+            const beamLength = active ? fullLength * fireProgress : fullLength;
+            g.save();
+            g.translate(bullet.x, bullet.y);
+            g.rotate(bullet.angle);
+            const mouthLead = active ? 8 : 0;
+            rect(mouthLead, -(active ? beamOffset : 1),
+              Math.max(0, beamLength - mouthLead),
+              active ? beamWidth : 2, active ? '#ffffff' : '#d7fbff');
+            if (active) rect(mouthLead, -1,
+              Math.max(0, beamLength - mouthLead), 3, '#ffffff');
+            g.restore();
+          }
         }
         g.globalAlpha = 1;
         drawBlasterHead(bullet, active);
@@ -1203,26 +1290,39 @@
           g.globalAlpha = 1;
         }
       } else if (bullet.kind === 'bone') {
+        g.save();
+        clipToBattleArena(arena);
+        const drawBoneX = bullet.x;
+        const drawBoneY = bullet.y;
+        const extent = effectiveBoneExtent(bullet);
         const boneImage = bullet.boneType === 1 ? blueBoneProjectileImage : boneProjectileImage;
         const boneColor = bullet.boneType === 1 ? '#00eeff'
           : bullet.boneType === 2 ? '#ff9b21' : '#ffffff';
         if (bullet.orientation === 'horizontal') {
-          const boneLength = bullet.length || bullet.h;
-          const boneLeft = bullet.fromStart ? bullet.x : bullet.x - boneLength;
-          rect(boneLeft, bullet.y - 1, boneLength, 3, boneColor);
-          rect(boneLeft, bullet.y - 2, 3, 5, boneColor);
-          rect(boneLeft + boneLength - 3, bullet.y - 2, 3, 5, boneColor);
+          const boneLength = extent;
+          const boneLeft = bullet.fromStart ? drawBoneX : drawBoneX - boneLength;
+          if (boneLength >= 1) {
+            rect(boneLeft, drawBoneY - 1, boneLength, 3, boneColor);
+            rect(boneLeft, drawBoneY - 2, Math.min(3, boneLength), 5, boneColor);
+            rect(boneLeft + Math.max(0, boneLength - 3), drawBoneY - 2,
+              Math.min(3, boneLength), 5, boneColor);
+          }
         } else {
-          const boneTop = bullet.fromTop ? bullet.y : bullet.y - bullet.h;
-          if (bullet.boneType !== 2 && boneImage.complete && boneImage.naturalWidth) {
+          const boneHeight = extent;
+          const boneTop = bullet.fromTop ? drawBoneY : drawBoneY - boneHeight;
+          if (boneHeight >= 1 && bullet.boneType !== 2
+            && boneImage.complete && boneImage.naturalWidth) {
             const boneWidth = stage === 10 ? 5 : 9;
-            g.drawImage(boneImage, bullet.x - Math.floor(boneWidth / 2), boneTop, boneWidth, bullet.h);
-          } else {
-            rect(bullet.x - 1, boneTop, 3, bullet.h, boneColor);
-            rect(bullet.x - 2, boneTop, 5, 3, boneColor);
-            rect(bullet.x - 2, boneTop + bullet.h - 3, 5, 3, boneColor);
+            g.drawImage(boneImage, drawBoneX - Math.floor(boneWidth / 2),
+              boneTop, boneWidth, boneHeight);
+          } else if (boneHeight >= 1) {
+            rect(drawBoneX - 1, boneTop, 3, boneHeight, boneColor);
+            rect(drawBoneX - 2, boneTop, 5, Math.min(3, boneHeight), boneColor);
+            rect(drawBoneX - 2, boneTop + Math.max(0, boneHeight - 3),
+              5, Math.min(3, boneHeight), boneColor);
           }
         }
+        g.restore();
       } else if (bullet.kind === 'drop') {
         rect(bullet.x - 2, bullet.y - 5, 5, 10, '#bffcff');
         rect(bullet.x - 1, bullet.y - 7, 3, 2, '#fff');
@@ -1941,7 +2041,8 @@
 
     if (elapsed >= 170) {
       const rise = Math.min(9, (elapsed - 170) / 75);
-      text('9999999', enemy.x, 21 - rise, 10, '#f32638', 'center');
+      const damageY = 21 - rise + Math.sin(elapsed / 85) * .7;
+      text('9999999', enemy.x, damageY, 10, '#f32638', 'center');
     }
 
     if (elapsed < 150) {
@@ -2029,6 +2130,10 @@
       else if (!(stage === 10 && state === 'command')
         && state !== 'sansDefeatHit' && state !== 'sansWalkOff') drawMessageBox();
       if (state === 'sansDefeatHit') drawSansDefeatOverlay(now);
+      if (stage === 10 && state === 'command' && sansEndingPhase === 'sleeping') {
+        const pulse = Math.floor(now / 360) % 2 ? '#ffffff' : '#8f8f8f';
+        text('こうげきを えらぶ', 160, 146, 7, pulse, 'center');
+      }
       drawStatus();
       drawMenu();
     }
@@ -2298,6 +2403,8 @@
     menu = 0;
     target = 0;
     bullets = [];
+    lastVisibleBattleMotionAt = performance.now();
+    motionFillerCount = 0;
     activeSansArena = null;
     sansDodges = 0;
     sansTurn = 0;
@@ -2561,6 +2668,8 @@
     spawnAt = Number.POSITIVE_INFINITY;
     volleyCount = 0;
     lastThreatAt = performance.now();
+    lastVisibleBattleMotionAt = lastThreatAt;
+    motionFillerCount = 0;
     invincible = 0;
     practiceGuardActive = TEST_PLAY_INVINCIBLE || practiceGuardTurns > 0;
     if (!TEST_PLAY_INVINCIBLE && practiceGuardActive) practiceGuardTurns--;
@@ -2641,7 +2750,20 @@
       warning: extras.warning || 0,
       life: extras.life || 5,
       side: extras.side || 'left',
+      visibleAt: Number.isFinite(extras.visibleAt) ? Math.max(0, extras.visibleAt) : 0,
+      chargeStart: Number.isFinite(extras.chargeStart)
+        ? Math.max(0, extras.chargeStart)
+        : Math.max(0, (extras.warning || 0) - .32),
+      hideWarningLine: Boolean(extras.hideWarningLine),
+      brightHead: Boolean(extras.brightHead),
+      blasterStartX: Number.isFinite(extras.blasterStartX) ? extras.blasterStartX : null,
+      blasterStartY: Number.isFinite(extras.blasterStartY) ? extras.blasterStartY : null,
+      blasterSize: Number.isFinite(extras.blasterSize) ? extras.blasterSize : 1,
       impactBone: Boolean(extras.impactBone),
+      cosmetic: Boolean(extras.cosmetic),
+      pulseBone: Boolean(extras.pulseBone),
+      growDuration: Number.isFinite(extras.growDuration) ? Math.max(.01, extras.growDuration) : .11,
+      retractDuration: Number.isFinite(extras.retractDuration) ? Math.max(.01, extras.retractDuration) : .11,
       soundFired: false,
       age: 0
     });
@@ -3894,6 +4016,94 @@
     playBlasterChargeSound();
   }
 
+  function spawnSequentialBlasterSpiral(options = {}) {
+    const arena = battleArena();
+    const count = Math.max(1, options.count || 64);
+    const centerX = (arena.left + arena.right) / 2;
+    const centerY = (arena.top + arena.bottom) / 2;
+    const radiusX = options.radiusX || 76;
+    const radiusY = options.radiusY || 55;
+
+    // Final video review:
+    // - the first head appears at the right edge;
+    // - the ring fills counter-clockwise in about one second;
+    // - the rightmost head fires first;
+    // - every remaining head fires one by one in the same order.
+    const startAngle = Number.isFinite(options.startAngle) ? options.startAngle : 0;
+    const angleStep = Number.isFinite(options.angleStep)
+      ? options.angleStep
+      : -Math.PI * 2 / count;
+    const appearanceDuration = options.appearanceDuration || .95;
+    const fireDelay = options.fireDelay || 1.0;
+    const fireStep = options.fireStep || .13;
+    const chargeDuration = options.chargeDuration || .24;
+    const activeDuration = options.activeDuration || .38;
+
+    for (let i = 0; i < count; i++) {
+      const angle = startAngle + i * angleStep;
+      const bx = centerX + Math.cos(angle) * radiusX;
+      const by = centerY + Math.sin(angle) * radiusY;
+      const visibleAt = count <= 1
+        ? 0
+        : appearanceDuration * i / (count - 1);
+      const fireAt = fireDelay + i * fireStep;
+
+      addProjectile('beam', bx, by, 0, 0, {
+        orientation: 'angled',
+        angle: angle + Math.PI,
+        length: options.length || 310,
+        warning: fireAt,
+        life: fireAt + activeDuration,
+        thickness: options.thickness || 6,
+        visibleAt,
+        chargeStart: Math.max(visibleAt, fireAt - chargeDuration),
+        hideWarningLine: true,
+        brightHead: true
+      });
+    }
+    playBlasterChargeSound();
+  }
+
+  function spawnBoneEdgeSet(options = {}) {
+    const arena = battleArena();
+    const spacing = Math.max(4, options.spacing || 5);
+    const depth = Math.max(4, options.depth || 11);
+    const life = options.life || .55;
+    const boneType = options.boneType || 0;
+
+    if (options.top) {
+      for (let x = arena.left + 3; x <= arena.right - 3; x += spacing) {
+        addProjectile('bone', x, arena.top, 0, 0, {
+          h: depth, fromTop: true, life, boneType
+        });
+      }
+    }
+    if (options.bottom) {
+      for (let x = arena.left + 3; x <= arena.right - 3; x += spacing) {
+        addProjectile('bone', x, arena.bottom, 0, 0, {
+          h: depth, life, boneType
+        });
+      }
+    }
+    if (options.left) {
+      for (let y = arena.top + 3; y <= arena.bottom - 3; y += spacing) {
+        addProjectile('bone', arena.left, y, 0, 0, {
+          orientation: 'horizontal', length: depth,
+          fromStart: true, life, boneType
+        });
+      }
+    }
+    if (options.right) {
+      for (let y = arena.top + 3; y <= arena.bottom - 3; y += spacing) {
+        addProjectile('bone', arena.right, y, 0, 0, {
+          orientation: 'horizontal', length: depth,
+          life, boneType
+        });
+      }
+    }
+    playBoneEmergeSound();
+  }
+
   function spawnBoneBorder(options = {}) {
     const arena = battleArena();
     const spacing = options.spacing || 7;
@@ -4153,6 +4363,571 @@
     });
   }
 
+  function projectileHasVisibleMotion(bullet, arena) {
+    if (!bullet) return false;
+    if (bullet.kind === 'beam') {
+      return bullet.age >= (bullet.visibleAt || 0) && bullet.age < bullet.life;
+    }
+    const moving = Math.abs(bullet.vx) > .5 || Math.abs(bullet.vy) > .5
+      || Math.abs(bullet.curve) > .001 || bullet.homing > 0;
+    if (!moving) return false;
+    const marginX = Math.max(24, Math.abs(bullet.vx) * .22);
+    const marginY = Math.max(18, Math.abs(bullet.vy) * .22);
+    return bullet.x >= arena.left - marginX && bullet.x <= arena.right + marginX
+      && bullet.y >= arena.top - marginY && bullet.y <= arena.bottom + marginY;
+  }
+
+  function spawnCosmeticMotionSweep() {
+    const arena = battleArena();
+    const fromRight = motionFillerCount % 2 === 0;
+    const direction = fromRight ? -1 : 1;
+    const length = 17 + (motionFillerCount % 3) * 3;
+    const lane = motionFillerCount % 2 === 0 ? arena.top + 7 : arena.bottom - 7;
+    const x = fromRight ? arena.right + length + 5 : arena.left - length - 5;
+    addProjectile('bone', x, lane, direction * 132, 0, {
+      orientation: 'horizontal',
+      length,
+      fromStart: !fromRight,
+      life: 2.2,
+      cosmetic: true
+    });
+    motionFillerCount++;
+  }
+
+  function keepSansBattleMoving(now, pattern) {
+    if (stage !== 10 || state !== 'enemyTurn' || !attackPattern?.scriptedSans) return;
+    if (attackPattern.finalSpecial) return;
+    const arena = battleArena();
+    const arenaMorphing = attackPattern?.finalSpecial
+      && now - stateAt >= 3550 && now - stateAt < 4420;
+    const heartMoving = heart.slamActive
+      || Math.abs(heart.vx) > 4 || Math.abs(heart.vy) > 4;
+    const projectileMoving = bullets.some(bullet => projectileHasVisibleMotion(bullet, arena));
+    const gestureMoving = now < sansGestureUntil || now < sansExpressionUntil;
+
+    if (arenaMorphing || heartMoving || projectileMoving || gestureMoving) {
+      lastVisibleBattleMotionAt = now;
+      return;
+    }
+
+    const remaining = Math.max(0, pattern.duration - (now - stateAt));
+    if (remaining > 350 && now - lastVisibleBattleMotionAt >= 420) {
+      spawnCosmeticMotionSweep();
+      lastVisibleBattleMotionAt = now;
+    }
+  }
+
+  function spawnPulseBoneSet(entries, options = {}) {
+    const arena = battleArena();
+    const width = arena.right - arena.left;
+    const height = arena.bottom - arena.top;
+    const life = options.life || .62;
+    for (const entry of entries) {
+      const x = arena.left + Math.max(3, Math.min(width - 3,
+        (entry.x ?? .5) * width));
+      const side = entry.side || 'top';
+      const maxHeight = Math.max(3, height - 8);
+      const h = Math.max(3, Math.min(maxHeight,
+        Number.isFinite(entry.h) ? entry.h : height * .58));
+      addProjectile('bone', x,
+        side === 'top' ? arena.top : arena.bottom,
+        0, 0, {
+          h,
+          fromTop: side === 'top',
+          life: entry.life || life,
+          boneType: entry.boneType || 0,
+          pulseBone: true,
+          growDuration: entry.growDuration || options.growDuration || .10,
+          retractDuration: entry.retractDuration || options.retractDuration || .11
+        });
+    }
+    playBoneEmergeSound();
+  }
+
+  function spawnPulseGateSet(entries, options = {}) {
+    const arena = battleArena();
+    const width = arena.right - arena.left;
+    const height = arena.bottom - arena.top;
+    const life = options.life || .66;
+    for (const entry of entries) {
+      const x = arena.left + Math.max(3, Math.min(width - 3,
+        (entry.x ?? .5) * width));
+      const opening = Math.max(12, Math.min(height - 8, entry.opening || 18));
+      const center = arena.top + Math.max(opening / 2 + 3,
+        Math.min(height - opening / 2 - 3,
+          (entry.center ?? .62) * height));
+      const topHeight = Math.max(3, center - opening / 2 - arena.top);
+      const bottomHeight = Math.max(3, arena.bottom - center - opening / 2);
+      const common = {
+        life: entry.life || life,
+        pulseBone: true,
+        growDuration: entry.growDuration || options.growDuration || .10,
+        retractDuration: entry.retractDuration || options.retractDuration || .11,
+        boneType: entry.boneType || 0
+      };
+      addProjectile('bone', x, arena.top, 0, 0, {
+        ...common, h: topHeight, fromTop: true
+      });
+      addProjectile('bone', x, arena.bottom, 0, 0, {
+        ...common, h: bottomHeight
+      });
+    }
+    playBoneEmergeSound();
+  }
+
+  function spawnBoneGapLine(options = {}) {
+    const arena = battleArena();
+    const fromRight = Boolean(options.fromRight);
+    const direction = fromRight ? -1 : 1;
+    const speed = options.speed || 122;
+    const x = fromRight ? arena.right + 8 : arena.left - 8;
+    const height = arena.bottom - arena.top;
+    const opening = Math.max(11, options.opening || 15);
+    const bottomHeight = Math.max(3, options.bottomHeight || 6);
+    const topHeight = Math.max(3, height - opening - bottomHeight);
+    const life = options.life || ((arena.right - arena.left + 40) / speed + .45);
+    addProjectile('bone', x, arena.top, direction * speed, 0, {
+      h: topHeight,
+      fromTop: true,
+      life
+    });
+    addProjectile('bone', x, arena.bottom, direction * speed, 0, {
+      h: bottomHeight,
+      life
+    });
+    playBoneEmergeSound();
+  }
+
+  function spawnBlueBonePair(options = {}) {
+    const arena = battleArena();
+    const fromRight = Boolean(options.fromRight);
+    const direction = fromRight ? -1 : 1;
+    const speed = options.speed || 104;
+    const spacing = options.spacing || 12;
+    const startX = fromRight ? arena.right + 9 : arena.left - 9;
+    const firstX = startX;
+    const secondX = startX - direction * spacing;
+    const height = arena.bottom - arena.top;
+    const life = options.life || ((arena.right - arena.left + 55) / speed + .5);
+    const blueFirst = !fromRight;
+    const addLongBlue = x => addProjectile('bone', x, arena.top,
+      direction * speed, 0, {
+        h: Math.max(8, height - 5),
+        fromTop: true,
+        boneType: 1,
+        life
+      });
+    const addShortWhite = x => addProjectile('bone', x, arena.bottom,
+      direction * speed, 0, {
+        h: 5,
+        life
+      });
+    if (blueFirst) {
+      addLongBlue(firstX);
+      addShortWhite(secondX);
+    } else {
+      addShortWhite(firstX);
+      addLongBlue(secondX);
+    }
+    playBoneEmergeSound();
+  }
+
+  function spawnFloorConveyor(options = {}) {
+    const arena = battleArena();
+    const fromRight = Boolean(options.fromRight);
+    const direction = fromRight ? -1 : 1;
+    const speed = options.speed || 78;
+    const count = options.count || 22;
+    const spacing = options.spacing || 6;
+    const startX = fromRight ? arena.right + 7 : arena.left - 7;
+    const life = options.life || ((arena.right - arena.left + count * spacing + 30)
+      / speed + .4);
+    for (let i = 0; i < count; i++) {
+      const x = startX - direction * i * spacing;
+      addProjectile('bone', x, arena.bottom, direction * speed, 0, {
+        h: options.height || 6,
+        life
+      });
+    }
+    playBoneEmergeSound();
+  }
+
+  function spawnAngledBlasterShot(positionAngle, options = {}) {
+    const arena = battleArena();
+    const centerX = (arena.left + arena.right) / 2;
+    const centerY = (arena.top + arena.bottom) / 2;
+    const radiusX = options.radiusX || (arena.right - arena.left) / 2 + 27;
+    const radiusY = options.radiusY || (arena.bottom - arena.top) / 2 + 24;
+    const x = centerX + Math.cos(positionAngle) * radiusX;
+    const y = centerY + Math.sin(positionAngle) * radiusY;
+    addProjectile('beam', x, y, 0, 0, {
+      orientation: 'angled',
+      angle: positionAngle + Math.PI,
+      length: options.length || 280,
+      warning: options.warning || .36,
+      life: options.life || .76,
+      thickness: options.thickness || 5,
+      visibleAt: options.visibleAt || 0,
+      chargeStart: options.chargeStart
+    });
+    playBlasterChargeSound();
+  }
+
+  function spawnSplitHorizontalBoneBar(options = {}) {
+    const arena = battleArena();
+    const centerX = (arena.left + arena.right) / 2;
+    const gap = Math.max(12, options.gap || 18);
+    const leftLength = Math.max(6, centerX - gap / 2 - arena.left);
+    const rightLength = Math.max(6, arena.right - centerX - gap / 2);
+    const y = options.fromBottom ? arena.bottom + 4 : arena.top - 4;
+    const vy = options.fromBottom ? -(options.speed || 72) : (options.speed || 72);
+    const life = options.life || ((arena.bottom - arena.top + 20) / Math.abs(vy) + .4);
+    addProjectile('bone', arena.left, y, 0, vy, {
+      orientation: 'horizontal',
+      length: leftLength,
+      fromStart: true,
+      life
+    });
+    addProjectile('bone', arena.right, y, 0, vy, {
+      orientation: 'horizontal',
+      length: rightLength,
+      life
+    });
+    playBoneEmergeSound();
+  }
+
+  function spawnMovingWall(options = {}) {
+    const arena = battleArena();
+    const fromRight = Boolean(options.fromRight);
+    const direction = fromRight ? -1 : 1;
+    const speed = options.speed || 132;
+    const x = fromRight ? arena.right + 8 : arena.left - 8;
+    const height = Math.min(arena.bottom - arena.top - 7, options.height || 30);
+    const life = options.life || ((arena.right - arena.left + 35) / speed + .45);
+    addProjectile('bone', x, arena.bottom, direction * speed, 0, {
+      h: height,
+      life,
+      boneType: options.boneType || 0
+    });
+    playBoneEmergeSound();
+  }
+
+
+  const RECORDED_ZONE = Object.freeze({
+    wide: { left: 133, top: 251, right: 508, bottom: 391 },
+    wideTall: { left: 113, top: 231, right: 548, bottom: 391 },
+    secondWide: { left: 121, top: 276, right: 526, bottom: 391 },
+    secondMid: { left: 171, top: 276, right: 476, bottom: 391 },
+    medium: { left: 121, top: 186, right: 526, bottom: 391 },
+    square: { left: 241, top: 226, right: 406, bottom: 391 },
+    sineSquare: { left: 179, top: 226, right: 404, bottom: 391 }
+  });
+
+  function recordedTransform(source) {
+    const arena = battleArena();
+    const sourceWidth = Math.max(1, source.right - source.left);
+    const sourceHeight = Math.max(1, source.bottom - source.top);
+    const scaleX = (arena.right - arena.left) / sourceWidth;
+    const scaleY = (arena.bottom - arena.top) / sourceHeight;
+    return {
+      arena,
+      scaleX,
+      scaleY,
+      x: value => arena.left + (value - source.left) * scaleX,
+      y: value => arena.top + (value - source.top) * scaleY
+    };
+  }
+
+  function recordedVelocity(source, direction, speed) {
+    const transform = recordedTransform(source);
+    const directionIndex = ((Math.round(direction) % 4) + 4) % 4;
+    if (directionIndex === 0) return { vx: speed * transform.scaleX, vy: 0 };
+    if (directionIndex === 1) return { vx: 0, vy: speed * transform.scaleY };
+    if (directionIndex === 2) return { vx: -speed * transform.scaleX, vy: 0 };
+    return { vx: 0, vy: -speed * transform.scaleY };
+  }
+
+  function recordedRepeatPosition(x, y, direction, spacing, index) {
+    const directionIndex = ((Math.round(direction) % 4) + 4) % 4;
+    if (directionIndex === 0) return { x: x - spacing * index, y };
+    if (directionIndex === 1) return { x, y: y - spacing * index };
+    if (directionIndex === 2) return { x: x + spacing * index, y };
+    return { x, y: y + spacing * index };
+  }
+
+  function spawnRecordedBoneV(source, x, y, height, direction, speed, boneType = 0, options = {}) {
+    const transform = recordedTransform(source);
+    const velocity = recordedVelocity(source, direction, speed);
+    addProjectile('bone', transform.x(x), transform.y(y), velocity.vx, velocity.vy, {
+      h: Math.max(2, height * transform.scaleY),
+      fromTop: true,
+      life: options.life || 10,
+      boneType,
+      pulseBone: Boolean(options.pulseBone),
+      growDuration: options.growDuration,
+      retractDuration: options.retractDuration
+    });
+  }
+
+  function spawnRecordedBoneVRepeat(source, x, y, height, direction, speed,
+    count, spacing, boneType = 0, options = {}) {
+    for (let index = 0; index < count; index++) {
+      const position = recordedRepeatPosition(x, y, direction, spacing, index);
+      spawnRecordedBoneV(source, position.x, position.y, height,
+        direction, speed, boneType, options);
+    }
+    playBoneEmergeSound();
+  }
+
+  function spawnRecordedBoneH(source, x, y, length, direction, speed, boneType = 0, options = {}) {
+    const transform = recordedTransform(source);
+    const velocity = recordedVelocity(source, direction, speed);
+    addProjectile('bone', transform.x(x), transform.y(y), velocity.vx, velocity.vy, {
+      orientation: 'horizontal',
+      length: Math.max(3, length * transform.scaleX),
+      fromStart: true,
+      life: options.life || 10,
+      boneType
+    });
+  }
+
+  function spawnRecordedBoneHRepeat(source, x, y, length, direction, speed,
+    count, spacing, boneType = 0, options = {}) {
+    for (let index = 0; index < count; index++) {
+      const position = recordedRepeatPosition(x, y, direction, spacing, index);
+      spawnRecordedBoneH(source, position.x, position.y, length,
+        direction, speed, boneType, options);
+    }
+    playBoneEmergeSound();
+  }
+
+  function spawnRecordedPlatform(source, x, y, width, direction, speed, options = {}) {
+    const transform = recordedTransform(source);
+    const velocity = recordedVelocity(source, direction, speed);
+    addProjectile('platform', transform.x(x), transform.y(y), velocity.vx, velocity.vy, {
+      w: Math.max(8, width * transform.scaleX),
+      life: options.life || 10
+    });
+  }
+
+  function spawnRecordedPlatformRepeat(source, x, y, width, direction, speed,
+    count, spacing, options = {}) {
+    for (let index = 0; index < count; index++) {
+      const position = recordedRepeatPosition(x, y, direction, spacing, index);
+      spawnRecordedPlatform(source, position.x, position.y, width,
+        direction, speed, options);
+    }
+  }
+
+  function recordedScreenPoint(x, y) {
+    return {
+      x: 40 + x * .375,
+      y: 10 + y / 3
+    };
+  }
+
+  function spawnRecordedBlaster(type, startX, startY, endX, endY,
+    angleDegrees, charge, fire, options = {}) {
+    const start = recordedScreenPoint(startX, startY);
+    const end = recordedScreenPoint(endX, endY);
+    const thickness = options.thickness
+      || (type >= 2 ? 15 : type === 1 ? 8 : 5);
+    addProjectile('beam', end.x, end.y, 0, 0, {
+      orientation: 'angled',
+      angle: angleDegrees * Math.PI / 180,
+      length: options.length || 330,
+      warning: Math.max(.05, charge),
+      life: Math.max(.12, charge + Math.max(.18, fire + .10)),
+      thickness,
+      hideWarningLine: true,
+      brightHead: true,
+      blasterStartX: start.x,
+      blasterStartY: start.y,
+      blasterSize: type
+    });
+    playBlasterChargeSound();
+  }
+
+  function spawnAimedRecordedBlaster(angle, type, charge, fire, options = {}) {
+    // CSV formula: start radius (400,300), target radius (200,200), then
+    // clamp the target to x=50..590 and y=40..440 in original coordinates.
+    const startX = heart.x + Math.cos(angle) * (options.startRadiusX || 150);
+    const startY = heart.y + Math.sin(angle) * (options.startRadiusY || 100);
+    const endX = Math.max(58.75, Math.min(261.25,
+      heart.x + Math.cos(angle) * (options.endRadiusX || 75)));
+    const endY = Math.max(23.333, Math.min(156.667,
+      heart.y + Math.sin(angle) * (options.endRadiusY || 66.667)));
+    const fireAngle = Math.atan2(heart.y - endY, heart.x - endX);
+    addProjectile('beam', endX, endY, 0, 0, {
+      orientation: 'angled',
+      angle: fireAngle,
+      length: options.length || 330,
+      warning: charge,
+      life: charge + Math.max(.18, fire + .10),
+      thickness: type ? 8 : 5,
+      hideWarningLine: true,
+      brightHead: true,
+      blasterStartX: startX,
+      blasterStartY: startY,
+      blasterSize: type
+    });
+    playBlasterChargeSound();
+  }
+
+  function setRecordedHeart(source, x, y) {
+    const transform = recordedTransform(source);
+    const arena = transform.arena;
+    heart.x = Math.max(arena.left + 5, Math.min(arena.right - 5, transform.x(x)));
+    heart.y = Math.max(arena.top + 5, Math.min(arena.bottom - 5, transform.y(y)));
+    heart.vx = 0;
+    heart.vy = 0;
+    heart.slamActive = false;
+  }
+
+  function spawnRecordedSineBones(source, count, speed, amplitude, options = {}) {
+    const transform = recordedTransform(source);
+    const arena = transform.arena;
+    const scaledSpeed = speed * transform.scaleX;
+    const spacing = options.spacing || 7;
+    const opening = options.opening || 14;
+    const center = (arena.top + arena.bottom) / 2;
+    const wave = amplitude * transform.scaleY;
+    const startX = arena.right + 8;
+    for (let index = 0; index < count; index++) {
+      const x = startX + index * spacing;
+      const gapCenter = Math.max(arena.top + opening / 2 + 2,
+        Math.min(arena.bottom - opening / 2 - 2,
+          center + Math.sin(index * Math.PI / 4 + (options.phase || 0)) * wave));
+      const gapTop = gapCenter - opening / 2;
+      const gapBottom = gapCenter + opening / 2;
+      addProjectile('bone', x, arena.top, -scaledSpeed, 0, {
+        h: Math.max(3, gapTop - arena.top), fromTop: true, life: options.life || 4
+      });
+      addProjectile('bone', x, arena.bottom, -scaledSpeed, 0, {
+        h: Math.max(3, arena.bottom - gapBottom), life: options.life || 4
+      });
+    }
+    playBoneEmergeSound();
+  }
+
+  function spawnRecordedBoneGap2(choiceSequence, speedSequence = []) {
+    const source = RECORDED_ZONE.wide;
+    let total = 0;
+    let index = 0;
+    const bottomHeights = [20, 30, 40, 60];
+    const firstIncrements = [9, 11, 19, 25];
+    const secondIncrements = [15, 17, 19, 25];
+    while (total < 150 && index < 32) {
+      const choice = choiceSequence[index % choiceSequence.length] % 4;
+      const heightB = bottomHeights[choice];
+      total += firstIncrements[choice];
+      let randomSpeed = speedSequence.length
+        ? speedSequence[index % speedSequence.length]
+        : [-2, 0, 2, 0][index % 4];
+      if (heightB === 40) randomSpeed = 0;
+      if (heightB === 60) randomSpeed = -1;
+      const heightT = 111 - heightB;
+      const yB = 386 - heightB;
+      const distance = total + 32;
+      const speedLFactor = 8 + randomSpeed;
+      const xL = 320 - distance * speedLFactor;
+      const speedL = speedLFactor * 30;
+      const rightRandom = heightB === 60 ? randomSpeed : -randomSpeed;
+      const speedRFactor = 8 + rightRandom;
+      const xR = 320 + distance * speedRFactor;
+      const speedR = speedRFactor * 30;
+      spawnRecordedBoneV(source, xL, 257, heightT, 0, speedL, 0, { life: 7.2 });
+      spawnRecordedBoneV(source, xL, yB, heightB, 0, speedL, 0, { life: 7.2 });
+      spawnRecordedBoneV(source, xR, 257, heightT, 2, speedR, 0, { life: 7.2 });
+      spawnRecordedBoneV(source, xR, yB, heightB, 2, speedR, 0, { life: 7.2 });
+      total += secondIncrements[choice];
+      index++;
+    }
+    playBoneEmergeSound();
+  }
+
+  function spawnMulti1Attack(attackIndex) {
+    clearSansThreats();
+    if (attackIndex === 0) {
+      setSansArena('secondWide', true);
+      setScriptSoul('blue', GravityDirection.DOWN, false);
+      setRecordedHeart(RECORDED_ZONE.secondWide, 320, 376);
+      spawnRecordedBoneVRepeat(RECORDED_ZONE.secondWide, 128, 341, 45, 0, 240, 4, 16, 0, { life: 2.2 });
+      spawnRecordedBoneV(RECORDED_ZONE.secondWide, 64, 286, 100, 0, 240, 0, { life: 2.2 });
+      spawnRecordedBoneVRepeat(RECORDED_ZONE.secondWide, 512, 341, 45, 2, 240, 4, 16, 0, { life: 2.2 });
+      spawnRecordedBoneV(RECORDED_ZONE.secondWide, 576, 286, 100, 2, 240, 0, { life: 2.2 });
+    } else if (attackIndex === 1) {
+      setSansArena('secondWide', true);
+      setScriptSoul('blue', GravityDirection.DOWN, false);
+      setRecordedHeart(RECORDED_ZONE.secondWide, 320, 376);
+      spawnRecordedBoneV(RECORDED_ZONE.secondWide, 128, 286, 100, 0, 240, 1, { life: 2.2 });
+      spawnRecordedBoneV(RECORDED_ZONE.secondWide, 56, 366, 20, 0, 240, 0, { life: 2.2 });
+      spawnRecordedBoneV(RECORDED_ZONE.secondWide, 24, 286, 100, 0, 240, 0, { life: 2.2 });
+      spawnRecordedBoneV(RECORDED_ZONE.secondWide, 512, 286, 100, 2, 240, 1, { life: 2.2 });
+      spawnRecordedBoneV(RECORDED_ZONE.secondWide, 584, 366, 20, 2, 240, 0, { life: 2.2 });
+      spawnRecordedBoneV(RECORDED_ZONE.secondWide, 616, 286, 100, 2, 240, 0, { life: 2.2 });
+      playBoneEmergeSound();
+    } else if (attackIndex === 2) {
+      setSansArena('secondMid', true);
+      setScriptSoul('blue', GravityDirection.DOWN, false);
+      setRecordedHeart(RECORDED_ZONE.secondMid, 320, 376);
+      spawnRecordedBoneGap2([0, 1, 2, 0, 3, 1], [-2, 0, 2, 0]);
+    } else if (attackIndex === 3) {
+      setSansArena('secondMid', true);
+      setScriptSoul('blue', GravityDirection.DOWN, false);
+      setRecordedHeart(RECORDED_ZONE.secondMid, 320, 376);
+      spawnRecordedBoneVRepeat(RECORDED_ZONE.secondMid, 200, 282, 70, 0, 150, 3, 125, 0, { life: 2.6 });
+      spawnRecordedBoneVRepeat(RECORDED_ZONE.secondMid, 200, 371, 15, 0, 150, 3, 125, 0, { life: 2.6 });
+      spawnRecordedBoneVRepeat(RECORDED_ZONE.secondMid, 440, 282, 70, 2, 150, 3, 125, 0, { life: 2.6 });
+      spawnRecordedBoneVRepeat(RECORDED_ZONE.secondMid, 440, 371, 15, 2, 150, 3, 125, 0, { life: 2.6 });
+    } else {
+      setSansArena('secondWide', true);
+      setScriptSoul('blue', GravityDirection.DOWN, false);
+      setRecordedHeart(RECORDED_ZONE.secondWide, 506, 376);
+      spawnRecordedBoneVRepeat(RECORDED_ZONE.secondWide, 200, 331, 55, 0, 360, 11, 24, 0, { life: 2.3 });
+      spawnRecordedBoneVRepeat(RECORDED_ZONE.secondWide, -64, 371, 15, 0, 360, 10, 24, 0, { life: 2.3 });
+    }
+  }
+
+  function spawnMulti2Attack(attackIndex) {
+    clearSansThreats();
+    if (attackIndex === 6) {
+      setSansArena('square', true);
+      setScriptSoul('red', GravityDirection.DOWN, true);
+      const diagonal = Boolean(spawnMulti2Attack.diagonal);
+      const angles = diagonal ? [45, 135, 225, 315] : [0, 90, 180, 270];
+      const positions = diagonal
+        ? [[191,176],[451,176],[451,436],[191,436]]
+        : [[191,306],[321,166],[449,306],[321,446]];
+      positions.forEach((position, i) => spawnRecordedBlaster(1,
+        position[0], position[1], position[0], position[1], angles[i],
+        diagonal ? .66666 : .6, .26666));
+      spawnMulti2Attack.diagonal = !diagonal;
+    } else if (attackIndex === 7) {
+      setSansArena('sineSquare', true);
+      setScriptSoul('red', GravityDirection.DOWN, true);
+      spawnRecordedSineBones(RECORDED_ZONE.sineSquare, 16, 300, 55, {
+        opening: 14, spacing: 7, life: 2.2, phase: spawnMulti2Attack.diagonal ? .9 : 0
+      });
+    } else if (attackIndex === 5) {
+      setSansArena('secondWide', true);
+      setScriptSoul('blue', GravityDirection.DOWN, false);
+      setRecordedHeart(RECORDED_ZONE.secondWide, 330, 304);
+      spawnRecordedPlatform(RECORDED_ZONE.secondWide, 309, 314, 41, 0, 0, { life: 2.8 });
+      spawnRecordedPlatform(RECORDED_ZONE.secondWide, 309, 354, 41, 0, 0, { life: 2.8 });
+      spawnRecordedBoneVRepeat(RECORDED_ZONE.secondWide, 121, 364, 30, 2, 0, 25, 16, 0, { life: 2.8 });
+      spawnRecordedBoneV(RECORDED_ZONE.secondWide, 521, 280, 35, 2, 240, 0, { life: 2.5 });
+      spawnRecordedBoneV(RECORDED_ZONE.secondWide, 1, 319, 65, 0, 240, 0, { life: 2.5 });
+    } else {
+      setSansArena('secondWide', true);
+      setScriptSoul('blue', GravityDirection.DOWN, false);
+      setRecordedHeart(RECORDED_ZONE.secondWide, 489, 376);
+      spawnRecordedBoneVRepeat(RECORDED_ZONE.secondWide, 345, 364, 20, 0, 120, 6, 76, 0, { life: 3.0 });
+      spawnRecordedBoneVRepeat(RECORDED_ZONE.secondWide, 297, 280, 82, 2, 120, 6, 76, 0, { life: 3.0 });
+    }
+  }
+  spawnMulti2Attack.diagonal = false;
+
   function runSansScriptedTurn(now) {
     const scriptIndex = attackPattern?.sansScriptIndex;
     if (!Number.isInteger(scriptIndex)) return false;
@@ -4169,397 +4944,297 @@
     };
 
     switch (scriptIndex) {
-      case 0: { // Opening square: slam, bone cage, cardinal/X/cross blasters, thick finish.
+      case 0: { // sans_intro.csv: slam, sine corridor, +, X, +, giant horizontal pair.
         once('s0-start', .01, () => {
           setSansArena('square', true);
-          setScriptSoul('blue', GravityDirection.DOWN, false);
-          slamSoul(GravityDirection.DOWN);
+          setScriptSoul('blue', GravityDirection.DOWN, true);
         });
-        once('s0-floor', .28, () => spawnFloorTeeth({ height: 10, spacing: 7, life: 1.15 }));
-        once('s0-pillars-a', .62, () => spawnVerticalDropSet({ count: 8, speed: 150, life: 1.45, heights: [17, 28, 20, 31, 18, 26, 21, 29] }));
-        once('s0-pillars-b', 1.08, () => spawnVerticalDropSet({ count: 8, speed: 170, life: 1.35, offset: 1, heights: [30, 18, 27, 19, 31, 17, 25, 21] }));
-        once('s0-red', 1.72, () => setScriptSoul('red', GravityDirection.DOWN, true));
-        once('s0-cardinal', 1.90, () => spawnAngledBlasterRing({ count: 4, baseAngle: 0, warning: .34, life: .74, thickness: 7 }));
-        once('s0-cross', 2.55, () => {
-          const a = battleArena();
-          spawnHorizontalBlaster((a.top + a.bottom) / 2, { side: 'left', warning: .3, life: .72, thickness: 8 });
-          spawnVerticalBlaster((a.left + a.right) / 2, { side: 'top', warning: .3, life: .72, thickness: 8 });
+        once('s0-slam', .27, () => slamSoul(GravityDirection.DOWN));
+        once('s0-floor', .77, () => spawnFloorTeeth({
+          height: 11, spacing: 5, life: .55, gapX: heart.x, gapRadius: 7
+        }));
+        once('s0-red', 1.47, () => {
+          clearSansThreats();
+          setScriptSoul('red', GravityDirection.DOWN, true);
         });
-        once('s0-x', 3.18, () => spawnAngledBlasterRing({ count: 4, baseAngle: Math.PI / 4, warning: .3, life: .72, thickness: 8 }));
-        once('s0-cardinal-2', 3.80, () => spawnAngledBlasterRing({ count: 4, baseAngle: 0, warning: .3, life: .7, thickness: 7 }));
-        once('s0-cross-2', 4.34, () => {
-          const a = battleArena();
-          spawnHorizontalBlaster((a.top + a.bottom) / 2, { side: 'right', warning: .28, life: .68, thickness: 9 });
-          spawnVerticalBlaster((a.left + a.right) / 2, { side: 'bottom', warning: .28, life: .68, thickness: 9 });
+        once('s0-sine', 2.27, () => spawnRecordedSineBones(
+          RECORDED_ZONE.square, 20, 360, 25,
+          { opening: 14, spacing: 9, life: 1.30, phase: -.6 }
+        ));
+        once('s0-plus1', 3.37, () => {
+          [[0,0,189,246,0],[0,0,259,166,90],[640,480,449,366,180],[640,480,379,446,270]]
+            .forEach(args => spawnRecordedBlaster(1, ...args, .333, .266));
         });
-        once('s0-pair', 4.92, () => {
-          const a = battleArena();
-          spawnHorizontalBlaster(a.top + 12, { side: 'left', warning: .28, life: .66, thickness: 6 });
-          spawnHorizontalBlaster(a.bottom - 12, { side: 'right', warning: .28, life: .66, thickness: 6 });
+        once('s0-x', 4.27, () => {
+          [[0,0,189,176,45],[640,0,449,176,135],[640,480,449,436,225],[0,480,189,436,315]]
+            .forEach(args => spawnRecordedBlaster(1, ...args, .333, .266));
         });
-        once('s0-thick-left', 5.48, () => spawnHorizontalBlaster((battleArena().top + battleArena().bottom) / 2, { side: 'left', warning: .25, life: .72, thickness: 13 }));
-        once('s0-thick-right', 6.04, () => spawnHorizontalBlaster((battleArena().top + battleArena().bottom) / 2, { side: 'right', warning: .22, life: .68, thickness: 14 }));
+        once('s0-plus2', 5.17, () => {
+          [[0,0,189,246,0],[0,0,259,166,90],[640,480,449,366,180],[640,480,379,446,270]]
+            .forEach(args => spawnRecordedBlaster(1, ...args, .333, .266));
+        });
+        once('s0-giants', 5.87, () => {
+          spawnRecordedBlaster(2, 0, 240, 139, 306, 0, .666, .5);
+          spawnRecordedBlaster(2, 640, 240, 499, 306, 180, .666, .5);
+        });
         break;
       }
 
-      case 1: { // Rapid marching vertical pillars across the first wide box.
-        for (let i = 0; i < 9; i++) {
-          once('s1-wave-' + i, .04 + i * .68, () => spawnAlternatingPillars({
-            fromRight: i % 2 === 0,
-            speed: 108 + i * 3,
-            count: 8,
-            spacing: 18,
-            offset: i,
-            heights: [38, 20, 34, 17, 37, 22, 32, 19],
-            life: 4.5
-          }));
-        }
+      case 1: { // sans_bonegap1.csv
+        once('s1-recorded', .20, () => {
+          const zone = RECORDED_ZONE.wide;
+          spawnRecordedBoneVRepeat(zone, 128, 257, 95, 0, 180, 8, 120, 0, { life: 6.3 });
+          spawnRecordedBoneVRepeat(zone, 128, 366, 20, 0, 180, 8, 120, 0, { life: 6.3 });
+          spawnRecordedBoneVRepeat(zone, 503, 257, 95, 2, 180, 8, 120, 0, { life: 6.3 });
+          spawnRecordedBoneVRepeat(zone, 503, 366, 20, 2, 180, 8, 120, 0, { life: 6.3 });
+        });
         break;
       }
 
-      case 2: { // Blue full-height walls with short white floor teeth between them.
-        for (let i = 0; i < 4; i++) {
-          once('s2-blue-' + i, .04 + i * 1.08, () => spawnBlueWallPair({ speed: 84 + i * 4, life: 2.2, inset: i % 2 ? 8 : 0 }));
-          once('s2-teeth-' + i, .34 + i * 1.08, () => spawnFloorTeeth({
-            height: 5 + i % 2,
-            spacing: 12,
-            life: .92,
-            gapX: battleArena().left + 23 + (i % 3) * 54,
-            gapRadius: 11
-          }));
-        }
-        break;
-      }
-
-      case 3: { // Second moving-pillar lesson, alternating sparse and dense groups.
-        for (let i = 0; i < 8; i++) {
-          once('s3-wave-' + i, .03 + i * .67, () => spawnAlternatingPillars({
-            fromRight: i % 2 === 1,
-            speed: 112,
-            count: i % 2 ? 6 : 4,
-            spacing: i % 2 ? 19 : 27,
-            offset: i + 1,
-            heights: [35, 18, 31, 20, 38, 17, 29, 22],
-            life: 4.2
-          }));
-        }
-        break;
-      }
-
-      case 4: { // Continuous floor teeth, three-bone ceiling groups, then tall singles.
-        once('s4-floor', .02, () => spawnFloorTeeth({ height: 7, spacing: 6, life: 7.0, keepGap: false }));
-        for (let i = 0; i < 4; i++) {
-          once('s4-triplet-' + i, .66 + i * .88, () => spawnUniformPillarTrain({
-            fromRight: true,
-            fromTop: true,
-            speed: 96,
-            count: 3,
-            spacing: 7,
-            heights: [17 + i * 2, 17 + i * 2, 17 + i * 2],
-            life: 4.5
-          }));
-        }
-        const singleHeights = [36, 31, 38, 29];
-        for (let i = 0; i < 4; i++) {
-          once('s4-single-' + i, 4.10 + i * .72, () => spawnUniformPillarTrain({
-            fromRight: i % 2 === 0,
-            fromTop: i % 2 === 0,
-            speed: 104,
-            count: 1,
-            spacing: 1,
-            heights: [singleHeights[i]],
-            life: 3.5
-          }));
-        }
-        break;
-      }
-
-      case 5: { // Long platform passage over a solid bone floor.
-        once('s5-floor', .02, () => spawnFloorTeeth({ height: 8, spacing: 6, life: 7.2, keepGap: false }));
-        const platformHeights = [13, 25, 18, 33, 22, 29, 16];
-        for (let i = 0; i < 7; i++) {
-          once('s5-platform-' + i, .08 + i * .92, () => spawnPlatformPass(
-            battleArena().bottom - platformHeights[i],
-            { fromRight: i % 2 === 1, speed: 82, width: 31 + (i % 2) * 4, life: 5.3 }
-          ));
-          once('s5-pillar-' + i, .48 + i * .92, () => spawnUniformPillarTrain({
-            fromRight: i % 2 === 0,
-            fromTop: i % 3 !== 1,
-            speed: 88,
-            count: 1,
-            heights: [21 + (i % 3) * 7],
-            life: 4.2
-          }));
-        }
-        break;
-      }
-
-      case 6: { // Dense falling/rising bone field above a low floor.
-        once('s6-floor', .02, () => spawnFloorTeeth({ height: 6, spacing: 7, life: 6.1, keepGap: false }));
-        for (let i = 0; i < 8; i++) {
-          once('s6-drops-' + i, .12 + i * .72, () => spawnVerticalDropSet({
-            count: 6,
-            speed: 92 + i * 2,
-            offset: i,
-            heights: [13, 26, 18, 31, 15, 24],
-            life: 2.7
-          }));
-        }
-        break;
-      }
-
-      case 7: { // Moving platforms while horizontal Gaster Blasters sweep both ways.
-        once('s7-platform-field', .02, () => spawnPlatformField({ life: 8, speed: 38 }));
-        for (let i = 0; i < 6; i++) {
-          once('s7-extra-platform-' + i, .55 + i * 1.12, () => spawnPlatformPass(
-            battleArena().top + 13 + (i % 3) * 14,
-            { fromRight: i % 2 === 0, speed: 48, width: 29, life: 6.4 }
-          ));
-        }
-        const lanes = [12, 34, 20, 43, 27, 10, 38, 18, 46, 25, 13, 35, 22];
-        lanes.forEach((offset, i) => once('s7-beam-' + i, .18 + i * .56, () => {
-          const a = battleArena();
-          spawnHorizontalBlaster(a.top + Math.min(a.bottom - a.top - 6, offset), {
-            side: i % 2 ? 'right' : 'left',
-            warning: .3,
-            life: .66,
-            thickness: i % 4 === 3 ? 7 : 5
-          });
+      case 2: { // sans_bluebone.csv
+        const shots = [
+          [.20, 503, 286, 100, 2, 300, 1],
+          [.433, 503, 366, 20, 2, 300, 0],
+          [.933, 503, 286, 100, 2, 300, 1],
+          [1.166, 503, 366, 20, 2, 300, 0],
+          [1.666, 503, 286, 100, 2, 300, 1],
+          [1.899, 503, 366, 20, 2, 300, 0],
+          [2.832, 128, 366, 20, 0, 300, 0],
+          [3.232, 128, 286, 100, 0, 300, 1],
+          [3.565, 128, 366, 20, 0, 300, 0],
+          [3.965, 128, 286, 100, 0, 300, 1],
+          [4.298, 128, 366, 20, 0, 300, 0],
+          [4.698, 128, 286, 100, 0, 300, 1]
+        ];
+        shots.forEach((shot, index) => once('s2-shot-' + index, shot[0], () => {
+          spawnRecordedBoneV(RECORDED_ZONE.wide,
+            shot[1], shot[2], shot[3], shot[4], shot[5], shot[6], { life: 2.3 });
+          playBoneEmergeSound();
         }));
         break;
       }
 
-      case 8: { // Tall box filled with repeated vertical bones over a low floor.
-        once('s8-floor', .02, () => spawnFloorTeeth({ height: 6, spacing: 7, life: 6.4, keepGap: false }));
-        for (let i = 0; i < 9; i++) {
-          once('s8-wave-' + i, .08 + i * .69, () => spawnVerticalDropSet({
-            count: 6,
-            speed: 94,
-            offset: i,
-            heights: [15, 29, 19, 33, 17, 26],
-            life: 2.65
-          }));
+      case 3: { // sans_bonegap2.csv, deterministic seed matching the supplied run.
+        once('s3-recorded', .02, () => spawnRecordedBoneGap2(
+          [0, 1, 2, 0, 3, 1, 0, 2, 1, 3, 0, 1],
+          [-2, 0, 2, 0, -2, 2]
+        ));
+        break;
+      }
+
+      case 4: { // sans_platforms1.csv
+        once('s4-platform1', .01, () => spawnRecordedPlatform(
+          RECORDED_ZONE.wide, 15, 346, 61, 0, 120, { life: 8.1 }
+        ));
+        once('s4-floor', .40, () => spawnRecordedBoneVRepeat(
+          RECORDED_ZONE.wide, 133, 356, 40, 0, 120, 41, 15, 0, { life: 8.0 }
+        ));
+        once('s4-platform2', 1.60, () => spawnRecordedPlatform(
+          RECORDED_ZONE.wide, -61, 346, 61, 0, 150, { life: 6.5 }
+        ));
+        once('s4-platform3', 3.30, () => spawnRecordedPlatform(
+          RECORDED_ZONE.wide, -61, 346, 61, 0, 180, { life: 5.0 }
+        ));
+        once('s4-three', 4.30, () => {
+          [133, 119, 105].forEach(x => spawnRecordedBoneV(
+            RECORDED_ZONE.wide, x, 257, 45, 0, 210, 0, { life: 3.3 }
+          ));
+          playBoneEmergeSound();
+        });
+        once('s4-tall', 6.60, () => {
+          spawnRecordedBoneV(RECORDED_ZONE.wide, 133, 257, 95, 0, 270, 0, { life: 2.0 });
+          playBoneEmergeSound();
+        });
+        break;
+      }
+
+      case 5: { // sans_platforms2.csv
+        const zone = RECORDED_ZONE.wide;
+        once('s5-p0', .01, () => spawnRecordedPlatform(zone, 640, 346, 51, 2, 150, { life: 9.5 }));
+        once('s5-floor', .40, () => spawnRecordedBoneVRepeat(zone, 508, 356, 40, 2, 120, 58, 15, 0, { life: 9.2 }));
+        once('s5-p1', .80, () => spawnRecordedPlatform(zone, 640, 296, 51, 2, 150, { life: 8.8 }));
+        once('s5-p2', 1.30, () => spawnRecordedPlatform(zone, 640, 346, 51, 2, 150, { life: 8.3 }));
+        once('s5-b0', 1.70, () => { spawnRecordedBoneV(zone, 508, 316, 70, 2, 150, 0, { life: 7.5 }); playBoneEmergeSound(); });
+        once('s5-p3', 2.10, () => spawnRecordedPlatform(zone, 640, 296, 31, 2, 60, { life: 8.0 }));
+        once('s5-p4', 2.70, () => spawnRecordedPlatform(zone, 640, 326, 51, 2, 150, { life: 7.1 }));
+        once('s5-p5', 3.40, () => spawnRecordedPlatform(zone, 640, 336, 51, 2, 150, { life: 6.4 }));
+        once('s5-b1', 3.70, () => { spawnRecordedBoneV(zone, 508, 257, 45, 2, 150, 0, { life: 5.7 }); playBoneEmergeSound(); });
+        once('s5-p6', 4.10, () => spawnRecordedPlatform(zone, 640, 316, 51, 2, 150, { life: 5.7 }));
+        once('s5-b2', 4.40, () => { spawnRecordedBoneV(zone, 508, 257, 55, 2, 150, 0, { life: 5.0 }); playBoneEmergeSound(); });
+        once('s5-b3', 5.10, () => { spawnRecordedBoneV(zone, 508, 257, 35, 2, 150, 0, { life: 4.3 }); playBoneEmergeSound(); });
+        once('s5-b4', 6.60, () => { spawnRecordedBoneV(zone, 133, 257, 95, 0, 90, 0, { life: 3.2 }); playBoneEmergeSound(); });
+        once('s5-b5', 7.30, () => { spawnRecordedBoneV(zone, 508, 276, 110, 2, 240, 0, { life: 2.4 }); playBoneEmergeSound(); });
+        break;
+      }
+
+      case 6: { // sans_platforms3.csv
+        once('s6-platforms', .01, () => {
+          spawnRecordedPlatformRepeat(RECORDED_ZONE.wide, 513, 346, 121, 2, 120, 5, 220, { life: 8.3 });
+          spawnRecordedPlatformRepeat(RECORDED_ZONE.wide, -71, 306, 161, 0, 120, 4, 280, { life: 8.3 });
+        });
+        const choices = [2, 1, 0, 2, 0, 1, 2, 1, 0, 1, 2, 0, 2, 1, 0, 2];
+        choices.forEach((choice, index) => once('s6-bone-' + index, .08 + index * .50, () => {
+          if (choice === 0) spawnRecordedBoneV(RECORDED_ZONE.wide, 517, 257, 45, 2, 120, 0, { life: 2.4 });
+          else if (choice === 1) spawnRecordedBoneV(RECORDED_ZONE.wide, 125, 306, 40, 0, 120, 0, { life: 2.4 });
+          else spawnRecordedBoneV(RECORDED_ZONE.wide, 517, 349, 35, 2, 120, 0, { life: 2.4 });
+          playBoneEmergeSound();
+        }));
+        break;
+      }
+
+      case 7: { // sans_platforms4.csv
+        once('s7-all', .01, () => {
+          const zone = RECORDED_ZONE.wideTall;
+          spawnRecordedPlatform(zone, 151, 336, 41, 0, 90, { life: 7.4 });
+          setRecordedHeart(zone, 175, 327);
+          spawnRecordedBoneVRepeat(zone, 528, 366, 40, 0, 60, 60, 15, 0, { life: 7.4 });
+          spawnRecordedBoneVRepeat(zone, 283, 267, 40, 3, 90, 11, 85, 0, { life: 7.4 });
+          spawnRecordedBoneVRepeat(zone, 363, 331, 40, 1, 120, 13, 95, 0, { life: 7.4 });
+          spawnRecordedBoneVRepeat(zone, 443, 248, 40, 3, 90, 11, 85, 0, { life: 7.4 });
+        });
+        break;
+      }
+
+      case 8: { // sans_platformblaster.csv
+        once('s8-platforms', .01, () => {
+          spawnRecordedPlatformRepeat(RECORDED_ZONE.wide, 552, 346, 51, 2, 120, 8, 140, { life: 9.0 });
+          spawnRecordedPlatformRepeat(RECORDED_ZONE.wide, -20, 306, 51, 0, 120, 8, 160, { life: 9.0 });
+        });
+        const leftRows = [285, 365, 325, 285, 365];
+        const rightRows = [365, 325, 285, 365, 325];
+        for (let index = 0; index < 5; index++) {
+          once('s8-left-' + index, .08 + index * 1.80, () =>
+            spawnRecordedBlaster(0, 0, 0, 73, leftRows[index], 0, .566, .10));
+          once('s8-right-' + index, .98 + index * 1.80, () =>
+            spawnRecordedBlaster(0, 640, 0, 563, rightRows[index], 180, .566, .10));
         }
         break;
       }
 
-      case 9: { // Rapid alternating ceiling/floor pillar trains.
-        for (let i = 0; i < 8; i++) {
-          once('s9-wave-' + i, .02 + i * .68, () => spawnAlternatingPillars({
-            fromRight: i % 2 === 0,
-            speed: 118,
-            count: 7,
-            spacing: 17,
-            offset: i,
-            heights: [39, 19, 35, 21, 37, 18, 32],
-            life: 4.0
-          }));
-        }
+      case 9: { // sans_platforms4hard.csv
+        once('s9-all', .01, () => {
+          const zone = RECORDED_ZONE.wideTall;
+          spawnRecordedPlatform(zone, 151, 336, 31, 0, 90, { life: 7.4 });
+          setRecordedHeart(zone, 175, 327);
+          spawnRecordedBoneVRepeat(zone, 528, 366, 40, 0, 60, 60, 15, 0, { life: 7.4 });
+          spawnRecordedBoneVRepeat(zone, 283, 268, 40, 3, 90, 12, 65, 0, { life: 7.4 });
+          spawnRecordedBoneVRepeat(zone, 363, 325, 40, 1, 120, 11, 90, 0, { life: 7.4 });
+          spawnRecordedBoneVRepeat(zone, 443, 268, 40, 3, 90, 12, 65, 0, { life: 7.4 });
+        });
         break;
       }
 
-      case 10: { // Tall paired bone gates sweep from one edge, then reverse once.
-        for (let i = 0; i < 6; i++) {
-          once('s10-bars-' + i, .03 + i * .92, () => spawnFullHeightBarTrain({
-            fromRight: i < 5,
-            speed: 105 + i * 4,
-            count: i % 2 ? 4 : 5,
-            spacing: 22,
-            life: 4.4
-          }));
-        }
+      case 10: { // sans_bonegap1fast.csv
+        once('s10-recorded', .40, () => {
+          const zone = RECORDED_ZONE.wide;
+          spawnRecordedBoneVRepeat(zone, 128, 257, 95, 0, 210, 8, 133, 0, { life: 5.9 });
+          spawnRecordedBoneVRepeat(zone, 128, 366, 20, 0, 210, 8, 133, 0, { life: 5.9 });
+          spawnRecordedBoneVRepeat(zone, 503, 257, 95, 2, 210, 8, 133, 0, { life: 5.9 });
+          spawnRecordedBoneVRepeat(zone, 503, 366, 20, 2, 210, 8, 133, 0, { life: 5.9 });
+        });
         break;
       }
 
-      case 11: { // Mirrored shared-gap bone gates close in from both sides.
-        for (let i = 0; i < 8; i++) {
-          once('s11-mirror-' + i, .02 + i * .68, () => spawnMirroredPillarWave({
-            speed: 112,
-            count: 3,
-            spacing: 17,
-            offset: i,
-            life: 4.0,
-            heights: [36, 18, 30, 21, 38, 17]
-          }));
-        }
+      case 11: { // sans_boneslideh.csv
+        once('s11-recorded', .50, () => {
+          spawnRecordedBoneVRepeat(RECORDED_ZONE.wide, 128, 366, 20, 0, 120, 8, 76, 0, { life: 7.1 });
+          spawnRecordedBoneVRepeat(RECORDED_ZONE.wide, 513, 257, 107, 2, 120, 8, 76, 0, { life: 7.1 });
+        });
         break;
       }
 
-      case 12: { // Second-half opener: blue walls, white pillars and short floor groups.
-        for (let i = 0; i < 5; i++) {
-          once('s12-blue-' + i, .02 + i * 1.30, () => spawnBlueWallPair({ speed: 82 + i * 3, life: 2.35, inset: i % 2 ? 7 : 0 }));
-          once('s12-pillars-' + i, .34 + i * 1.30, () => spawnAlternatingPillars({
-            fromRight: i % 2 === 0,
-            speed: 104,
-            count: 5,
-            spacing: 22,
-            offset: i,
-            heights: [33, 17, 29, 20, 35],
-            life: 3.7
-          }));
-          once('s12-floor-' + i, .76 + i * 1.30, () => spawnFloorTeeth({
-            height: 7,
-            spacing: 9,
-            life: .78,
-            gapX: battleArena().left + 18 + (i % 4) * 46,
-            gapRadius: 10
-          }));
-        }
+      case 12: { // second deterministic sans_bonegap2 roll.
+        once('s12-recorded', .02, () => spawnRecordedBoneGap2(
+          [1, 0, 3, 2, 0, 1, 3, 0, 2, 1, 0, 3],
+          [0, 2, -2, 0, 2, -2]
+        ));
         break;
       }
 
-      case 13: { // Medium-box diagonal blaster dance in the observed order.
+      case 13: { // sans_multi1.csv, choices observed in the supplied video.
+        const choices = [[.02, 1], [1.48, 2], [3.22, 3], [5.10, 4], [6.72, 1]];
+        choices.forEach((choice, index) => once('s13-sub-' + index, choice[0], () =>
+          spawnMulti1Attack(choice[1])
+        ));
+        break;
+      }
+
+      case 14: { // sans_randomblaster1.csv: 15 thin aimed blasters.
         setScriptSoul('red', GravityDirection.DOWN, false);
-        const angles = [.05, .62, 1.26, 2.78, 3.20, 4.32, 5.10, .34, 1.78, 2.54, 4.82, 5.66];
-        angles.forEach((angle, i) => once('s13-beam-' + i, .02 + i * .55, () => spawnAngledBlasterRing({
-          count: 2,
-          baseAngle: angle,
-          warning: .34,
-          life: .70,
-          thickness: 6,
-          radiusX: 91,
-          radiusY: 52
-        })));
+        const angles = [.05, 3.12, .82, 4.05, 2.42, 5.32, 3.02, .22,
+          1.72, 4.78, 2.82, 5.88, 1.10, 3.88, 5.14];
+        angles.forEach((angle, index) => once('s14-blaster-' + index,
+          .50 + index * .53333,
+          () => spawnAimedRecordedBlaster(angle, 0, .46666, .03333)
+        ));
         break;
       }
 
-      case 14: { // Mixed small-box sequence: cardinal beam, slanted bone boxes, X, then wide pillars.
-        once('s14-start', .01, () => {
-          setSansArena('square', true);
-          setScriptSoul('red', GravityDirection.DOWN, false);
-          spawnAngledBlasterRing({ count: 4, baseAngle: 0, warning: .30, life: .68, thickness: 7 });
-        });
-        once('s14-cross', .46, () => {
-          const a = battleArena();
-          spawnHorizontalBlaster((a.top + a.bottom) / 2, { side: 'left', warning: .27, life: .64, thickness: 8 });
-          spawnVerticalBlaster((a.left + a.right) / 2, { side: 'top', warning: .27, life: .64, thickness: 8 });
-        });
-        once('s14-slope-right', 1.12, () => spawnSlantedBoneTunnel({ fromRight: true, speed: 134, count: 12, opening: 14, slope: 2.8, life: 3.3 }));
-        once('s14-slope-left', 2.12, () => spawnSlantedBoneTunnel({ fromRight: false, speed: 138, count: 12, opening: 14, slope: -2.7, life: 3.3 }));
-        once('s14-x', 3.06, () => spawnAngledBlasterRing({ count: 4, baseAngle: Math.PI / 4, warning: .3, life: .70, thickness: 8 }));
-        once('s14-wide', 3.82, () => {
-          clearSansThreats();
-          setSansArena('wide', true);
-          setScriptSoul('blue', GravityDirection.DOWN, false);
-        });
-        for (let i = 0; i < 4; i++) {
-          once('s14-wide-pillars-' + i, 3.92 + i * .66, () => spawnAlternatingPillars({
-            fromRight: i % 2 === 0,
-            speed: 124,
-            count: 6,
-            spacing: 18,
-            offset: i,
-            heights: [36, 18, 32, 20, 37, 17],
-            life: 3.5
-          }));
-        }
-        once('s14-square-again', 6.28, () => {
-          clearSansThreats();
-          setSansArena('square', true);
-          setScriptSoul('red', GravityDirection.DOWN, false);
-        });
-        once('s14-slope-final', 6.38, () => spawnSlantedBoneTunnel({ fromRight: true, speed: 142, count: 13, opening: 13, slope: -2.9, life: 3.0 }));
-        once('s14-corners-final', 7.38, () => spawnAngledBlasterRing({ count: 4, baseAngle: Math.PI / 4, warning: .28, life: .66, thickness: 7 }));
+      case 15: { // sans_multi2.csv, exact subattack order visible in the supplied run.
+        const choices = [[.02, 6], [1.34, 7], [3.04, 6], [4.34, 5], [6.05, 8]];
+        choices.forEach((choice, index) => once('s15-sub-' + index, choice[0], () =>
+          spawnMulti2Attack(choice[1])
+        ));
         break;
       }
 
-      case 15: { // First long square wall-slam sequence; impact walls grow bones automatically.
+      case 16: { // sans_bonestab1.csv: nine wall slams.
         const directions = [
           GravityDirection.RIGHT, GravityDirection.RIGHT,
           GravityDirection.DOWN, GravityDirection.LEFT,
           GravityDirection.DOWN, GravityDirection.UP,
           GravityDirection.LEFT, GravityDirection.RIGHT,
-          GravityDirection.RIGHT, GravityDirection.DOWN,
-          GravityDirection.LEFT, GravityDirection.RIGHT
+          GravityDirection.RIGHT
         ];
-        directions.forEach((direction, i) => once('s15-slam-' + i, .02 + i * .72, () => slamSoul(direction)));
+        directions.forEach((direction, index) => once('s16-slam-' + index,
+          .27 + index * .92, () => slamSoul(direction)));
         break;
       }
 
-      case 16: { // Second square slam set, with a different recorded direction order.
+      case 17: { // sans_bonestab2.csv: nine faster wall slams.
         const directions = [
           GravityDirection.LEFT, GravityDirection.UP,
           GravityDirection.DOWN, GravityDirection.RIGHT,
           GravityDirection.UP, GravityDirection.RIGHT,
           GravityDirection.DOWN, GravityDirection.LEFT,
-          GravityDirection.UP, GravityDirection.RIGHT,
-          GravityDirection.DOWN
+          GravityDirection.UP
         ];
-        directions.forEach((direction, i) => once('s16-slam-' + i, .02 + i * .67, () => slamSoul(direction)));
+        directions.forEach((direction, index) => once('s17-slam-' + index,
+          .27 + index * .76, () => slamSoul(direction)));
         break;
       }
 
-      case 17: { // Faster second diagonal Gaster Blaster dance.
+      case 18: { // sans_randomblaster2.csv: 12 larger aimed blasters.
         setScriptSoul('red', GravityDirection.DOWN, false);
-        const angles = [.82, 3.18, 5.82, .16, 2.02, 4.56, 5.48, 1.30, 3.70, .58, 2.82, 4.98, 1.88];
-        angles.forEach((angle, i) => once('s17-ring-' + i, .02 + i * .55, () => spawnAngledBlasterRing({
-          count: 2,
-          baseAngle: angle,
-          warning: .30,
-          life: .66,
-          thickness: 6,
-          radiusX: 93,
-          radiusY: 54
-        })));
+        const angles = [.82, 3.18, 5.82, .16, 2.02, 4.56,
+          5.48, 1.30, 3.70, .58, 2.82, 4.98];
+        angles.forEach((angle, index) => once('s18-blaster-' + index,
+          .40 + index * .66666,
+          () => spawnAimedRecordedBlaster(angle, 1, .66666, .03333)
+        ));
         break;
       }
 
-      case 18: { // Long horizontal bone bars slide past the red soul in pairs.
-        setScriptSoul('red', GravityDirection.DOWN, false);
-        const a = battleArena();
-        const ys = [a.top + 7, a.bottom - 8, a.top + 19, a.bottom - 20, a.top + 31, a.bottom - 32, (a.top + a.bottom) / 2];
-        ys.forEach((y, i) => once('s18-bar-' + i, .02 + i * .68, () => {
-          spawnHorizontalBoneBar(y, { fromRight: i % 2 === 1, speed: 148 + i * 3, length: 138, life: 3.0 });
-          if (i % 2 === 0) spawnHorizontalBoneBar(y + 8, { fromRight: true, speed: 142 + i * 3, length: 112, life: 3.0 });
-        }));
+      case 19: { // sans_boneslidev.csv
+        once('s19-recorded', .20, () => {
+          spawnRecordedBoneHRepeat(RECORDED_ZONE.square,
+            130, -10, 200, 1, 300, 7, 183, 0, { life: 5.7 });
+          spawnRecordedBoneHRepeat(RECORDED_ZONE.square,
+            330, 650, 200, 3, 300, 7, 183, 0, { life: 5.7 });
+        });
         break;
       }
 
-      case 19: { // Rapid shuffled replay of earlier mechanics in the video order.
-        once('s19-wide-start', .01, () => {
-          setSansArena('wide', true);
-          setScriptSoul('blue', GravityDirection.DOWN, false);
-          spawnAlternatingPillars({ fromRight: true, speed: 126, count: 7, spacing: 17, offset: 0, heights: [37, 18, 33, 20, 35, 17, 31], life: 3.2 });
-        });
-        once('s19-pillars-left', .68, () => spawnAlternatingPillars({ fromRight: false, speed: 128, count: 7, spacing: 17, offset: 1, heights: [35, 19, 31, 21, 37, 18, 29], life: 3.2 }));
-        once('s19-floor-phase', 1.42, () => {
-          clearSansThreats();
-          setSansArena('wideTall', true);
-          setScriptSoul('blue', GravityDirection.DOWN, false);
-          spawnFloorTeeth({ height: 7, spacing: 6, life: 2.1, keepGap: false });
-          spawnVerticalDropSet({ count: 6, speed: 108, offset: 0, life: 2.2 });
-        });
-        once('s19-blue-wall', 2.42, () => {
-          spawnBlueWallPair({ speed: 94, life: 2.2 });
-          spawnAlternatingPillars({ fromRight: true, speed: 116, count: 5, spacing: 20, offset: 2, life: 3.0 });
-        });
-        once('s19-square-slope', 3.45, () => {
-          clearSansThreats();
-          setSansArena('square', true);
-          setScriptSoul('red', GravityDirection.DOWN, false);
-          spawnSlantedBoneTunnel({ fromRight: true, speed: 144, count: 12, opening: 13, slope: 2.9, life: 2.8 });
-        });
-        once('s19-square-slope-2', 4.35, () => spawnSlantedBoneTunnel({ fromRight: false, speed: 146, count: 12, opening: 13, slope: -2.9, life: 2.8 }));
-        once('s19-long-floor', 5.30, () => {
-          clearSansThreats();
-          setSansArena('wideTall', true);
-          setScriptSoul('blue', GravityDirection.DOWN, false);
-          spawnFloorTeeth({ height: 7, spacing: 6, life: 2.6, keepGap: false });
-          spawnUniformPillarTrain({ fromRight: true, fromTop: true, speed: 118, count: 5, spacing: 15, heights: [31, 24, 35, 21, 29], life: 3.0 });
-        });
-        once('s19-blue-late', 6.38, () => spawnBlueWallPair({ speed: 96, life: 2.0, inset: 4 }));
-        once('s19-last-wide', 7.08, () => {
-          clearSansThreats();
-          setSansArena('wide', true);
-          setScriptSoul('blue', GravityDirection.DOWN, false);
-          spawnMirroredPillarWave({ speed: 126, count: 4, spacing: 17, offset: 3, life: 3.0 });
-        });
-        once('s19-last-wide-2', 7.82, () => spawnMirroredPillarWave({ speed: 130, count: 4, spacing: 17, offset: 4, life: 3.0 }));
-        once('s19-last-wide-3', 8.48, () => spawnMirroredPillarWave({ speed: 132, count: 3, spacing: 18, offset: 5, life: 2.6 }));
+      case 20: { // sans_multi3.csv, five observed subattacks.
+        once('s20-a', .02, () => spawnMulti2Attack(8));
+        once('s20-b', 1.52, () => spawnMulti2Attack(5));
+        once('s20-c', 3.05, () => spawnMulti1Attack(1));
+        once('s20-d', 4.55, () => spawnMulti2Attack(7));
+        once('s20-e', 6.35, () => spawnMulti1Attack(4));
         break;
       }
 
-      case 20: { // Short pre-finale square slam sequence.
+      case 21: { // sans_bonestab3.csv: final nine rapid wall slams before the special.
         const directions = [
           GravityDirection.DOWN, GravityDirection.UP,
           GravityDirection.UP, GravityDirection.LEFT,
@@ -4567,11 +5242,12 @@
           GravityDirection.LEFT, GravityDirection.UP,
           GravityDirection.RIGHT
         ];
-        directions.forEach((direction, i) => once('s20-slam-' + i, .02 + i * .52, () => slamSoul(direction)));
+        directions.forEach((direction, index) => once('s21-slam-' + index,
+          .27 + index * .50, () => slamSoul(direction)));
         break;
       }
 
-      case 21: { // Final: square slams -> long bone tunnel -> bone border -> blaster spiral -> final slams.
+      case 22: { // Final attack.
         if (elapsed < 3.55) {
           activeSansArena = resolveArenaBox(SANS_ARENA_PRESETS.square);
         } else if (elapsed < 4.42) {
@@ -4584,14 +5260,26 @@
             w: from.w + (to.w - from.w) * p,
             h: from.h + (to.h - from.h) * p
           });
-        } else if (elapsed < 13.65) {
+        } else if (elapsed < 15.35) {
           activeSansArena = resolveArenaBox(SANS_ARENA_PRESETS.long);
+        } else if (elapsed < 15.58) {
+          const p = smoothstep01((elapsed - 15.35) / .23);
+          const from = SANS_ARENA_PRESETS.long;
+          const to = SANS_ARENA_PRESETS.square;
+          activeSansArena = resolveArenaBox({
+            x: from.x + (to.x - from.x) * p,
+            y: from.y + (to.y - from.y) * p,
+            w: from.w + (to.w - from.w) * p,
+            h: from.h + (to.h - from.h) * p
+          });
+        } else {
+          activeSansArena = resolveArenaBox(SANS_ARENA_PRESETS.square);
         }
 
-        once('s21-start', .01, () => {
+        once('s22-start', .01, () => {
           setSansArena('square', true);
           setScriptSoul('blue', GravityDirection.DOWN, false);
-          spawnFloorTeeth({ height: 6, spacing: 7, life: .9 });
+          spawnFloorTeeth({ height: 6, spacing: 7, life: .9, gapX: heart.x, gapRadius: 8 });
         });
         const openingDirections = [
           GravityDirection.RIGHT, GravityDirection.DOWN,
@@ -4599,9 +5287,11 @@
           GravityDirection.RIGHT, GravityDirection.DOWN,
           GravityDirection.LEFT, GravityDirection.UP
         ];
-        openingDirections.forEach((direction, i) => once('s21-open-slam-' + i, .08 + i * .43, () => slamSoul(direction)));
-        once('s21-clear-stretch', 3.50, () => clearSansThreats());
-        once('s21-long-ready', 4.43, () => {
+        openingDirections.forEach((direction, i) => once(
+          's22-open-slam-' + i, .08 + i * .43, () => slamSoul(direction)
+        ));
+        once('s22-clear-stretch', 3.50, () => clearSansThreats());
+        once('s22-long-ready', 4.43, () => {
           setSansArena('long', false);
           setScriptSoul('blue', GravityDirection.DOWN, false);
           const a = battleArena();
@@ -4610,27 +5300,45 @@
           heart.vx = 0;
           heart.vy = 0;
         });
-        once('s21-tunnel', 4.48, () => spawnFinalBoneTunnelTrain({ speed: 142, life: 10.2 }));
-        once('s21-square-return', 13.68, () => {
+        once('s22-tunnel', 4.48, () => spawnFinalBoneTunnelTrain({
+          speed: 142, life: 10.2
+        }));
+        once('s22-square-return', 15.58, () => {
           clearSansThreats();
           setSansArena('square', true);
-          setScriptSoul('red', GravityDirection.DOWN, false);
+          setScriptSoul('blue', GravityDirection.DOWN, false);
         });
-        once('s21-border-a', 14.08, () => spawnBoneBorder({ height: 7, spacing: 7, life: 4.4 }));
-        once('s21-border-b', 16.25, () => spawnBoneBorder({ height: 8, spacing: 6, life: 2.4 }));
-        for (let i = 0; i < 12; i++) {
-          once('s21-ring-' + i, 18.75 + i * .86, () => spawnAngledBlasterRing({
-            count: 12,
-            baseAngle: i * .31,
-            warning: .32,
-            life: .72,
-            thickness: 6,
-            radiusX: 76,
-            radiusY: 55,
-            length: 310
-          }));
-        }
-        once('s21-final-slam-start', 29.45, () => {
+        once('s22-bones-top-bottom', 16.30, () => spawnBoneEdgeSet({
+          top: true, bottom: true, depth: 11, spacing: 5, life: .52
+        }));
+        once('s22-clear-top-left', 16.82, () => clearSansThreats());
+        once('s22-bones-top-left', 17.30, () => spawnBoneEdgeSet({
+          top: true, left: true, depth: 11, spacing: 5, life: .50
+        }));
+        once('s22-clear-bottom-right', 17.80, () => clearSansThreats());
+        once('s22-bones-bottom-right', 18.30, () => spawnBoneEdgeSet({
+          bottom: true, right: true, depth: 11, spacing: 5, life: .52
+        }));
+        once('s22-clear-left', 18.82, () => clearSansThreats());
+        once('s22-bones-left', 19.22, () => {
+          setScriptSoul('red', GravityDirection.DOWN, false);
+          spawnBoneEdgeSet({ left: true, depth: 12, spacing: 5, life: 1.30 });
+        });
+        once('s22-sequential-ring', 19.35, () => spawnSequentialBlasterSpiral({
+          count: 64,
+          startAngle: 0,
+          angleStep: -Math.PI / 32,
+          appearanceDuration: .95,
+          fireDelay: 1.0,
+          fireStep: .13,
+          chargeDuration: .24,
+          activeDuration: .45,
+          thickness: 6,
+          radiusX: 76,
+          radiusY: 55,
+          length: 310
+        }));
+        once('s22-final-slam-start', 29.05, () => {
           clearSansThreats();
           setSansArena('square', true);
           setScriptSoul('blue', GravityDirection.DOWN, false);
@@ -4643,20 +5351,23 @@
           GravityDirection.DOWN, GravityDirection.RIGHT,
           GravityDirection.UP, GravityDirection.LEFT
         ];
-        for (let i = 0; i < 35; i++) {
-          once('s21-final-slam-' + i, 29.60 + i * .54, () => slamSoul(finalDirections[i % finalDirections.length]));
+        for (let i = 0; i < 33; i++) {
+          once('s22-final-slam-' + i, 29.18 + i * .50, () =>
+            slamSoul(finalDirections[i % finalDirections.length])
+          );
         }
         break;
       }
 
       default: {
-        once('sans-fallback', .02, () => spawnMirroredPillarWave({ speed: 112, count: 4, life: 4 }));
+        once('sans-fallback', .02, () => spawnBoneGapLine({
+          fromRight: false, speed: 120, opening: 16, bottomHeight: 6
+        }));
         break;
       }
     }
     return true;
   }
-
 
   function applySansDamage(now) {
     // 連続接触中も約0.1秒ごとの判定に抑え、HPが一瞬で消えないようにする。
@@ -4811,22 +5522,26 @@
         }
       } else if (bullet.kind === 'bone') {
         const heartRadius = stage === 10 ? 2.25 : 4;
+        const extent = effectiveBoneExtent(bullet);
         if (bullet.orientation === 'horizontal') {
-          const boneLength = bullet.length || bullet.h;
+          const boneLength = extent;
           const boneLeft = bullet.fromStart ? bullet.x : bullet.x - boneLength;
-          hit = Math.abs(bullet.y - heart.y) < (stage === 10 ? 2.35 : 5)
+          hit = boneLength >= 1
+            && Math.abs(bullet.y - heart.y) < (stage === 10 ? 2.35 : 5)
             && heart.x > boneLeft - heartRadius
             && heart.x < boneLeft + boneLength + heartRadius;
         } else {
-          const boneTop = bullet.fromTop ? bullet.y : bullet.y - bullet.h;
-          const boneBottom = boneTop + bullet.h;
-          hit = Math.abs(bullet.x - heart.x) < (stage === 10 ? 2.35 : 5)
+          const boneTop = bullet.fromTop ? bullet.y : bullet.y - extent;
+          const boneBottom = boneTop + extent;
+          hit = extent >= 1
+            && Math.abs(bullet.x - heart.x) < (stage === 10 ? 2.35 : 5)
             && heart.y > boneTop - heartRadius
             && heart.y < boneBottom + heartRadius;
         }
       } else {
         hit = Math.abs(bullet.x - heart.x) < 6 && Math.abs(bullet.y - heart.y) < 7;
       }
+      if (bullet.cosmetic) hit = false;
       if (bullet.kind === 'bone' && bullet.boneType === 1) {
         const heartIsMoving = keys.has('ArrowLeft')
           || keys.has('ArrowRight')
