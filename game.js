@@ -159,7 +159,7 @@
     9000, 7800, 8600, 6100, 9000, 5200, 50000
   ];
   const SANS_SCRIPT_META = [
-    { arena: 'square', soul: 'blue', gravity: true },       // opening
+    { arena: 'square', soul: 'red', gravity: false },       // opening: hand raise, then blue slam
     { arena: 'wide', soul: 'blue', gravity: true },         // bone gap
     { arena: 'wide', soul: 'blue', gravity: true },         // blue bone
     { arena: 'wide', soul: 'blue', gravity: true },         // random bone lines
@@ -183,25 +183,25 @@
     { arena: 'square', soul: 'blue', gravity: true },       // wall slam 3
     { arena: 'square', soul: 'blue', gravity: true, final: true }
   ];
-  const TEST_PLAY_INVINCIBLE = false;
-  const RED_SOUL_MOVE_SPEED = 145;
-  const BLUE_SOUL_TANGENT_SPEED = 132;
+  const TEST_PLAY_INVINCIBLE = true;
+  const RED_SOUL_MOVE_SPEED = 155;
+  const BLUE_SOUL_TANGENT_SPEED = 142;
   // Lower peak speed plus variable hold makes short hops predictable and
   // prevents a full press from crossing narrow final corridors by itself.
-  const BLUE_SOUL_JUMP_VELOCITY = 150;
-  const BLUE_SOUL_JUMP_HOLD_ACCEL = 220;
-  const BLUE_SOUL_JUMP_HOLD_TIME = .11;
-  const BLUE_SOUL_GRAVITY = 520;
-  const BLUE_SOUL_PRELIFT_SPEED = 76;
-  const BLUE_SOUL_COYOTE_TIME = .09;
-  const BLUE_SOUL_JUMP_BUFFER_TIME = .12;
-  const BLUE_SOUL_RELEASE_MULTIPLIER = .58;
+  const BLUE_SOUL_JUMP_VELOCITY = 178;
+  const BLUE_SOUL_JUMP_HOLD_ACCEL = 300;
+  const BLUE_SOUL_JUMP_HOLD_TIME = .15;
+  const BLUE_SOUL_GRAVITY = 500;
+  const BLUE_SOUL_PRELIFT_SPEED = 90;
+  const BLUE_SOUL_COYOTE_TIME = .13;
+  const BLUE_SOUL_JUMP_BUFFER_TIME = .16;
+  const BLUE_SOUL_RELEASE_MULTIPLIER = .62;
   // Final sleeping turn mapped from the supplied 640x480 video into the
   // game's 320x180 logical canvas. The frame first slides left, then drops over FIGHT.
   const FINAL_BOX_START = Object.freeze({ x: 124.5, y: 85, w: 74, h: 55.5 });
   const FINAL_BOX_TARGET = Object.freeze({ x: 25.5, y: 113.25 });
-  const FINAL_FIGHT_HITBOX = Object.freeze({ x: 35, y: 152, w: 42, h: 17 });
-  const FINAL_BOX_SLIDE_SPEED = 6.8;
+  const FINAL_FIGHT_HITBOX = Object.freeze({ x: 29, y: 151, w: 51, h: 19 });
+  const FINAL_BOX_SLIDE_SPEED = 8.25;
   const GravityDirection = Object.freeze({
     DOWN: 'down',
     UP: 'up',
@@ -714,10 +714,10 @@
             ? sansReferenceImage : aiGeneratedSansFallbackImage;
     const poseStarted = sansGestureStartedAt;
     const poseEnds = sansGestureUntil;
-    const inBlend = smoothstep01((t - poseStarted) / 78);
-    const outBlend = smoothstep01((poseEnds + 115 - t) / 115);
+    const inBlend = smoothstep01((t - poseStarted) / 18);
+    const outBlend = smoothstep01((poseEnds + 42 - t) / 42);
     const canGesture = !resting && !finalDodge && !wounded;
-    const poseBlend = canGesture && t >= poseStarted && t <= poseEnds + 115
+    const poseBlend = canGesture && t >= poseStarted && t <= poseEnds + 42
       ? Math.min(inBlend, outBlend)
       : 0;
 
@@ -2672,8 +2672,6 @@
 
   function updateSansFinalBoxMove(dt) {
     const leftHeld = keys.has('ArrowLeft');
-    const rightHeld = keys.has('ArrowRight');
-    const upHeld = keys.has('ArrowUp');
     const downHeld = keys.has('ArrowDown');
     const padding = 5;
     sansFinalBox.fightReady = false;
@@ -2682,58 +2680,26 @@
       const bounds = moveHeartInsideFinalBox(dt);
       const inLowerLeft = heart.x <= bounds.minX + .2
         && heart.y >= bounds.maxY - .2;
-      if (inLowerLeft && leftHeld) {
-        sansFinalBox.phase = 'slideX';
+      if (inLowerLeft && (leftHeld || downHeld)) {
+        sansFinalBox.phase = 'slideToFight';
         beep(220, .035);
       }
       return;
     }
 
-    if (sansFinalBox.phase === 'slideX') {
-      if (leftHeld) {
-        sansFinalBox.x = Math.max(
-          FINAL_BOX_TARGET.x,
-          sansFinalBox.x - FINAL_BOX_SLIDE_SPEED * dt
-        );
+    if (sansFinalBox.phase === 'slideToFight') {
+      const dx = FINAL_BOX_TARGET.x - sansFinalBox.x;
+      const dy = FINAL_BOX_TARGET.y - sansFinalBox.y;
+      const distance = Math.hypot(dx, dy);
+      if (distance > .01) {
+        const step = Math.min(distance, FINAL_BOX_SLIDE_SPEED * dt);
+        sansFinalBox.x += dx / distance * step;
+        sansFinalBox.y += dy / distance * step;
       }
       heart.x = sansFinalBox.x + padding;
-      if (upHeld || downHeld) {
-        const direction = (downHeld ? 1 : 0) - (upHeld ? 1 : 0);
-        heart.y += direction * RED_SOUL_MOVE_SPEED * dt;
-      }
-      clampHeartToFinalBox(padding);
-      if (sansFinalBox.x <= FINAL_BOX_TARGET.x + .01) {
-        sansFinalBox.x = FINAL_BOX_TARGET.x;
-        sansFinalBox.phase = 'positionY';
-        beep(330, .035);
-      }
-      return;
-    }
-
-    if (sansFinalBox.phase === 'positionY') {
-      const bounds = moveHeartInsideFinalBox(dt);
-      const onBottomEdge = heart.y >= bounds.maxY - .2;
-      if (onBottomEdge && downHeld) {
-        sansFinalBox.phase = 'slideY';
-        beep(220, .035);
-      }
-      return;
-    }
-
-    if (sansFinalBox.phase === 'slideY') {
-      if (downHeld) {
-        sansFinalBox.y = Math.min(
-          FINAL_BOX_TARGET.y,
-          sansFinalBox.y + FINAL_BOX_SLIDE_SPEED * dt
-        );
-      }
       heart.y = sansFinalBox.y + sansFinalBox.h - padding;
-      if (leftHeld || rightHeld) {
-        const direction = (rightHeld ? 1 : 0) - (leftHeld ? 1 : 0);
-        heart.x += direction * RED_SOUL_MOVE_SPEED * dt;
-      }
-      clampHeartToFinalBox(padding);
-      if (sansFinalBox.y >= FINAL_BOX_TARGET.y - .01) {
+      if (distance <= .08) {
+        sansFinalBox.x = FINAL_BOX_TARGET.x;
         sansFinalBox.y = FINAL_BOX_TARGET.y;
         sansFinalBox.phase = 'docked';
         sansFinalBox.docked = true;
@@ -3884,7 +3850,7 @@
 
     // 着地点の周囲だけに狭い空間を残し、叩きつけと同時の確定被弾を防ぐ。
     for (let position = start; position <= end; position += 7) {
-      if (Math.abs(position - tangent) < 11) continue;
+      if (Math.abs(position - tangent) < 13) continue;
       if (verticalWall) {
         addProjectile('bone', position,
           direction === GravityDirection.DOWN ? arena.bottom : arena.top,
@@ -4072,7 +4038,7 @@
 
   function safeRouteWindow(arena, options = {}) {
     const height = arena.bottom - arena.top;
-    const opening = Math.max(18, Math.min(height - 8, options.opening || 20));
+    const opening = Math.max(20, Math.min(height - 8, options.opening || 22));
     let center = Number.isFinite(options.routeCenter) ? options.routeCenter : null;
     if (center === null) {
       if (soulMode === 'blue' && gravityDirection === GravityDirection.DOWN) {
@@ -4553,9 +4519,9 @@
     const direction = fromRight ? -1 : 1;
     const speed = options.speed || 122;
     const count = options.count || 12;
-    const spacing = options.spacing || 7;
-    const opening = options.opening || 14;
-    const slope = options.slope || 2.4;
+    const spacing = Math.max(10, options.spacing || 10);
+    const opening = Math.max(20, options.opening || 20);
+    const slope = Math.max(-2.25, Math.min(2.25, options.slope || 2.0));
     const life = options.life || 5;
     const startX = fromRight ? arena.right + 8 : arena.left - 8;
     const center = (arena.top + arena.bottom) / 2;
@@ -5055,10 +5021,11 @@
     const transform = recordedTransform(source);
     const arena = transform.arena;
     const scaledSpeed = speed * transform.scaleX;
-    const spacing = options.spacing || 7;
-    const opening = options.opening || 14;
+    const spacing = Math.max(10, options.spacing || 10);
+    const opening = Math.max(20, options.opening || 20);
     const center = (arena.top + arena.bottom) / 2;
-    const wave = amplitude * transform.scaleY;
+    const maxWave = Math.max(0, (arena.bottom - arena.top - opening) / 2 - 3);
+    const wave = Math.min(amplitude * transform.scaleY, maxWave);
     const startX = arena.right + 8;
     for (let index = 0; index < count; index++) {
       const x = startX + index * spacing;
@@ -5217,25 +5184,28 @@
       case 0: { // sans_intro.csv: slam, sine corridor, +, X, +, giant horizontal pair.
         once('s0-start', .01, () => {
           setSansArena('square', true);
-          setScriptSoul('blue', GravityDirection.DOWN, true);
+          setScriptSoul('red', GravityDirection.DOWN, true);
+          sansGestureDirection = GravityDirection.UP;
+          sansGestureStartedAt = now;
+          sansGestureUntil = now + 920;
         });
-        // In the reference footage Sans raises his hand while forcing the
-        // blue soul downward. The pose therefore intentionally differs from
-        // the gravity direction during this one opening slam.
-        once('s0-slam', .27, () => slamSoul(
-          GravityDirection.DOWN, GravityDirection.UP, 520
-        ));
-        once('s0-floor', .77, () => spawnFloorTeeth({
-          height: 11, spacing: 5, life: .55, gapX: heart.x, gapRadius: 7
+        // The hand appears first while the soul is still red.  A few frames
+        // later the soul turns blue and is slammed down, matching the video.
+        once('s0-slam', .36, () => {
+          setScriptSoul('blue', GravityDirection.DOWN, false);
+          slamSoul(GravityDirection.DOWN, GravityDirection.UP, 620);
+        });
+        once('s0-floor', .82, () => spawnFloorTeeth({
+          height: 10, spacing: 6, life: .52, gapX: heart.x, gapRadius: 10
         }));
-        once('s0-red', 1.47, () => {
+        once('s0-red', 1.40, () => {
           clearSansThreats();
           setScriptSoul('red', GravityDirection.DOWN, true);
         });
-        once('s0-point', 1.97, () => {
+        once('s0-point', 1.46, () => {
           sansGestureDirection = GravityDirection.RIGHT;
           sansGestureStartedAt = now;
-          sansGestureUntil = now + 760;
+          sansGestureUntil = now + 820;
         });
         once('s0-sine', 2.27, () => spawnRecordedSineBones(
           RECORDED_ZONE.square, 20, 360, 25,
@@ -5668,6 +5638,7 @@
   }
 
   function applySansDamage(now) {
+    if (TEST_PLAY_INVINCIBLE) return;
     // 連続接触中も約0.1秒ごとの判定に抑え、HPが一瞬で消えないようにする。
     if (now - lastSansDamageAt < 100) return;
     lastSansDamageAt = now;
@@ -5685,6 +5656,11 @@
   }
 
   function updateKarmaDrain(dt) {
+    if (TEST_PLAY_INVINCIBLE) {
+      karmaHp = 0;
+      karmaDrainFrames = 0;
+      return;
+    }
     if (stage !== 10 || karmaHp <= 0) return;
     karmaDrainFrames += dt * 60;
     const period = karmaHp >= 30 ? 5 : karmaHp >= 15 ? 7 : 9;

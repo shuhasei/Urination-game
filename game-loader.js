@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const GAME_URL = 'game.js?v=20260806-final4';
+  const GAME_URL = 'game.js?v=20260806-final5';
   const hint = document.getElementById('start-hint');
 
   if (hint) {
