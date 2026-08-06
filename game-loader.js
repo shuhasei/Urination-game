@@ -1,10 +1,11 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260807-room11-live1';
+  const VERSION = '20260807-room11-hotfix2';
   const GAME_URL = `game.js?v=${VERSION}`;
   const MAIN_PATCH_URL = 'https://raw.githubusercontent.com/shuhasei/Urination-game/main/.github/scripts/apply_room11_omega.py';
   const RESCUE_PATCH_URL = 'https://raw.githubusercontent.com/shuhasei/Urination-game/main/.github/scripts/apply_room11_omega_rescue.py';
+  const HOTFIX_URL = `room11-hotfix.js?v=${VERSION}`;
   const PYODIDE_URL = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js';
   const PYODIDE_INDEX_URL = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/';
   const hint = document.getElementById('start-hint');
@@ -13,6 +14,12 @@
     if (!hint) return;
     hint.textContent = message;
     hint.classList.add('visible');
+  }
+
+  function hideHint() {
+    if (!hint) return;
+    hint.textContent = '';
+    hint.classList.remove('visible');
   }
 
   function fetchText(url) {
@@ -35,7 +42,7 @@
 
   function executeGame(source) {
     return new Promise((resolve, reject) => {
-      const blob = new Blob([`${source}\n//# sourceURL=game-room11-live.js`], {
+      const blob = new Blob([`${source}\n//# sourceURL=game-room11-hotfix.js`], {
         type: 'text/javascript'
       });
       const url = URL.createObjectURL(blob);
@@ -95,15 +102,18 @@ exec(compile(runner.read_text(encoding='utf-8'), str(runner), 'exec'), namespace
 
   async function start() {
     try {
-      const patchedSource = await buildPatchedGame();
-      showHint('更新したゲームを起動しています…');
-      await executeGame(patchedSource);
-      if (hint && hint.textContent === '更新したゲームを起動しています…') {
-        hint.textContent = 'ENTER / Z / タップ';
+      await loadExternalScript(HOTFIX_URL);
+      if (typeof window.applyRoom11Hotfix !== 'function') {
+        throw new Error('ROOM11 hotfix function is unavailable');
       }
+      const generatedSource = await buildPatchedGame();
+      showHint('表示と案内ルートを修正しています…');
+      const fixedSource = window.applyRoom11Hotfix(generatedSource);
+      await executeGame(fixedSource);
+      hideHint();
     } catch (error) {
       console.error('ROOM11 live patch failed:', error);
-      showHint('更新データの適用に失敗しました。再読み込みしてください。');
+      showHint('更新データの適用に失敗しました。Ctrl＋Shift＋Rで再読み込みしてください。');
     }
   }
 
