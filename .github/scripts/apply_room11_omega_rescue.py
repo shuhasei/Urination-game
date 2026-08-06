@@ -20,4 +20,4 @@ required = [
 missing = [item for item in required if item not in game]
 if missing:
     raise SystemExit('Core ROOM11 features missing: ' + ', '.join(missing))
-print('Resilient ROOM11 patch completed.')
+print('Resilient ROOM11 patch completed and verified.')
