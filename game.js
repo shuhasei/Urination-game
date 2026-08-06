@@ -204,6 +204,12 @@
   const FINAL_BOX_TARGET = Object.freeze({ x: 25.5, y: 113.25 });
   const FINAL_FIGHT_HITBOX = Object.freeze({ x: 29, y: 151, w: 51, h: 19 });
   const FINAL_BOX_SLIDE_SPEED = 8.25;
+  const ROOM11_OMEGA_MODULE_V1 = true;
+  const PROFILE_STORAGE_KEY = 'undertaleProfilesV2';
+  const ROOM11_BACKGROUND_GIF = 'data:image/gif;base64,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';
+  const room11BackgroundImage = new Image();
+  room11BackgroundImage.src = ROOM11_BACKGROUND_GIF;
+
   const GravityDirection = Object.freeze({
     DOWN: 'down',
     UP: 'up',
@@ -283,6 +289,8 @@
   let playerName = localStorage.getItem('undertalePlayerName') || '';
   let nameDraft = playerName;
   let pacifistRoutePending = false;
+  let guideChoice=0, guideAccepted=false, guideStartedAt=-10000, guideSansX=340, guidePlayerX=82;
+  let omegaStartedAt=-10000, omegaSpawnAt=0, omegaPhase=0, omegaBullets=[];
   let menu = 0;
   let target = 0;
   let playerLevel = 1;
@@ -427,7 +435,7 @@
     secondWide: { x: 85, y: 102, w: 153, h: 39 },
     secondMid: { x: 104, y: 102, w: 115, h: 39 },
     sineSquare: { x: 107, y: 85, w: 85, h: 56 },
-    long: { x: 36, y: 98, w: 248, h: 35 }
+    long: { x: 36, y: 101, w: 248, h: 29 }
   });
   let activeSansArena = null;
 
@@ -490,15 +498,15 @@
   }
 
   function battleSoulScale() {
-    return isCompactBattleSoul() ? .72 : 1;
+    return isCompactBattleSoul() ? .58 : 1;
   }
 
   function battleSoulRadius() {
-    return isCompactBattleSoul() ? 1.65 : 2.25;
+    return isCompactBattleSoul() ? 1.25 : 2.25;
   }
 
   function battleSoulPadding() {
-    return isCompactBattleSoul() ? 3.25 : 5;
+    return isCompactBattleSoul() ? 2.5 : 5;
   }
 
   function battleHeartShape(x, y, color) {
@@ -897,7 +905,7 @@
 
   function drawStatus() {
     const sansLayout = stage === 10;
-    const y = 148;
+    const y = 138;
     text(playerName || 'すけ', sansLayout ? 53 : 74, y, 7);
     text('LV ' + playerLevel, sansLayout ? 78 : 96, y, 8);
     text('HP', sansLayout ? 127 : 155, y + 1, 6);
@@ -986,7 +994,7 @@
 
   function drawMenu() {
     const boxes = [[30, 50], [99, 50], [171, 50], [241, 50]];
-    const menuY = 155;
+    const menuY = 158;
     for (let i = 0; i < boxes.length; i++) {
       const [x, w] = boxes[i];
       const selected = (state === 'command' && menu === i)
@@ -2053,6 +2061,27 @@
     text('ENTER / Z', 160, 142, 8, '#fff', 'center');
   }
 
+
+  function drawGuideHuman(x,y){rect(x-4,y-15,8,6,'#5b281e');rect(x-5,y-9,10,5,'#73402a');rect(x-5,y-4,10,5,'#8c3d9a');rect(x-5,y+1,10,4,'#2f62be');rect(x-4,y+5,3,5,'#3a2b75');rect(x+1,y+5,3,5,'#3a2b75');}
+  function drawGuideRoomBase(){rect(0,0,W,H,'#713738');rect(0,116,W,64,'#4c5264');for(let x=0;x<W;x+=12)line(x,118,x+7,180,x%24?'#536475':'#5e496e',3);rect(111,9,98,109,'#321b16');rect(116,14,88,104,'#a54912');rect(123,20,74,91,'#d0620b');rect(132,28,56,74,'#b74c08');rect(181,50,12,27,'#5b2717');rect(184,53,6,6,'#e69027');rect(0,112,W,6,'#b66434');}
+  function drawGuideDialogue(rows){frameBox(16,128,288,43,'#fff',2);rows.slice(0,3).forEach((r,i)=>text(r,25,135+i*10,7,'#fff'));}
+  function startSansGuideSequence(){pacifistRoutePending=true;guideChoice=0;guideAccepted=false;guideStartedAt=performance.now();guideSansX=342;guidePlayerX=80;bullets=[];soulMode='red';setState('sansGuide');saveCurrentProfile();}
+  function drawSansGuide(now){drawGuideRoomBase();drawGuideHuman(guidePlayerX,111);drawSans(guideSansX,73,now);const e=(now-guideStartedAt)/1000;if(e<1.8)drawGuideDialogue(['＊ よお。にんげん。']);else if(e<4)drawGuideDialogue(['＊ オレが ROOM11まで','＊ あんないしてやるよ。']);else drawGuideDialogue(['＊ こっちだ。','＊ おくれずに ついてきな。']);}
+  function updateSansGuide(dt,now){const e=(now-guideStartedAt)/1000;if(e<1.5)guideSansX=Math.max(228,guideSansX-92*dt);else if(e>=4.2){guideSansX=Math.max(166,guideSansX-35*dt);guidePlayerX=Math.min(143,guidePlayerX+28*dt);}if(e>=6.2)setState('guideChoice');}
+  function drawGuideChoice(){drawGuideRoomBase();drawGuideHuman(143,111);drawSans(166,73,performance.now());frameBox(39,124,242,49,'#fff',2);text('＊ 次に行く 覚悟はあるか？',51,132,8,'#fff');text((guideChoice===0?'♥ ':'')+'Yes',98,153,9,guideChoice===0?'#ffff00':'#fff','center');text((guideChoice===1?'♥ ':'')+'No',218,153,9,guideChoice===1?'#ffff00':'#fff','center');}
+  function drawGuideResponse(){drawGuideRoomBase();drawGuideHuman(143,111);drawSans(166,73,performance.now());drawGuideDialogue(guideAccepted?['＊ お前ならできる。','＊ さあ、行こうぜ。']:['＊ まだ そのときじゃないぜ。','＊ あせらなくていい。','＊ 覚悟が決まったら また来な。']);}
+  function startRoom11Walk(){guideStartedAt=performance.now();setState('room11Walk');saveCurrentProfile();}
+  function drawRoom11Walk(now){if(room11BackgroundImage.complete&&room11BackgroundImage.naturalWidth)g.drawImage(room11BackgroundImage,0,0,W,H);else rect(0,0,W,H,'#bbb');text('ROOM 11',160,12,13,'#fff','center');const q=smoothstep01((now-guideStartedAt)/4000);drawSans(160,112-q*79,now);drawGuideHuman(160,157-q*68);if(q<.45)drawGuideDialogue(['＊ ここからは オレの背中を','＊ 追って歩くだけでいい。']);}
+  function updateRoom11Walk(now){if(now-guideStartedAt>=4700){omegaStartedAt=now;setState('omegaIntro');saveCurrentProfile();}}
+  function drawOmegaFlowey(now){const z=Math.sin(now/190)*2,c=160;for(let i=0;i<10;i++)line(18+i*32,0,c+Math.sin(i*1.7)*65,54,i%2?'#483a46':'#30272f',5);fillPolygon([[0,58],[60,45],[93,58],[64,74],[0,74]],'#497a25');fillPolygon([[320,58],[260,45],[227,58],[256,74],[320,74]],'#497a25');g.fillStyle='#8b4d4a';g.beginPath();g.ellipse(c,58+z,39,34,0,0,Math.PI*2);g.fill();for(const x of[133,187]){g.fillStyle='#ded3b8';g.beginPath();g.arc(x,50+z,10,0,Math.PI*2);g.fill();g.fillStyle='#211719';g.beginPath();g.arc(x,50+z,4,0,Math.PI*2);g.fill();}fillPolygon([[145,75+z],[155,119],[160,93],[165,119],[175,75+z]],'#a7625d');rect(130,5+z,60,31,'#211b20');rect(135,9+z,50,23,'#e7e2d1');rect(141,13+z,38,15,'#fff');line(148,21+z,157,15+z,'#111',2);line(171,21+z,162,15+z,'#111',2);line(151,25+z,169,25+z,'#9c1016',2);}
+  function startOmegaBattle(){omegaStartedAt=performance.now();omegaSpawnAt=omegaStartedAt+500;omegaBullets=[];soulMode='red';heart.x=160;heart.y=132;setState('omegaBattle');}
+  function addOmega(kind,x,y,vx,vy,life=3,radius=3){omegaBullets.push({kind,x,y,vx,vy,life,radius,age:0});}
+  function spawnOmegaWave(now){const e=(now-omegaStartedAt)/1000;omegaPhase=Math.floor(e/8)%6;if(omegaPhase===0){for(let i=0;i<9;i++)addOmega('knife',34+i*31,70,i%2?18:-18,86,2.2,3);omegaSpawnAt=now+700;}else if(omegaPhase===1){const q=Math.floor(e*2)%2;for(let i=0;i<6;i++)addOmega('pellet',q?305:15,78+i*10,q?-105:105,Math.sin(i*1.8)*18,3.2,2.5);omegaSpawnAt=now+520;}else if(omegaPhase===2){for(let i=0;i<5;i++){const a=-Math.PI/2+(i-2)*.24;addOmega('bomb',160,66,Math.cos(a)*72,Math.sin(a)*72,3.2,4);}omegaSpawnAt=now+620;}else if(omegaPhase===3){for(let i=0;i<8;i++)addOmega('vine',30+i*37,141,0,-92-(i%3)*14,1.4,3);omegaSpawnAt=now+760;}else if(omegaPhase===4){addOmega('laser',heart.x,69,0,0,1,4);omegaSpawnAt=now+430;}else{for(let i=0;i<12;i++){const a=i*Math.PI*2/12+e*.7;addOmega('pellet',160,103,Math.cos(a)*76,Math.sin(a)*76,3,2.4);}omegaSpawnAt=now+780;}}
+  function updateOmegaBattle(dt,now){const a={left:24,right:296,top:72,bottom:142};let dx=(keys.has('ArrowRight')?1:0)-(keys.has('ArrowLeft')?1:0),dy=(keys.has('ArrowDown')?1:0)-(keys.has('ArrowUp')?1:0),m=Math.hypot(dx,dy);if(m){dx/=m;dy/=m;}heart.x=Math.max(a.left+4,Math.min(a.right-4,heart.x+dx*164*dt));heart.y=Math.max(a.top+4,Math.min(a.bottom-4,heart.y+dy*164*dt));if(now>=omegaSpawnAt)spawnOmegaWave(now);let hit=false;for(const b of omegaBullets){b.age+=dt;b.x+=b.vx*dt;b.y+=b.vy*dt;hit||=b.kind==='laser'?b.age>.48&&Math.abs(heart.x-b.x)<4:Math.hypot(heart.x-b.x,heart.y-b.y)<b.radius+2.2;}omegaBullets=omegaBullets.filter(b=>b.age<b.life&&b.x>-30&&b.x<350&&b.y>45&&b.y<175);if(hit&&!TEST_PLAY_INVINCIBLE&&invincible<=0){hp=Math.max(0,hp-1);invincible=.45;}invincible-=dt;if(now-omegaStartedAt>=52000){omegaBullets=[];setState('omegaVictory');saveCurrentProfile();}}
+  function drawOmegaBattle(now){rect(0,0,W,H,'#000');drawOmegaFlowey(now);const a={left:24,right:296,top:72,bottom:142};frameBox(a.left,a.top,a.right-a.left,a.bottom-a.top,'#fff',2);for(const b of omegaBullets){if(b.kind==='knife')line(b.x-6,b.y-4,b.x+6,b.y+4,'#fff',2);else if(b.kind==='laser')line(b.x,a.top,b.x,a.bottom,b.age<.48?'#a42020':'#fff',b.age<.48?1:4);else if(b.kind==='vine')line(b.x,b.y+12,b.x,b.y-12,'#7fc53a',4);else{g.fillStyle=b.kind==='bomb'?'#ffef3b':'#fff';g.beginPath();g.arc(b.x,b.y,b.radius,0,Math.PI*2);g.fill();}}battleHeartShape(heart.x,heart.y,'#ed001f');text('OMEGA FLOWEY',160,151,7,'#fff','center');}
+  function drawOmegaIntro(now){rect(0,0,W,H,'#000');drawOmegaFlowey(now);text('ROOM 11',160,129,10,'#fff','center');text('＊ 奥から ひどく ゆがんだ笑い声がする。',160,149,7,'#fff','center');text('ENTER / Z',160,165,7,'#aaa','center');}
+  function drawOmegaVictory(){rect(0,0,W,H,'#000');text('その けついが みらいを ひらいた。',160,62,12,'#ffff00','center');text('ROOM11を こえた。',160,89,9,'#fff','center');text('データを セーブしました。',160,111,8,'#aaa','center');text('ENTER / Z',160,145,8,'#fff','center');}
+
   function drawTitle(now) {
     rect(0, 0, W, H, '#000');
     if (titleImage.complete && titleImage.naturalWidth) {
@@ -2062,6 +2091,7 @@
       heartShape(160, 90);
     }
     if (Math.floor(now / 500) % 2 === 0) text('ENTER / Z', 160, 142, 9, '#fff', 'center');
+    if(playerName){text(playerName+' でログイン中',160,158,6,'#aaa','center');text('X：ログアウト',160,169,6,'#777','center');}
   }
 
   const SOUL_PIXELS = [
@@ -2240,7 +2270,7 @@
   function drawEnding(victory) {
     rect(0, 0, W, H, '#000');
     text(victory ? 'BATTLE COMPLETE' : 'GAME OVER', 160, 58, 15, victory ? '#fff000' : '#f5222d', 'center');
-    text(victory ? '10しゅうねんの しょうり！' : 'もういちど ちょうせん', 160, 88, 9, '#fff', 'center');
+    text(victory ? 'その けついが みらいを ひらいた。' : 'もういちど ちょうせん', 160, 88, 9, '#fff', 'center');
     text('ENTER / Z', 160, 125, 8, '#aaa', 'center');
   }
 
@@ -2249,6 +2279,20 @@
       drawTitle(now);
     } else if (state === 'nameEntry') {
       drawNameEntry();
+    } else if (state === 'sansGuide') {
+      drawSansGuide(now);
+    } else if (state === 'guideChoice') {
+      drawGuideChoice();
+    } else if (state === 'guideResponse') {
+      drawGuideResponse();
+    } else if (state === 'room11Walk') {
+      drawRoom11Walk(now);
+    } else if (state === 'omegaIntro') {
+      drawOmegaIntro(now);
+    } else if (state === 'omegaBattle') {
+      drawOmegaBattle(now);
+    } else if (state === 'omegaVictory') {
+      drawOmegaVictory();
     } else if (state === 'pacifistPass' || state === 'nextBossPending') {
       drawPacifistPass();
     } else if (state === 'opening') {
@@ -2256,7 +2300,11 @@
     } else if (state === 'soulBreak') {
       drawSoulBreak(now);
     } else if (state === 'victory' || state === 'defeat' || state === 'stageClear') {
-      if (state === 'stageClear') {
+      if (state === 'guideChoice') {
+      if (pressed.has('ArrowLeft') || pressed.has('ArrowUp')) { guideChoice=0; beep(); }
+      if (pressed.has('ArrowRight') || pressed.has('ArrowDown')) { guideChoice=1; beep(); }
+    } else if (state === 'title' && (pressed.has('Escape') || pressed.has('KeyX')) && playerName) { logoutCurrentProfile();
+    } else if (state === 'stageClear') {
         rect(0, 0, W, H, '#050505');
         rect(45, 38, 230, 102, '#3d3c49');
         rect(57, 50, 206, 78, '#111');
@@ -2948,6 +2996,7 @@
     reviveItems = 1;
     clearChoice = stage < 10 ? 1 : 0;
     setState('stageClear');
+    saveCurrentProfile();
   }
 
   function finishDefeat() {
@@ -3955,7 +4004,7 @@
     return GravityDirection.LEFT;
   }
 
-  function slamSoul(direction, gestureDirection = oppositeGravityDirection(direction), gestureDuration = 430) {
+  function slamSoul(direction, gestureDirection = direction, gestureDuration = 430) {
     // A new forced slam must never drag the soul through bones created by the
     // previous impact. Remove only those short-lived impact bones.
     bullets = bullets.filter(bullet => !bullet.impactBone);
@@ -4003,12 +4052,12 @@
     const maximumRise = compact ? 15 : platformPhase ? 29 : 23;
     const riseRatio = compact ? .42 : platformPhase ? .72 : .58;
     const rise = Math.max(9, Math.min(maximumRise, clearance - 2, span * riseRatio));
-    const gravity = compact ? 455 : platformPhase ? 480 : 500;
+    const gravity = compact ? 390 : platformPhase ? 430 : 455;
     return {
       velocity: Math.max(compact ? 105 : 132,
         Math.min(platformPhase ? 190 : 178, Math.sqrt(2 * gravity * rise))),
       holdAccel: compact ? 120 : platformPhase ? 250 : 205,
-      holdTime: compact ? .075 : platformPhase ? .135 : .105,
+      holdTime: compact ? .11 : platformPhase ? .18 : .14,
       gravity,
       release: compact ? .50 : .58
     };
@@ -5673,7 +5722,7 @@
         once('s22-clear-stretch', 3.50, () => clearSansThreats());
         once('s22-long-ready', 4.43, () => {
           setSansArena('long', false);
-          setScriptSoul('blue', GravityDirection.DOWN, false);
+          setScriptSoul('red', GravityDirection.DOWN, false);
           const a = battleArena();
           heart.x = a.left + 10;
           heart.y = a.bottom - 5;
@@ -6299,7 +6348,13 @@
     updateEnemySpeech(dt);
     handlePressed();
     updateSansEnding(now);
-    if (state === 'opening') {
+    if (state === 'sansGuide') {
+      updateSansGuide(dt, now);
+    } else if (state === 'room11Walk') {
+      updateRoom11Walk(now);
+    } else if (state === 'omegaBattle') {
+      updateOmegaBattle(dt, now);
+    } else if (state === 'opening') {
       updateOpening(dt);
     } else if (state === 'soulBreak') {
       if (now - defeatAt > 2250) setState('defeat');
