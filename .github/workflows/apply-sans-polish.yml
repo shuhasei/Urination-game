@@ -1,0 +1,35 @@
+name: Apply Sans battle polish
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/apply-sans-polish.yml
+      - .github/scripts/apply_sans_polish.py
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply requested polish
+        run: python3 .github/scripts/apply_sans_polish.py
+      - name: Check JavaScript syntax
+        run: node --check game.js
+      - name: Commit game update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add game.js index.html game-loader.js
+          if git diff --cached --quiet; then
+            echo "No game changes to commit"
+            exit 0
+          fi
+          git commit -m "Polish Sans battle controls and video sequence"
+          git push
