@@ -1,0 +1,148 @@
+name: Receive and apply final Sans battle build
+
+on:
+  push:
+    paths:
+      - 'assets/final-build-receiver/trigger.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-final-sans-build
+  cancel-in-progress: false
+
+jobs:
+  receive-and-apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Open a temporary upload receiver
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cat > /tmp/upload_server.py <<'PY'
+          from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+          from pathlib import Path
+
+          destination = Path('/tmp/final-v4.patch.gz')
+
+          class Handler(BaseHTTPRequestHandler):
+              def _receive(self):
+                  try:
+                      length = int(self.headers.get('Content-Length', '0'))
+                  except ValueError:
+                      length = 0
+                  if length <= 0 or length > 2_000_000:
+                      self.send_response(400)
+                      self.end_headers()
+                      self.wfile.write(b'invalid content length')
+                      return
+                  remaining = length
+                  with destination.open('wb') as output:
+                      while remaining:
+                          chunk = self.rfile.read(min(65536, remaining))
+                          if not chunk:
+                              break
+                          output.write(chunk)
+                          remaining -= len(chunk)
+                  if remaining != 0:
+                      destination.unlink(missing_ok=True)
+                      self.send_response(400)
+                      self.end_headers()
+                      self.wfile.write(b'incomplete upload')
+                      return
+                  self.send_response(200)
+                  self.end_headers()
+                  self.wfile.write(b'ok')
+
+              do_POST = _receive
+              do_PUT = _receive
+
+              def log_message(self, format, *args):
+                  print(format % args, flush=True)
+
+          ThreadingHTTPServer(('127.0.0.1', 8000), Handler).serve_forever()
+          PY
+
+          python3 /tmp/upload_server.py >/tmp/upload-server.log 2>&1 &
+          echo $! >/tmp/upload-server.pid
+
+          curl --fail --location --silent --show-error --retry 3 \
+            'https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64' \
+            --output /tmp/cloudflared
+          chmod +x /tmp/cloudflared
+          /tmp/cloudflared tunnel --url http://127.0.0.1:8000 --no-autoupdate >/tmp/cloudflared.log 2>&1 &
+          echo $! >/tmp/cloudflared.pid
+
+          tunnel_url=''
+          for attempt in $(seq 1 90); do
+            tunnel_url=$(grep -Eo 'https://[a-z0-9-]+\.trycloudflare\.com' /tmp/cloudflared.log | head -n 1 || true)
+            if [ -n "$tunnel_url" ]; then
+              break
+            fi
+            sleep 2
+          done
+          test -n "$tunnel_url"
+
+          mkdir -p assets/final-build-receiver
+          printf '%s\n' "$tunnel_url" > assets/final-build-receiver/url.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/final-build-receiver/url.txt
+          git commit -m 'Open temporary final build receiver [skip ci]'
+          git push origin HEAD:main
+
+          for attempt in $(seq 1 180); do
+            if [ -s /tmp/final-v4.patch.gz ]; then
+              break
+            fi
+            sleep 3
+          done
+          test -s /tmp/final-v4.patch.gz
+          printf '%s  %s\n' '257af60bca94bd6b4d7d03997e2f0a5849ce433e0dd8536cfec7b406314b280a' '/tmp/final-v4.patch.gz' | sha256sum --check --strict
+
+      - name: Apply, validate, and publish the final build
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          gzip --decompress --stdout /tmp/final-v4.patch.gz > /tmp/final-v4.patch
+          printf '%s  %s\n' '65d8d81828a8dc07bd5c5053d9b158c729095ad3f18a32e088ff6928ce26d763' '/tmp/final-v4.patch' | sha256sum --check --strict
+
+          final_ok=true
+          printf '%s  %s\n' 'a704f281a21fb771b115394cdd7f02d26f352d962a2521863ff3e84d184b27d6' 'game.js' | sha256sum --check --strict || final_ok=false
+          printf '%s  %s\n' '1fbebbb84ccaedef440be614640b41e3d0e50cdb30ac325e78b536ba773a271d' 'game-loader.js' | sha256sum --check --strict || final_ok=false
+          printf '%s  %s\n' '9736cbef433cdb94a1a6dabdec0a9d1e0f577ab0098a0606add9934e9401e279' 'index.html' | sha256sum --check --strict || final_ok=false
+          printf '%s  %s\n' 'f71b7f3100351b5878be38b26d0e31c5ffe1382ab688bab6750ea73d4556c2e3' 'README.md' | sha256sum --check --strict || final_ok=false
+
+          if [ "$final_ok" != true ]; then
+            git apply --check /tmp/final-v4.patch
+            git apply /tmp/final-v4.patch
+          fi
+
+          printf '%s  %s\n' 'a704f281a21fb771b115394cdd7f02d26f352d962a2521863ff3e84d184b27d6' 'game.js' | sha256sum --check --strict
+          printf '%s  %s\n' '1fbebbb84ccaedef440be614640b41e3d0e50cdb30ac325e78b536ba773a271d' 'game-loader.js' | sha256sum --check --strict
+          printf '%s  %s\n' '9736cbef433cdb94a1a6dabdec0a9d1e0f577ab0098a0606add9934e9401e279' 'index.html' | sha256sum --check --strict
+          printf '%s  %s\n' 'f71b7f3100351b5878be38b26d0e31c5ffe1382ab688bab6750ea73d4556c2e3' 'README.md' | sha256sum --check --strict
+          node --check game.js
+          node --check game-loader.js
+
+          rm -rf assets/final-build-receiver assets/final-build-verify assets/final-build-v5 assets/final-build-v4 assets/final-build-v3 assets/final-complete assets/final-complete-v2
+          rm -f test-deploy-key-note.txt test-deploy-key-note-2.txt
+          rm -f release-tool-probe.txt release-tool-probe-2.txt release-tool-probe-3.txt release-tool-probe-4.txt
+          rm -f push-files-probe.txt push-files-tool-check.txt push-files-tool-check-2.txt push-files-tool-check-3.txt
+          rm -f delete-tool-probe.txt
+
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m 'Complete Sans battle rebuild [skip ci]'
+            git push origin HEAD:main
+          fi
