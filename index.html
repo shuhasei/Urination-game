@@ -4,23 +4,23 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>UNDERTALE</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20260806-final3">
 </head>
 <body>
   <main id="game-shell" aria-label="地下遺跡を探索するレトロゲーム">
-    <canvas id="game" width="640" height="360" tabindex="0" aria-label="ゲーム画面。方向キーで移動、EnterかZで決定"></canvas>
+    <canvas id="game" width="640" height="360" tabindex="0" aria-label="ゲーム画面。方向キーまたはWASDで移動。Enter、Z、Space、OKで決定。青いハートは同じキーでジャンプ"></canvas>
     <div id="start-hint">ENTER / Z / タップ</div>
     <div id="touch" aria-hidden="true">
       <button class="touch-button" id="up" data-key="ArrowUp" aria-label="上">▲</button>
       <button class="touch-button" id="down" data-key="ArrowDown" aria-label="下">▼</button>
       <button class="touch-button" id="left" data-key="ArrowLeft" aria-label="左">◀</button>
       <button class="touch-button" id="right" data-key="ArrowRight" aria-label="右">▶</button>
-      <button class="touch-button" id="ok" data-key="Enter" aria-label="決定">OK</button>
+      <button class="touch-button" id="ok" data-key="Space" aria-label="決定またはジャンプ">OK</button>
     </div>
     <div id="spotify-embed" aria-hidden="true"></div>
   </main>
 
-  <script src="game-loader.js?v=20260806-1"></script>
+  <script src="game-loader.js?v=20260806-final3"></script>
   <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
 </body>
 </html>
