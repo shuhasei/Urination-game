@@ -145,14 +145,13 @@
 
   async function prepareOmegaVideoSprites() {
     showHint('動画由来の攻撃素材を読み込んでいます…');
-    const sprites = window.OMEGA_VIDEO_SPRITE_BASE64 || {};
-    const mime = window.OMEGA_VIDEO_SPRITE_MIME || 'image/png';
-    const pairs = await Promise.all(Object.entries(sprites).map(async ([name, base64]) => {
-      return [name, await decodeImageData(base64, mime, `${name} sprite`)];
-    }));
-    if (!pairs.length) throw new Error('動画由来の攻撃素材データがありません');
-    window.__omegaVideoSpriteImages = Object.fromEntries(pairs);
-    console.info('Omega video sprites ready:', Object.keys(window.__omegaVideoSpriteImages));
+    const base64 = window.OMEGA_VIDEO_SPRITE_SHEET_BASE64;
+    const mime = window.OMEGA_VIDEO_SPRITE_SHEET_MIME || 'image/png';
+    const layout = window.OMEGA_VIDEO_SPRITE_SHEET_LAYOUT || {};
+    if (!base64 || !Object.keys(layout).length) throw new Error('動画由来の攻撃素材データがありません');
+    window.__omegaVideoSpriteSheet = await decodeImageData(base64, mime, 'Omega video sprite sheet');
+    window.__omegaVideoSpriteLayout = layout;
+    console.info('Omega video sprite sheet ready:', Object.keys(layout));
   }
 
   function executeGame(source) {
