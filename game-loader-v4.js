@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260808-omega-video-gifs1';
+  const VERSION = '20260808-omega-video-gifs2';
   const GAME_URL = `game.js?v=${VERSION}`;
   const MAIN_PATCH_URL = 'https://raw.githubusercontent.com/shuhasei/Urination-game/main/.github/scripts/apply_room11_omega.py';
   const RESCUE_PATCH_URL = 'https://raw.githubusercontent.com/shuhasei/Urination-game/main/.github/scripts/apply_room11_omega_rescue.py';
@@ -118,25 +118,49 @@
   }
 
   function decodeImageData(base64, mime, label) {
-    const image = new Image();
     return new Promise((resolve, reject) => {
+      const normalized = String(base64 || '').replace(/\s+/g, '');
+      if (!normalized) {
+        reject(new Error(`${label} data is empty`));
+        return;
+      }
+
+      let binary;
+      try {
+        binary = atob(normalized);
+      } catch (_) {
+        reject(new Error(`${label} Base64 is invalid`));
+        return;
+      }
+
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const blob = new Blob([bytes], { type: mime });
+      const blobUrl = URL.createObjectURL(blob);
+      const image = new Image();
+      image.__omegaBlobUrl = blobUrl;
+
       image.onload = () => {
         if (!image.naturalWidth || !image.naturalHeight) {
+          URL.revokeObjectURL(blobUrl);
           reject(new Error(`${label} has no dimensions`));
           return;
         }
         resolve(image);
       };
-      image.onerror = () => reject(new Error(`${label} could not be decoded`));
-      image.src = `data:${mime};base64,${base64}`;
+      image.onerror = () => {
+        URL.revokeObjectURL(blobUrl);
+        reject(new Error(`${label} could not be decoded`));
+      };
+      image.src = blobUrl;
     });
   }
 
   async function prepareOmegaPartGifs() {
     showHint('オメガフラウィの部位別GIFを読み込んでいます…');
     const pairs = await Promise.all(Object.entries(OMEGA_PART_FILES).map(async ([name, path]) => {
-      const base64 = (await fetchText(`${path}?v=${VERSION}`)).trim();
-      if (!base64) throw new Error(`${name} GIF data is empty`);
+      const base64 = await fetchText(`${path}?v=${VERSION}`);
+      if (!base64.trim()) throw new Error(`${name} GIF data is empty`);
       return [name, await decodeImageData(base64, 'image/gif', `${name} GIF`)];
     }));
     window.__omegaPartGifImages = Object.fromEntries(pairs);
@@ -156,7 +180,7 @@
 
   function executeGame(source) {
     return new Promise((resolve, reject) => {
-      const blob = new Blob([`${source}\n//# sourceURL=game-omega-video-gifs1.js`], { type: 'text/javascript' });
+      const blob = new Blob([`${source}\n//# sourceURL=game-omega-video-gifs2.js`], { type: 'text/javascript' });
       const url = URL.createObjectURL(blob);
       const script = document.createElement('script');
       script.src = url;
