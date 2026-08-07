@@ -9,6 +9,7 @@
   const MEDIA_HOTFIX_URL = `room11-media-hotfix.js?v=${VERSION}`;
   const ROOM10_UNLOCK_URL = `room10-movement-unlock.js?v=${VERSION}`;
   const OMEGA_FAITHFUL_URL = `omega-faithful-hotfix.js?v=${VERSION}`;
+  const OMEGA_HQ_URL = `omega-hq-generated-hotfix.js?v=${VERSION}`;
   const PYODIDE_URL = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js';
   const PYODIDE_INDEX_URL = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/';
   const hint = document.getElementById('start-hint');
@@ -109,25 +110,20 @@ exec(compile(runner.read_text(encoding='utf-8'), str(runner), 'exec'), namespace
       await loadExternalScript(MEDIA_HOTFIX_URL);
       await loadExternalScript(ROOM10_UNLOCK_URL);
       await loadExternalScript(OMEGA_FAITHFUL_URL);
-      if (typeof window.applyRoom11Hotfix !== 'function') {
-        throw new Error('ROOM11 hotfix function is unavailable');
-      }
-      if (typeof window.applyRoom11MediaHotfix !== 'function') {
-        throw new Error('ROOM11 media hotfix function is unavailable');
-      }
-      if (typeof window.applyRoom10MovementUnlock !== 'function') {
-        throw new Error('ROOM10 movement unlock function is unavailable');
-      }
-      if (typeof window.applyOmegaFaithfulHotfix !== 'function') {
-        throw new Error('Omega master hotfix function is unavailable');
-      }
+      await loadExternalScript(OMEGA_HQ_URL);
+      if (typeof window.applyRoom11Hotfix !== 'function') throw new Error('ROOM11 hotfix function is unavailable');
+      if (typeof window.applyRoom11MediaHotfix !== 'function') throw new Error('ROOM11 media hotfix function is unavailable');
+      if (typeof window.applyRoom10MovementUnlock !== 'function') throw new Error('ROOM10 movement unlock function is unavailable');
+      if (typeof window.applyOmegaFaithfulHotfix !== 'function') throw new Error('Omega master hotfix function is unavailable');
+      if (typeof window.applyOmegaHQGeneratedHotfix !== 'function') throw new Error('Omega HQ hotfix function is unavailable');
       const generatedSource = await buildPatchedGame();
       showHint('ROOM11とオメガフラウィの完全版を構築しています…');
       const fixedSource = window.applyRoom11Hotfix(generatedSource);
       const mediaSource = window.applyRoom11MediaHotfix(fixedSource);
       const unlockedSource = window.applyRoom10MovementUnlock(mediaSource);
       const faithfulSource = window.applyOmegaFaithfulHotfix(unlockedSource);
-      await executeGame(faithfulSource);
+      const hqSource = window.applyOmegaHQGeneratedHotfix(faithfulSource);
+      await executeGame(hqSource);
       hideHint();
     } catch (error) {
       console.error('ROOM11 live patch failed:', error);
