@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260807-omega-story5';
+  const VERSION = '20260807-omega-story6';
   const GAME_URL = `game.js?v=${VERSION}`;
   const MAIN_PATCH_URL = 'https://raw.githubusercontent.com/shuhasei/Urination-game/main/.github/scripts/apply_room11_omega.py';
   const RESCUE_PATCH_URL = 'https://raw.githubusercontent.com/shuhasei/Urination-game/main/.github/scripts/apply_room11_omega_rescue.py';
@@ -46,33 +46,47 @@
 
   function normalizeStorySource(source) {
     let result = String(source || '');
-
     const multilineVictory = `    if (state === 'omegaVictory') {
       if (typeof saveCurrentProfile === 'function') saveCurrentProfile();
       setState('title');
       touch.classList.remove('show');
       return;
     }`;
-    const storyExpectedVictory = `    if (state === 'omegaVictory') { saveCurrentProfile(); setState('title'); return; }`;
-    if (result.includes(multilineVictory) && !result.includes(storyExpectedVictory)) {
-      result = result.replace(multilineVictory, storyExpectedVictory);
-    }
-
     const compactVictory = `    if (state === 'omegaVictory') {
       saveCurrentProfile();
       setState('title');
       return;
     }`;
-    if (result.includes(compactVictory) && !result.includes(storyExpectedVictory)) {
-      result = result.replace(compactVictory, storyExpectedVictory);
-    }
-
+    const storyExpectedVictory = `    if (state === 'omegaVictory') { saveCurrentProfile(); setState('title'); return; }`;
+    if (result.includes(multilineVictory) && !result.includes(storyExpectedVictory)) result = result.replace(multilineVictory, storyExpectedVictory);
+    if (result.includes(compactVictory) && !result.includes(storyExpectedVictory)) result = result.replace(compactVictory, storyExpectedVictory);
     return result;
+  }
+
+  async function preloadEmbeddedOmega(source) {
+    const match = String(source || '').match(/room11OmegaSourceImage\.src='(data:image\/(?:png|webp|jpeg);base64,[^']+)'/);
+    if (!match) throw new Error('オメガフラウィ画像データをゲームソース内で検出できません');
+
+    showHint('オメガフラウィ画像を読み込んでいます…');
+    const dataUrl = match[1];
+    const image = new Image();
+    await new Promise((resolve, reject) => {
+      image.onload = resolve;
+      image.onerror = () => reject(new Error('オメガフラウィ画像データを画像として読み込めません'));
+      image.src = dataUrl;
+    });
+    if (!image.naturalWidth || !image.naturalHeight) throw new Error('オメガフラウィ画像のサイズを取得できません');
+    if (typeof image.decode === 'function') {
+      try { await image.decode(); } catch (_) { /* onload succeeded, so decoding is usable */ }
+    }
+    window.__omegaFloweyPreloadedImage = image;
+    window.__omegaFloweyPreloadedDataUrl = dataUrl;
+    console.info('Omega Flowey image preloaded:', image.naturalWidth, image.naturalHeight);
   }
 
   function executeGame(source) {
     return new Promise((resolve, reject) => {
-      const blob = new Blob([`${source}\n//# sourceURL=game-omega-story5.js`], { type: 'text/javascript' });
+      const blob = new Blob([`${source}\n//# sourceURL=game-omega-story6.js`], { type: 'text/javascript' });
       const url = URL.createObjectURL(blob);
       const script = document.createElement('script');
       script.src = url;
@@ -137,10 +151,14 @@ exec(compile(runner.read_text(encoding='utf-8'), str(runner), 'exec'), namespace
       }
 
       const generatedSource = await buildPatchedGame();
-      showHint('オメガフラウィ戦の完全版を構築しています…');
-
+      showHint('ROOM11とオメガフラウィを構築しています…');
       let source = window.applyRoom11Hotfix(generatedSource);
       source = window.applyRoom11MediaHotfix(source);
+
+      // The Omega image is a large embedded data URI. Load and decode it before
+      // executing the game so all draw routines see a ready image immediately.
+      await preloadEmbeddedOmega(source);
+
       source = window.applyRoom10MovementUnlock(source);
       source = window.applyOmegaFaithfulHotfix(source);
       source = normalizeStorySource(source);
