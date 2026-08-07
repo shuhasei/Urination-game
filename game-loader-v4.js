@@ -15,6 +15,7 @@
   const OMEGA_MOTION_URL = `omega-motion-hotfix.js?v=${VERSION}`;
   const OMEGA_PARTS_FINAL_URL = `omega-parts-final-hotfix.js?v=${VERSION}`;
   const OMEGA_VIDEO_SPRITE_DATA_URL = `omega-video-sprite-data.js?v=${VERSION}`;
+  const OMEGA_VIDEO_ATTACK_HOTFIX_URL = `omega-video-attack-hotfix.js?v=${VERSION}`;
   const OMEGA_PART_FILES = Object.freeze({
     tv: 'assets/omega-parts-gif/tv.b64',
     left_eye: 'assets/omega-parts-gif/left_eye.b64',
@@ -213,6 +214,7 @@ exec(compile(runner.read_text(encoding='utf-8'), str(runner), 'exec'), namespace
       await loadExternalScript(OMEGA_MOTION_URL);
       await loadExternalScript(OMEGA_PARTS_FINAL_URL);
       await loadExternalScript(OMEGA_VIDEO_SPRITE_DATA_URL);
+      await loadExternalScript(OMEGA_VIDEO_ATTACK_HOTFIX_URL);
       await prepareOmegaPartGifs();
       await prepareOmegaVideoSprites();
 
@@ -224,7 +226,8 @@ exec(compile(runner.read_text(encoding='utf-8'), str(runner), 'exec'), namespace
         ['applyOmegaHQGeneratedHotfix', 'Omega HQ hotfix'],
         ['applyOmegaStoryFinalHotfix', 'Omega story hotfix'],
         ['applyOmegaMotionHotfix', 'Omega motion hotfix'],
-        ['applyOmegaPartsFinalHotfix', 'Omega parts GIF hotfix']
+        ['applyOmegaPartsFinalHotfix', 'Omega parts GIF hotfix'],
+        ['applyOmegaVideoAttackHotfix', 'Omega video attack hotfix']
       ];
       for (const [name, label] of required) {
         if (typeof window[name] !== 'function') throw new Error(`${label} function is unavailable`);
@@ -237,6 +240,7 @@ exec(compile(runner.read_text(encoding='utf-8'), str(runner), 'exec'), namespace
       source = await prepareOmegaImage(source);
       source = window.applyRoom10MovementUnlock(source);
       source = window.applyOmegaFaithfulHotfix(source);
+      source = window.applyOmegaVideoAttackHotfix(source);
       source = window.applyOmegaHQGeneratedHotfix(source);
       source = normalizeStorySource(source);
 
