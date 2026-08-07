@@ -1,11 +1,12 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260807-room11-hotfix2';
+  const VERSION = '20260807-room11-media3';
   const GAME_URL = `game.js?v=${VERSION}`;
   const MAIN_PATCH_URL = 'https://raw.githubusercontent.com/shuhasei/Urination-game/main/.github/scripts/apply_room11_omega.py';
   const RESCUE_PATCH_URL = 'https://raw.githubusercontent.com/shuhasei/Urination-game/main/.github/scripts/apply_room11_omega_rescue.py';
   const HOTFIX_URL = `room11-hotfix.js?v=${VERSION}`;
+  const MEDIA_HOTFIX_URL = `room11-media-hotfix.js?v=${VERSION}`;
   const PYODIDE_URL = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js';
   const PYODIDE_INDEX_URL = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/';
   const hint = document.getElementById('start-hint');
@@ -42,7 +43,7 @@
 
   function executeGame(source) {
     return new Promise((resolve, reject) => {
-      const blob = new Blob([`${source}\n//# sourceURL=game-room11-hotfix.js`], {
+      const blob = new Blob([`${source}\n//# sourceURL=game-room11-media3.js`], {
         type: 'text/javascript'
       });
       const url = URL.createObjectURL(blob);
@@ -103,13 +104,18 @@ exec(compile(runner.read_text(encoding='utf-8'), str(runner), 'exec'), namespace
   async function start() {
     try {
       await loadExternalScript(HOTFIX_URL);
+      await loadExternalScript(MEDIA_HOTFIX_URL);
       if (typeof window.applyRoom11Hotfix !== 'function') {
         throw new Error('ROOM11 hotfix function is unavailable');
       }
+      if (typeof window.applyRoom11MediaHotfix !== 'function') {
+        throw new Error('ROOM11 media hotfix function is unavailable');
+      }
       const generatedSource = await buildPatchedGame();
-      showHint('表示と案内ルートを修正しています…');
+      showHint('ROOM11とオメガフラウィを更新しています…');
       const fixedSource = window.applyRoom11Hotfix(generatedSource);
-      await executeGame(fixedSource);
+      const mediaSource = window.applyRoom11MediaHotfix(fixedSource);
+      await executeGame(mediaSource);
       hideHint();
     } catch (error) {
       console.error('ROOM11 live patch failed:', error);
