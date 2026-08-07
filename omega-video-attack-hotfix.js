@@ -30,8 +30,7 @@
     const span = findFunctionSpan(s, 'drawOmegaMasterBullet');
     if (!span) throw new Error('[Omega video attacks] drawOmegaMasterBullet not found');
     const code = `  const OMEGA_VIDEO_ATTACK_SPRITES_V1 = true;
-  function omegaMasterVideoSprite(name){const img=window.__omegaVideoSpriteImages&&window.__omegaVideoSpriteImages[name];return img&&img.complete&&img.naturalWidth?img:null;}
-  function omegaMasterDrawVideoSprite(name,w,h,baseAngle=0){const img=omegaMasterVideoSprite(name);if(!img)return false;g.save();if(baseAngle)g.rotate(-baseAngle);g.imageSmoothingEnabled=false;g.drawImage(img,-w/2,-h/2,w,h);g.restore();return true;}
+  function omegaMasterDrawVideoSprite(name,w,h,baseAngle=0){const img=window.__omegaVideoSpriteSheet,box=window.__omegaVideoSpriteLayout&&window.__omegaVideoSpriteLayout[name];if(!img||!img.complete||!img.naturalWidth||!box)return false;g.save();if(baseAngle)g.rotate(-baseAngle);g.imageSmoothingEnabled=false;g.drawImage(img,box[0],box[1],box[2],box[3],-w/2,-h/2,w,h);g.restore();return true;}
   function drawOmegaMasterBullet(b,now) {
     g.save();g.translate(Math.round(b.x),Math.round(b.y));g.rotate(b.angle||0);const warning=b.age<(b.warning||0);g.globalAlpha=warning?.28+.18*Math.sin(b.age*27):1;
     if(b.kind==='cross'){rect(-1,-7,2,14,'#fff');rect(-7,-1,14,2,'#fff');g.rotate(Math.PI/4);rect(-1,-5,2,10,'#fff');rect(-5,-1,10,2,'#fff');}
