@@ -1,10 +1,11 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260807-omega-story6';
+  const VERSION = '20260807-omega-story7';
   const GAME_URL = `game.js?v=${VERSION}`;
   const MAIN_PATCH_URL = 'https://raw.githubusercontent.com/shuhasei/Urination-game/main/.github/scripts/apply_room11_omega.py';
   const RESCUE_PATCH_URL = 'https://raw.githubusercontent.com/shuhasei/Urination-game/main/.github/scripts/apply_room11_omega_rescue.py';
+  const IMAGE_DATA_URL = `omega-image-data.js?v=${VERSION}`;
   const HOTFIX_URL = `room11-hotfix.js?v=${VERSION}`;
   const MEDIA_HOTFIX_URL = `room11-media-hotfix.js?v=${VERSION}`;
   const ROOM10_UNLOCK_URL = `room10-movement-unlock.js?v=${VERSION}`;
@@ -63,30 +64,51 @@
     return result;
   }
 
-  async function preloadEmbeddedOmega(source) {
-    const match = String(source || '').match(/room11OmegaSourceImage\.src='(data:image\/(?:png|webp|jpeg);base64,[^']+)'/);
-    if (!match) throw new Error('オメガフラウィ画像データをゲームソース内で検出できません');
+  async function prepareOmegaImage(source) {
+    const base64 = window.OMEGA_FLOWEY_IMAGE_BASE64;
+    const mime = window.OMEGA_FLOWEY_IMAGE_MIME || 'image/webp';
+    if (!base64) throw new Error('検証済みオメガフラウィ画像データがありません');
 
     showHint('オメガフラウィ画像を読み込んでいます…');
-    const dataUrl = match[1];
+    let binary;
+    try {
+      binary = atob(base64);
+    } catch (_) {
+      throw new Error('オメガフラウィ画像のBase64データが壊れています');
+    }
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const blob = new Blob([bytes], { type: mime });
+    const blobUrl = URL.createObjectURL(blob);
+
     const image = new Image();
     await new Promise((resolve, reject) => {
       image.onload = resolve;
-      image.onerror = () => reject(new Error('オメガフラウィ画像データを画像として読み込めません'));
-      image.src = dataUrl;
+      image.onerror = () => reject(new Error('検証済みオメガフラウィ画像をデコードできません'));
+      image.src = blobUrl;
     });
-    if (!image.naturalWidth || !image.naturalHeight) throw new Error('オメガフラウィ画像のサイズを取得できません');
-    if (typeof image.decode === 'function') {
-      try { await image.decode(); } catch (_) { /* onload succeeded, so decoding is usable */ }
+    if (!image.naturalWidth || !image.naturalHeight) {
+      URL.revokeObjectURL(blobUrl);
+      throw new Error('オメガフラウィ画像のサイズを取得できません');
     }
+
+    window.__omegaFloweyBlobUrl = blobUrl;
     window.__omegaFloweyPreloadedImage = image;
-    window.__omegaFloweyPreloadedDataUrl = dataUrl;
-    console.info('Omega Flowey image preloaded:', image.naturalWidth, image.naturalHeight);
+    console.info('Omega Flowey verified image ready:', image.naturalWidth, image.naturalHeight);
+
+    // Remove the previously broken, oversized data: URL before the generated game
+    // is executed. The actual Image object will now use the verified Blob URL.
+    const patched = String(source || '').replace(
+      /room11OmegaSourceImage\.src='data:image\/(?:png|webp|jpeg);base64,[^']*';/,
+      "room11OmegaSourceImage.src=window.__omegaFloweyBlobUrl;"
+    );
+    if (patched === source) throw new Error('オメガフラウィ画像の差し替え位置を検出できません');
+    return patched;
   }
 
   function executeGame(source) {
     return new Promise((resolve, reject) => {
-      const blob = new Blob([`${source}\n//# sourceURL=game-omega-story6.js`], { type: 'text/javascript' });
+      const blob = new Blob([`${source}\n//# sourceURL=game-omega-story7.js`], { type: 'text/javascript' });
       const url = URL.createObjectURL(blob);
       const script = document.createElement('script');
       script.src = url;
@@ -133,6 +155,7 @@ exec(compile(runner.read_text(encoding='utf-8'), str(runner), 'exec'), namespace
 
   async function start() {
     try {
+      await loadExternalScript(IMAGE_DATA_URL);
       await loadExternalScript(HOTFIX_URL);
       await loadExternalScript(MEDIA_HOTFIX_URL);
       await loadExternalScript(ROOM10_UNLOCK_URL);
@@ -154,11 +177,7 @@ exec(compile(runner.read_text(encoding='utf-8'), str(runner), 'exec'), namespace
       showHint('ROOM11とオメガフラウィを構築しています…');
       let source = window.applyRoom11Hotfix(generatedSource);
       source = window.applyRoom11MediaHotfix(source);
-
-      // The Omega image is a large embedded data URI. Load and decode it before
-      // executing the game so all draw routines see a ready image immediately.
-      await preloadEmbeddedOmega(source);
-
+      source = await prepareOmegaImage(source);
       source = window.applyRoom10MovementUnlock(source);
       source = window.applyOmegaFaithfulHotfix(source);
       source = normalizeStorySource(source);
