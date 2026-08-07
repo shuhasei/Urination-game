@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260807-omega-motion2';
+  const VERSION = '20260807-omega-master4';
   const GAME_URL = `game.js?v=${VERSION}`;
   const MAIN_PATCH_URL = 'https://raw.githubusercontent.com/shuhasei/Urination-game/main/.github/scripts/apply_room11_omega.py';
   const RESCUE_PATCH_URL = 'https://raw.githubusercontent.com/shuhasei/Urination-game/main/.github/scripts/apply_room11_omega_rescue.py';
@@ -10,6 +10,7 @@
   const MEDIA_HOTFIX_URL = `room11-media-hotfix.js?v=${VERSION}`;
   const ROOM10_UNLOCK_URL = `room10-movement-unlock.js?v=${VERSION}`;
   const OMEGA_FAITHFUL_URL = `omega-faithful-hotfix.js?v=${VERSION}`;
+  const OMEGA_HQ_URL = `omega-hq-generated-hotfix.js?v=${VERSION}`;
   const OMEGA_STORY_URL = `omega-story-final-hotfix.js?v=${VERSION}`;
   const OMEGA_MOTION_URL = `omega-motion-hotfix.js?v=${VERSION}`;
   const PYODIDE_URL = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js';
@@ -107,7 +108,7 @@
 
   function executeGame(source) {
     return new Promise((resolve, reject) => {
-      const blob = new Blob([`${source}\n//# sourceURL=game-omega-motion2.js`], { type: 'text/javascript' });
+      const blob = new Blob([`${source}\n//# sourceURL=game-omega-master4.js`], { type: 'text/javascript' });
       const url = URL.createObjectURL(blob);
       const script = document.createElement('script');
       script.src = url;
@@ -159,6 +160,7 @@ exec(compile(runner.read_text(encoding='utf-8'), str(runner), 'exec'), namespace
       await loadExternalScript(MEDIA_HOTFIX_URL);
       await loadExternalScript(ROOM10_UNLOCK_URL);
       await loadExternalScript(OMEGA_FAITHFUL_URL);
+      await loadExternalScript(OMEGA_HQ_URL);
       await loadExternalScript(OMEGA_STORY_URL);
       await loadExternalScript(OMEGA_MOTION_URL);
 
@@ -167,6 +169,7 @@ exec(compile(runner.read_text(encoding='utf-8'), str(runner), 'exec'), namespace
         ['applyRoom11MediaHotfix', 'ROOM11 media hotfix'],
         ['applyRoom10MovementUnlock', 'ROOM10 movement unlock'],
         ['applyOmegaFaithfulHotfix', 'Omega master hotfix'],
+        ['applyOmegaHQGeneratedHotfix', 'Omega HQ hotfix'],
         ['applyOmegaStoryFinalHotfix', 'Omega story hotfix'],
         ['applyOmegaMotionHotfix', 'Omega motion hotfix']
       ];
@@ -181,6 +184,7 @@ exec(compile(runner.read_text(encoding='utf-8'), str(runner), 'exec'), namespace
       source = await prepareOmegaImage(source);
       source = window.applyRoom10MovementUnlock(source);
       source = window.applyOmegaFaithfulHotfix(source);
+      source = window.applyOmegaHQGeneratedHotfix(source);
       source = normalizeStorySource(source);
 
       try {
