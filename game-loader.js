@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260807-omega-faithful2';
+  const VERSION = '20260807-omega-master3';
   const GAME_URL = `game.js?v=${VERSION}`;
   const MAIN_PATCH_URL = 'https://raw.githubusercontent.com/shuhasei/Urination-game/main/.github/scripts/apply_room11_omega.py';
   const RESCUE_PATCH_URL = 'https://raw.githubusercontent.com/shuhasei/Urination-game/main/.github/scripts/apply_room11_omega_rescue.py';
@@ -45,7 +45,7 @@
 
   function executeGame(source) {
     return new Promise((resolve, reject) => {
-      const blob = new Blob([`${source}\n//# sourceURL=game-omega-faithful2.js`], {
+      const blob = new Blob([`${source}\n//# sourceURL=game-omega-master3.js`], {
         type: 'text/javascript'
       });
       const url = URL.createObjectURL(blob);
@@ -119,10 +119,10 @@ exec(compile(runner.read_text(encoding='utf-8'), str(runner), 'exec'), namespace
         throw new Error('ROOM10 movement unlock function is unavailable');
       }
       if (typeof window.applyOmegaFaithfulHotfix !== 'function') {
-        throw new Error('Omega faithful hotfix function is unavailable');
+        throw new Error('Omega master hotfix function is unavailable');
       }
       const generatedSource = await buildPatchedGame();
-      showHint('ROOM11とオメガフラウィを再現しています…');
+      showHint('ROOM11とオメガフラウィの完全版を構築しています…');
       const fixedSource = window.applyRoom11Hotfix(generatedSource);
       const mediaSource = window.applyRoom11MediaHotfix(fixedSource);
       const unlockedSource = window.applyRoom10MovementUnlock(mediaSource);
