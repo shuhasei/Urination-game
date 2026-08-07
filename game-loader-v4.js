@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260807-omega-story7';
+  const VERSION = '20260807-omega-motion2';
   const GAME_URL = `game.js?v=${VERSION}`;
   const MAIN_PATCH_URL = 'https://raw.githubusercontent.com/shuhasei/Urination-game/main/.github/scripts/apply_room11_omega.py';
   const RESCUE_PATCH_URL = 'https://raw.githubusercontent.com/shuhasei/Urination-game/main/.github/scripts/apply_room11_omega_rescue.py';
@@ -11,6 +11,7 @@
   const ROOM10_UNLOCK_URL = `room10-movement-unlock.js?v=${VERSION}`;
   const OMEGA_FAITHFUL_URL = `omega-faithful-hotfix.js?v=${VERSION}`;
   const OMEGA_STORY_URL = `omega-story-final-hotfix.js?v=${VERSION}`;
+  const OMEGA_MOTION_URL = `omega-motion-hotfix.js?v=${VERSION}`;
   const PYODIDE_URL = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js';
   const PYODIDE_INDEX_URL = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/';
   const hint = document.getElementById('start-hint');
@@ -96,8 +97,6 @@
     window.__omegaFloweyPreloadedImage = image;
     console.info('Omega Flowey verified image ready:', image.naturalWidth, image.naturalHeight);
 
-    // Remove the previously broken, oversized data: URL before the generated game
-    // is executed. The actual Image object will now use the verified Blob URL.
     const patched = String(source || '').replace(
       /room11OmegaSourceImage\.src='data:image\/(?:png|webp|jpeg);base64,[^']*';/,
       "room11OmegaSourceImage.src=window.__omegaFloweyBlobUrl;"
@@ -108,7 +107,7 @@
 
   function executeGame(source) {
     return new Promise((resolve, reject) => {
-      const blob = new Blob([`${source}\n//# sourceURL=game-omega-story7.js`], { type: 'text/javascript' });
+      const blob = new Blob([`${source}\n//# sourceURL=game-omega-motion2.js`], { type: 'text/javascript' });
       const url = URL.createObjectURL(blob);
       const script = document.createElement('script');
       script.src = url;
@@ -161,13 +160,15 @@ exec(compile(runner.read_text(encoding='utf-8'), str(runner), 'exec'), namespace
       await loadExternalScript(ROOM10_UNLOCK_URL);
       await loadExternalScript(OMEGA_FAITHFUL_URL);
       await loadExternalScript(OMEGA_STORY_URL);
+      await loadExternalScript(OMEGA_MOTION_URL);
 
       const required = [
         ['applyRoom11Hotfix', 'ROOM11 hotfix'],
         ['applyRoom11MediaHotfix', 'ROOM11 media hotfix'],
         ['applyRoom10MovementUnlock', 'ROOM10 movement unlock'],
         ['applyOmegaFaithfulHotfix', 'Omega master hotfix'],
-        ['applyOmegaStoryFinalHotfix', 'Omega story hotfix']
+        ['applyOmegaStoryFinalHotfix', 'Omega story hotfix'],
+        ['applyOmegaMotionHotfix', 'Omega motion hotfix']
       ];
       for (const [name, label] of required) {
         if (typeof window[name] !== 'function') throw new Error(`${label} function is unavailable`);
@@ -187,6 +188,13 @@ exec(compile(runner.read_text(encoding='utf-8'), str(runner), 'exec'), namespace
       } catch (storyError) {
         console.error('Omega story patch compatibility error:', storyError);
         showHint('オメガフラウィ演出を互換モードで起動しています…');
+      }
+
+      try {
+        source = window.applyOmegaMotionHotfix(source);
+      } catch (motionError) {
+        console.error('Omega motion patch compatibility error:', motionError);
+        showHint('オメガフラウィの標準演出で起動しています…');
       }
 
       await executeGame(source);
