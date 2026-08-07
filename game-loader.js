@@ -1,13 +1,14 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260807-room10-unlock1';
+  const VERSION = '20260807-omega-faithful2';
   const GAME_URL = `game.js?v=${VERSION}`;
   const MAIN_PATCH_URL = 'https://raw.githubusercontent.com/shuhasei/Urination-game/main/.github/scripts/apply_room11_omega.py';
   const RESCUE_PATCH_URL = 'https://raw.githubusercontent.com/shuhasei/Urination-game/main/.github/scripts/apply_room11_omega_rescue.py';
   const HOTFIX_URL = `room11-hotfix.js?v=${VERSION}`;
   const MEDIA_HOTFIX_URL = `room11-media-hotfix.js?v=${VERSION}`;
   const ROOM10_UNLOCK_URL = `room10-movement-unlock.js?v=${VERSION}`;
+  const OMEGA_FAITHFUL_URL = `omega-faithful-hotfix.js?v=${VERSION}`;
   const PYODIDE_URL = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js';
   const PYODIDE_INDEX_URL = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/';
   const hint = document.getElementById('start-hint');
@@ -44,7 +45,7 @@
 
   function executeGame(source) {
     return new Promise((resolve, reject) => {
-      const blob = new Blob([`${source}\n//# sourceURL=game-room10-unlock1.js`], {
+      const blob = new Blob([`${source}\n//# sourceURL=game-omega-faithful2.js`], {
         type: 'text/javascript'
       });
       const url = URL.createObjectURL(blob);
@@ -107,6 +108,7 @@ exec(compile(runner.read_text(encoding='utf-8'), str(runner), 'exec'), namespace
       await loadExternalScript(HOTFIX_URL);
       await loadExternalScript(MEDIA_HOTFIX_URL);
       await loadExternalScript(ROOM10_UNLOCK_URL);
+      await loadExternalScript(OMEGA_FAITHFUL_URL);
       if (typeof window.applyRoom11Hotfix !== 'function') {
         throw new Error('ROOM11 hotfix function is unavailable');
       }
@@ -116,12 +118,16 @@ exec(compile(runner.read_text(encoding='utf-8'), str(runner), 'exec'), namespace
       if (typeof window.applyRoom10MovementUnlock !== 'function') {
         throw new Error('ROOM10 movement unlock function is unavailable');
       }
+      if (typeof window.applyOmegaFaithfulHotfix !== 'function') {
+        throw new Error('Omega faithful hotfix function is unavailable');
+      }
       const generatedSource = await buildPatchedGame();
-      showHint('ROOM10の移動判定を修正しています…');
+      showHint('ROOM11とオメガフラウィを再現しています…');
       const fixedSource = window.applyRoom11Hotfix(generatedSource);
       const mediaSource = window.applyRoom11MediaHotfix(fixedSource);
       const unlockedSource = window.applyRoom10MovementUnlock(mediaSource);
-      await executeGame(unlockedSource);
+      const faithfulSource = window.applyOmegaFaithfulHotfix(unlockedSource);
+      await executeGame(faithfulSource);
       hideHint();
     } catch (error) {
       console.error('ROOM11 live patch failed:', error);
