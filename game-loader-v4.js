@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260807-omega-master4';
+  const VERSION = '20260807-omega-parts5';
   const GAME_URL = `game.js?v=${VERSION}`;
   const MAIN_PATCH_URL = 'https://raw.githubusercontent.com/shuhasei/Urination-game/main/.github/scripts/apply_room11_omega.py';
   const RESCUE_PATCH_URL = 'https://raw.githubusercontent.com/shuhasei/Urination-game/main/.github/scripts/apply_room11_omega_rescue.py';
@@ -13,6 +13,15 @@
   const OMEGA_HQ_URL = `omega-hq-generated-hotfix.js?v=${VERSION}`;
   const OMEGA_STORY_URL = `omega-story-final-hotfix.js?v=${VERSION}`;
   const OMEGA_MOTION_URL = `omega-motion-hotfix.js?v=${VERSION}`;
+  const OMEGA_PARTS_FINAL_URL = `omega-parts-final-hotfix.js?v=${VERSION}`;
+  const OMEGA_PART_FILES = Object.freeze({
+    tv: 'assets/omega-parts-gif/tv.b64',
+    left_eye: 'assets/omega-parts-gif/left_eye.b64',
+    right_eye: 'assets/omega-parts-gif/right_eye.b64',
+    core: 'assets/omega-parts-gif/core.b64',
+    left_arm: 'assets/omega-parts-gif/left_arm.b64',
+    right_arm: 'assets/omega-parts-gif/right_arm.b64'
+  });
   const PYODIDE_URL = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js';
   const PYODIDE_INDEX_URL = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/';
   const hint = document.getElementById('start-hint');
@@ -106,9 +115,26 @@
     return patched;
   }
 
+  async function prepareOmegaPartGifs() {
+    showHint('オメガフラウィの部位別GIFを読み込んでいます…');
+    const pairs = await Promise.all(Object.entries(OMEGA_PART_FILES).map(async ([name, path]) => {
+      const base64 = (await fetchText(`${path}?v=${VERSION}`)).trim();
+      if (!base64.startsWith('R0lGOD')) throw new Error(`${name} GIF data is invalid`);
+      const image = new Image();
+      await new Promise((resolve, reject) => {
+        image.onload = resolve;
+        image.onerror = () => reject(new Error(`${name} GIF could not be decoded`));
+        image.src = `data:image/gif;base64,${base64}`;
+      });
+      return [name, image];
+    }));
+    window.__omegaPartGifImages = Object.fromEntries(pairs);
+    console.info('Omega part GIFs ready:', Object.keys(window.__omegaPartGifImages));
+  }
+
   function executeGame(source) {
     return new Promise((resolve, reject) => {
-      const blob = new Blob([`${source}\n//# sourceURL=game-omega-master4.js`], { type: 'text/javascript' });
+      const blob = new Blob([`${source}\n//# sourceURL=game-omega-parts5.js`], { type: 'text/javascript' });
       const url = URL.createObjectURL(blob);
       const script = document.createElement('script');
       script.src = url;
@@ -163,6 +189,8 @@ exec(compile(runner.read_text(encoding='utf-8'), str(runner), 'exec'), namespace
       await loadExternalScript(OMEGA_HQ_URL);
       await loadExternalScript(OMEGA_STORY_URL);
       await loadExternalScript(OMEGA_MOTION_URL);
+      await loadExternalScript(OMEGA_PARTS_FINAL_URL);
+      await prepareOmegaPartGifs();
 
       const required = [
         ['applyRoom11Hotfix', 'ROOM11 hotfix'],
@@ -171,7 +199,8 @@ exec(compile(runner.read_text(encoding='utf-8'), str(runner), 'exec'), namespace
         ['applyOmegaFaithfulHotfix', 'Omega master hotfix'],
         ['applyOmegaHQGeneratedHotfix', 'Omega HQ hotfix'],
         ['applyOmegaStoryFinalHotfix', 'Omega story hotfix'],
-        ['applyOmegaMotionHotfix', 'Omega motion hotfix']
+        ['applyOmegaMotionHotfix', 'Omega motion hotfix'],
+        ['applyOmegaPartsFinalHotfix', 'Omega parts GIF hotfix']
       ];
       for (const [name, label] of required) {
         if (typeof window[name] !== 'function') throw new Error(`${label} function is unavailable`);
@@ -201,6 +230,7 @@ exec(compile(runner.read_text(encoding='utf-8'), str(runner), 'exec'), namespace
         showHint('オメガフラウィの標準演出で起動しています…');
       }
 
+      source = window.applyOmegaPartsFinalHotfix(source);
       await executeGame(source);
       hideHint();
     } catch (error) {
