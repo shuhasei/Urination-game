@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const PARTS_VERSION = '20260807-omega-parts5';
+  const PARTS_VERSION = '20260808-omega-video-gifs1';
 
   function findFunctionSpan(source, name) {
     const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
