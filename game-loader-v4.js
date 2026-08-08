@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260808-omega-live2d6';
+  const VERSION = '20260808-omega-video7';
   const GAME_URL = `game.js?v=${VERSION}`;
   const MAIN_PATCH_URL = 'https://raw.githubusercontent.com/shuhasei/Urination-game/main/.github/scripts/apply_room11_omega.py';
   const RESCUE_PATCH_URL = 'https://raw.githubusercontent.com/shuhasei/Urination-game/main/.github/scripts/apply_room11_omega_rescue.py';
@@ -134,7 +134,7 @@
 
   function executeGame(source) {
     return new Promise((resolve, reject) => {
-      const blob = new Blob([`${source}\n//# sourceURL=game-omega-live2d6.js`], { type: 'text/javascript' });
+      const blob = new Blob([`${source}\n//# sourceURL=game-omega-video7.js`], { type: 'text/javascript' });
       const url = URL.createObjectURL(blob);
       const script = document.createElement('script');
       script.src = url;
@@ -190,7 +190,7 @@ exec(compile(runner.read_text(encoding='utf-8'), str(runner), 'exec'), namespace
       await loadExternalScript(OMEGA_STORY_URL);
       await loadExternalScript(OMEGA_MOTION_URL);
       await loadExternalScript(OMEGA_PARTS_FINAL_URL);
-      // The Live2D-guide rig now crops the embedded HQ source directly; legacy part GIFs are no longer a startup dependency.
+      // The video-reference rig crops the embedded source directly; legacy part GIFs are not a startup dependency.
 
       const required = [
         ['applyRoom11Hotfix', 'ROOM11 hotfix'],
@@ -200,7 +200,7 @@ exec(compile(runner.read_text(encoding='utf-8'), str(runner), 'exec'), namespace
         ['applyOmegaHQGeneratedHotfix', 'Omega HQ hotfix'],
         ['applyOmegaStoryFinalHotfix', 'Omega story hotfix'],
         ['applyOmegaMotionHotfix', 'Omega motion hotfix'],
-        ['applyOmegaPartsFinalHotfix', 'Omega Live2D guide rig']
+        ['applyOmegaPartsFinalHotfix', 'Omega video-reference rig']
       ];
       for (const [name, label] of required) {
         if (typeof window[name] !== 'function') throw new Error(`${label} function is unavailable`);
