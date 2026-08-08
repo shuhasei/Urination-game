@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260808-omega-video-gifs2';
+  const VERSION = '20260808-omega-live2d-hq1';
   const GAME_URL = `game.js?v=${VERSION}`;
   const MAIN_PATCH_URL = 'https://raw.githubusercontent.com/shuhasei/Urination-game/main/.github/scripts/apply_room11_omega.py';
   const RESCUE_PATCH_URL = 'https://raw.githubusercontent.com/shuhasei/Urination-game/main/.github/scripts/apply_room11_omega_rescue.py';
@@ -16,6 +16,8 @@
   const OMEGA_PARTS_FINAL_URL = `omega-parts-final-hotfix.js?v=${VERSION}`;
   const OMEGA_VIDEO_SPRITE_DATA_URL = `omega-video-sprite-data.js?v=${VERSION}`;
   const OMEGA_VIDEO_ATTACK_HOTFIX_URL = `omega-video-attack-hotfix.js?v=${VERSION}`;
+  const OMEGA_USER_GIF_DATA_URLS = [1, 2, 3, 4, 5].map(n => `omega-user-gif-data-${n}.js?v=${VERSION}`);
+  const OMEGA_LIVE2D_HOTFIX_URL = `omega-live2d-final-hotfix.js?v=${VERSION}`;
   const OMEGA_PART_FILES = Object.freeze({
     tv: 'assets/omega-parts-gif/tv.b64',
     left_eye: 'assets/omega-parts-gif/left_eye.b64',
@@ -120,26 +122,16 @@
   function decodeImageData(base64, mime, label) {
     return new Promise((resolve, reject) => {
       const normalized = String(base64 || '').replace(/\s+/g, '');
-      if (!normalized) {
-        reject(new Error(`${label} data is empty`));
-        return;
-      }
-
+      if (!normalized) { reject(new Error(`${label} data is empty`)); return; }
       let binary;
-      try {
-        binary = atob(normalized);
-      } catch (_) {
-        reject(new Error(`${label} Base64 is invalid`));
-        return;
-      }
-
+      try { binary = atob(normalized); }
+      catch (_) { reject(new Error(`${label} Base64 is invalid`)); return; }
       const bytes = new Uint8Array(binary.length);
       for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
       const blob = new Blob([bytes], { type: mime });
       const blobUrl = URL.createObjectURL(blob);
       const image = new Image();
       image.__omegaBlobUrl = blobUrl;
-
       image.onload = () => {
         if (!image.naturalWidth || !image.naturalHeight) {
           URL.revokeObjectURL(blobUrl);
@@ -148,10 +140,7 @@
         }
         resolve(image);
       };
-      image.onerror = () => {
-        URL.revokeObjectURL(blobUrl);
-        reject(new Error(`${label} could not be decoded`));
-      };
+      image.onerror = () => { URL.revokeObjectURL(blobUrl); reject(new Error(`${label} could not be decoded`)); };
       image.src = blobUrl;
     });
   }
@@ -159,8 +148,8 @@
   async function prepareOmegaPartGifs() {
     showHint('オメガフラウィの部位別GIFを読み込んでいます…');
     const pairs = await Promise.all(Object.entries(OMEGA_PART_FILES).map(async ([name, path]) => {
-      const base64 = await fetchText(`${path}?v=${VERSION}`);
-      if (!base64.trim()) throw new Error(`${name} GIF data is empty`);
+      const base64 = (await fetchText(`${path}?v=${VERSION}`)).trim();
+      if (!base64) throw new Error(`${name} GIF data is empty`);
       return [name, await decodeImageData(base64, 'image/gif', `${name} GIF`)];
     }));
     window.__omegaPartGifImages = Object.fromEntries(pairs);
@@ -178,9 +167,17 @@
     console.info('Omega video sprite sheet ready:', Object.keys(layout));
   }
 
+  async function prepareOmegaUserFleshGif() {
+    showHint('提供GIFから作成した高画質テクスチャを読み込んでいます…');
+    const base64 = window.OMEGA_USER_FLESH_GIF_BASE64;
+    if (!base64) throw new Error('User Omega GIF data is unavailable');
+    window.__omegaUserFleshGif = await decodeImageData(base64, 'image/gif', 'User Omega flesh GIF');
+    console.info('User Omega flesh GIF ready:', window.__omegaUserFleshGif.naturalWidth, window.__omegaUserFleshGif.naturalHeight);
+  }
+
   function executeGame(source) {
     return new Promise((resolve, reject) => {
-      const blob = new Blob([`${source}\n//# sourceURL=game-omega-video-gifs2.js`], { type: 'text/javascript' });
+      const blob = new Blob([`${source}\n//# sourceURL=game-omega-live2d-hq1.js`], { type: 'text/javascript' });
       const url = URL.createObjectURL(blob);
       const script = document.createElement('script');
       script.src = url;
@@ -238,8 +235,12 @@ exec(compile(runner.read_text(encoding='utf-8'), str(runner), 'exec'), namespace
       await loadExternalScript(OMEGA_PARTS_FINAL_URL);
       await loadExternalScript(OMEGA_VIDEO_SPRITE_DATA_URL);
       await loadExternalScript(OMEGA_VIDEO_ATTACK_HOTFIX_URL);
+      window.OMEGA_USER_FLESH_GIF_BASE64 = '';
+      for (const url of OMEGA_USER_GIF_DATA_URLS) await loadExternalScript(url);
+      await loadExternalScript(OMEGA_LIVE2D_HOTFIX_URL);
       await prepareOmegaPartGifs();
       await prepareOmegaVideoSprites();
+      await prepareOmegaUserFleshGif();
 
       const required = [
         ['applyRoom11Hotfix', 'ROOM11 hotfix'],
@@ -250,7 +251,8 @@ exec(compile(runner.read_text(encoding='utf-8'), str(runner), 'exec'), namespace
         ['applyOmegaStoryFinalHotfix', 'Omega story hotfix'],
         ['applyOmegaMotionHotfix', 'Omega motion hotfix'],
         ['applyOmegaPartsFinalHotfix', 'Omega parts GIF hotfix'],
-        ['applyOmegaVideoAttackHotfix', 'Omega video attack hotfix']
+        ['applyOmegaVideoAttackHotfix', 'Omega video attack hotfix'],
+        ['applyOmegaLive2DFinalHotfix', 'Omega Live2D final hotfix']
       ];
       for (const [name, label] of required) {
         if (typeof window[name] !== 'function') throw new Error(`${label} function is unavailable`);
@@ -282,6 +284,7 @@ exec(compile(runner.read_text(encoding='utf-8'), str(runner), 'exec'), namespace
       }
 
       source = window.applyOmegaPartsFinalHotfix(source);
+      source = window.applyOmegaLive2DFinalHotfix(source);
       await executeGame(source);
       hideHint();
     } catch (error) {
