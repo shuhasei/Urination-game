@@ -187,14 +187,14 @@ def make_guide(src: Image.Image, masks: dict[str, np.ndarray], out: Path) -> Non
 def export_psd(canvas_size: tuple[int, int], groups: dict[str, list[tuple[str, Image.Image]]], out: Path) -> None:
     if PSDImage is None:
         raise RuntimeError("psd-tools is required for --psd. Install: pip install psd-tools")
-    psd = PSDImage.new(mode="RGBA", size=canvas_size)
+    psd = PSDImage.new(mode="RGB", size=canvas_size)
     for group_name in GROUP_ORDER:
         entries = groups.get(group_name, [])
         if not entries:
             continue
         group = psd.create_group(name=group_name)
         for name, pil in entries:
-            group.create_pixel_layer(pil, name=name)
+            group.append(psd.create_pixel_layer(pil, name=name))
     psd.save(out)
 
 
