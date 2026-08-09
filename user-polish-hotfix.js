@@ -1,8 +1,15 @@
 (() => {
   'use strict';
 
+  // MyInstants: undertale - sans talking. Keep the remote URL in code so the
+  // game uses the published sound without duplicating the MP3 binary in this repo.
+  window.USER_SANS_VOICE_URL = window.USER_SANS_VOICE_URL
+    || 'https://www.myinstants.com/media/sounds/just-sans-talking.mp3';
+  window.USER_SANS_VOICE_SOURCE_PAGE = window.USER_SANS_VOICE_SOURCE_PAGE
+    || 'https://www.myinstants.com/en/instant/undertale-sans-talking-84135/';
+
   function replaceFunction(source, name, replacement) {
-    const marker = new RegExp(`(^|\\n)\\s*function\\s+${name}\\s*\\(`);
+    const marker = new RegExp(`(^|\n)\s*function\s+${name}\s*\(`);
     const match = marker.exec(source);
     if (!match) return source;
     const start = match.index + (match[1] ? match[1].length : 0);
@@ -38,6 +45,21 @@
     return source.slice(0, at) + block + source.slice(at);
   }
 
+  function injectSansVoice(source) {
+    if (source.includes('const userSansSpeechPool =')) return source;
+    const marker = '  function speechBlip() {';
+    const at = source.indexOf(marker);
+    if (at < 0) return source;
+    const block = `  const userSansSpeechPool = window.USER_SANS_VOICE_URL\n    ? Array.from({ length: 4 }, () => {\n      const sample = new Audio(window.USER_SANS_VOICE_URL);\n      sample.preload = 'auto';\n      sample.volume = .34;\n      return sample;\n    })\n    : [];\n  let userSansSpeechPoolIndex = 0;\n\n`;
+    return source.slice(0, at) + block + source.slice(at);
+  }
+
+  function patchSansVoice(source) {
+    const original = `    if (isSans) {\n      const sample = sansSpeechPool[sansSpeechPoolIndex++ % sansSpeechPool.length];\n      sample.pause();\n      sample.currentTime = 0;\n      sample.preservesPitch = false;\n      sample.playbackRate = .58 + (Math.floor(speechChars) % 4) * .025;\n      sample.play().catch(() => {});\n      window.setTimeout(() => {\n        sample.pause();\n        sample.currentTime = 0;\n      }, 74);\n      return;\n    }`;
+    const polished = `    if (isSans) {\n      const externalReady = userSansSpeechPool.length\n        && userSansSpeechPool.some(sample => sample.readyState >= 2);\n      const pool = externalReady ? userSansSpeechPool : sansSpeechPool;\n      const poolIndex = externalReady ? userSansSpeechPoolIndex++ : sansSpeechPoolIndex++;\n      const sample = pool[poolIndex % pool.length];\n      sample.pause();\n      sample.currentTime = 0;\n      sample.preservesPitch = false;\n      if (externalReady) {\n        sample.volume = .34;\n        sample.playbackRate = .96 + (Math.floor(speechChars) % 4) * .018;\n      } else {\n        sample.playbackRate = .58 + (Math.floor(speechChars) % 4) * .025;\n      }\n      sample.play().catch(() => {});\n      window.setTimeout(() => {\n        sample.pause();\n        sample.currentTime = 0;\n      }, externalReady ? 82 : 74);\n      return;\n    }`;
+    return source.includes(original) ? source.replace(original, polished) : source;
+  }
+
   function patchSansScale(source) {
     return source
       .replace('    const footX = x;\n    const footY = y + 40 + idleBob + (resting ? 2 : 0);',
@@ -67,6 +89,8 @@
   window.applyUserPolishHotfix = source => {
     let s = String(source || '');
     s = injectUserImages(s);
+    s = injectSansVoice(s);
+    s = patchSansVoice(s);
     s = patchSansScale(s);
     s = patchBlueSoul(s);
     s = patchBlaster(s);
