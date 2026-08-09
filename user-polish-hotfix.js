@@ -34,7 +34,7 @@
     const marker = '  const sansWoundedSitImage = new Image();';
     const at = source.indexOf(marker);
     if (at < 0) return source;
-    const block = `  const room11GuideSansImage = new Image();\n  room11GuideSansImage.src = 'assets/sans-idle.png';\n  const customGasterBlasterImage = new Image();\n  customGasterBlasterImage.src = 'assets/gaster-blaster.png';\n\n`;
+    const block = `  const room11GuideSansImage = new Image();\n  room11GuideSansImage.src = window.USER_SANS_GIF_DATA || 'assets/sans-idle.png';\n  const customGasterBlasterImage = new Image();\n  customGasterBlasterImage.src = window.USER_GASTER_GIF_DATA || '';\n\n`;
     return source.slice(0, at) + block + source.slice(at);
   }
 
