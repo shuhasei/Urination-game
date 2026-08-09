@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Omega Flowey Mask Refiner</title>
+<style>
+body{font-family:system-ui,sans-serif;margin:16px;background:#151515;color:#eee}.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}button,input,select{font:inherit}.wrap{position:relative;display:inline-block;max-width:100%;background:#000}canvas{display:block;max-width:95vw;max-height:75vh;image-rendering:pixelated;cursor:crosshair;border:1px solid #555}.hint{max-width:900px;color:#bbb;font-size:14px}.warn{color:#ffdc7a}
+</style>
+</head><body>
+<h1>Omega Flowey Mask Refiner</h1>
+<p class="hint">bootstrapで作った粗いマスクを1枚ずつ修正するための軽量ツールです。赤=選択範囲。左ドラッグ=描く、右ドラッグ=消す。保存時は元画像と同じサイズの白黒PNGになります。</p>
+<div class="bar"><label>Source <input id="src" type="file" accept="image/*"></label><label>Mask <input id="mask" type="file" accept="image/png"></label></div>
+<div class="bar"><label>Layer name <input id="name" value="tv_frame_main"></label><label>Brush <input id="brush" type="range" min="1" max="80" value="12"><span id="bs">12</span>px</label><button id="clear">Clear</button><button id="save">Save mask PNG</button></div>
+<p id="status" class="warn">Sourceを読み込んでください。</p><div class="wrap"><canvas id="c"></canvas></div>
+<script>
+const c=document.getElementById('c'),x=c.getContext('2d',{willReadFrequently:true});let img=null,mask=document.createElement('canvas'),mx=mask.getContext('2d'),drawing=false,erase=false,last=null;
+function fit(){if(!img)return;c.width=img.naturalWidth;c.height=img.naturalHeight;mask.width=c.width;mask.height=c.height;render()}
+function render(){if(!img)return;x.clearRect(0,0,c.width,c.height);x.drawImage(img,0,0);x.save();x.globalAlpha=.42;x.fillStyle='#ff0066';x.drawImage(mask,0,0);x.globalCompositeOperation='source-in';x.fillRect(0,0,c.width,c.height);x.restore()}
+function pos(e){const r=c.getBoundingClientRect();return[(e.clientX-r.left)*c.width/r.width,(e.clientY-r.top)*c.height/r.height]}
+function stroke(a,b){mx.save();mx.lineCap='round';mx.lineJoin='round';mx.lineWidth=+document.getElementById('brush').value;mx.strokeStyle='#fff';mx.globalCompositeOperation=erase?'destination-out':'source-over';mx.beginPath();mx.moveTo(a[0],a[1]);mx.lineTo(b[0],b[1]);mx.stroke();mx.restore();render()}
+document.getElementById('src').onchange=e=>{const f=e.target.files[0];if(!f)return;const u=URL.createObjectURL(f);img=new Image();img.onload=()=>{fit();document.getElementById('status').textContent=`${img.naturalWidth}×${img.naturalHeight} / マスクを読み込むか新規で描いてください。`;URL.revokeObjectURL(u)};img.src=u};
+document.getElementById('mask').onchange=e=>{if(!img)return alert('Sourceを先に読み込んでください');const f=e.target.files[0];if(!f)return;const u=URL.createObjectURL(f),m=new Image();m.onload=()=>{mx.clearRect(0,0,mask.width,mask.height);mx.drawImage(m,0,0,mask.width,mask.height);render();URL.revokeObjectURL(u)};m.src=u};
+c.oncontextmenu=e=>e.preventDefault();c.onpointerdown=e=>{if(!img)return;drawing=true;erase=e.button===2;last=pos(e);c.setPointerCapture(e.pointerId)};c.onpointermove=e=>{if(!drawing)return;const p=pos(e);stroke(last,p);last=p};c.onpointerup=()=>drawing=false;c.onpointercancel=()=>drawing=false;
+document.getElementById('brush').oninput=e=>document.getElementById('bs').textContent=e.target.value;document.getElementById('clear').onclick=()=>{mx.clearRect(0,0,mask.width,mask.height);render()};
+document.getElementById('save').onclick=()=>{if(!img)return;const out=document.createElement('canvas');out.width=mask.width;out.height=mask.height;const ox=out.getContext('2d');ox.fillStyle='#000';ox.fillRect(0,0,out.width,out.height);ox.drawImage(mask,0,0);const a=document.createElement('a');a.download=(document.getElementById('name').value||'mask')+'.png';a.href=out.toDataURL('image/png');a.click()};
+</script></body></html>
