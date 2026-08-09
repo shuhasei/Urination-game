@@ -8,12 +8,15 @@
   window.USER_SANS_VOICE_SOURCE_PAGE = window.USER_SANS_VOICE_SOURCE_PAGE
     || 'https://www.myinstants.com/en/instant/undertale-sans-talking-84135/';
 
+  // Avoid RegExp escaping here. This file is itself used to rewrite another
+  // JavaScript source string, and regexp backslashes can be consumed during
+  // that extra parsing layer. Find the declaration text directly instead.
   function replaceFunction(source, name, replacement) {
-    const marker = new RegExp(`(^|\n)\s*function\s+${name}\s*\(`);
-    const match = marker.exec(source);
-    if (!match) return source;
-    const start = match.index + (match[1] ? match[1].length : 0);
-    const brace = source.indexOf('{', start);
+    const marker = 'function ' + name;
+    const markerAt = source.indexOf(marker);
+    if (markerAt < 0) return source;
+    const start = source.lastIndexOf('\n', markerAt) + 1;
+    const brace = source.indexOf('{', markerAt + marker.length);
     if (brace < 0) return source;
     let depth = 0;
     let quote = null;
