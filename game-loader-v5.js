@@ -1,11 +1,12 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260810-sans-sfx-final1';
+  const VERSION = '20260810-sans-voice-fix1';
   const scripts = [
     `user-sans-video-addon.js?v=${VERSION}`,
     `user-battle-sync-v2.js?v=${VERSION}`,
     `user-undertale-sfx-final.js?v=${VERSION}`,
+    `user-sans-voice-fix.js?v=${VERSION}`,
     `game-loader-v4.js?v=${VERSION}`
   ];
 
