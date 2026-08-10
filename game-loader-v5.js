@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260810-sans-voice-fix1';
+  const VERSION = '20260810-sans-reference-cal2';
   const scripts = [
     `user-sans-video-addon.js?v=${VERSION}`,
     `user-battle-sync-v2.js?v=${VERSION}`,
