@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260810-sans-hardening4';
+  const VERSION = '20260810-sans-hardening5';
 
   function loadScript(src) {
     return new Promise((resolve, reject) => {
@@ -27,9 +27,6 @@
   }
 
   async function prepareEmbeddedMedia() {
-    // Load Base64 media before the patch chain. The previous build waited for
-    // game-loader-v4 to load this file, so the first Sans frames often chose a
-    // PNG fallback before the GIF had decoded.
     await loadScript(`user-media-data.js?v=${VERSION}`);
     if (window.USER_SANS_GIF_DATA) {
       window.__userSansGifPreloaded = await preloadImage(window.USER_SANS_GIF_DATA, 'Sans GIF');
@@ -49,14 +46,12 @@
   (async () => {
     try {
       await prepareEmbeddedMedia();
-      // Install source transformers before v4 constructs/executes game.js.
       await loadScript(`user-sans-video-addon.js?v=${VERSION}`);
       await loadScript(`user-battle-sync-v2.js?v=${VERSION}`);
       await loadScript(`user-undertale-sfx-final.js?v=${VERSION}`);
-      // This is deliberately the final transformer. It replaces the older
-      // voice-fix layer and guarantees the reference state, embedded GIF and
-      // all-passage checks survive every earlier compatibility patch.
       await loadScript(`sans-final-hardening.js?v=${VERSION}`);
+      // Freeze the transformer order before v4 loads user-polish-hotfix.js.
+      await loadScript(`sans-final-orchestrator.js?v=${VERSION}`);
       await loadScript(`game-loader-v4.js?v=${VERSION}`);
     } catch (error) {
       console.error('Sans battle hardening loader failed:', error);
