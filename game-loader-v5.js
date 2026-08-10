@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260810-sans-display-audio-v8';
+  const VERSION = '20260811-sans-fidelity-v10';
 
   function loadScript(src) {
     return new Promise((resolve, reject) => {
