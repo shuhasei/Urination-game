@@ -1,10 +1,10 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260810-sans-video-gaster1';
+  const VERSION = '20260810-sans-sync2';
   const scripts = [
     `user-sans-video-addon.js?v=${VERSION}`,
-    `user-gaster-audio-addon.js?v=${VERSION}`,
+    `user-battle-sync-v2.js?v=${VERSION}`,
     `game-loader-v4.js?v=${VERSION}`
   ];
 
@@ -23,7 +23,7 @@
     try {
       for (const src of scripts) await loadScript(src);
     } catch (error) {
-      console.error('Sans video/Gaster addon loader failed:', error);
+      console.error('Sans battle sync loader failed:', error);
       const hint = document.getElementById('start-hint');
       if (hint) {
         hint.textContent = '追加演出の読み込みに失敗しました：' + (error?.message || String(error));
