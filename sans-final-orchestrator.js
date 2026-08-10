@@ -30,6 +30,9 @@
       if (typeof window.applySansFinalHardening === 'function') {
         s = window.applySansFinalHardening(s);
       }
+      if (typeof window.applySansGapGifBalanceV6 === 'function') {
+        s = window.applySansGapGifBalanceV6(s);
+      }
       return s;
     };
     wrapped.__sansFinalOrchestrated = true;
