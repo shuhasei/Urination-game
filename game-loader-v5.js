@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260811-sans-fidelity-v11';
+  const VERSION = '20260811-sans-fidelity-v12';
 
   function loadScript(src) {
     return new Promise((resolve, reject) => {
@@ -49,6 +49,9 @@
     if (window.USER_GASTER_GIF_DATA) {
       try {
         window.__userGasterGifPreloaded = await preloadImage(window.USER_GASTER_GIF_DATA, 'Gaster GIF');
+        console.info('Gaster GIF ready:',
+          window.__userGasterGifPreloaded.naturalWidth,
+          window.__userGasterGifPreloaded.naturalHeight);
       } catch (error) {
         console.warn('Gaster embedded GIF preload failed; frame sprites remain available.', error);
       }
@@ -64,8 +67,6 @@
       await loadScript(`sans-final-hardening.js?v=${VERSION}`);
       await loadScript(`sans-gap-gif-balance-v6.js?v=${VERSION}`);
       await loadScript(`sans-final-orchestrator.js?v=${VERSION}`);
-      // Install the guard before game-loader-v4 dynamically loads sans-fidelity-v9.js.
-      await loadScript(`sans-fidelity-v11-regex-fix.js?v=${VERSION}`);
       await loadScript(`game-loader-v4.js?v=${VERSION}`);
     } catch (error) {
       console.error('Sans battle hardening loader failed:', error);
