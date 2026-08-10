@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260810-sans-gif-gap6';
+  const VERSION = '20260810-sans-display-audio-v8';
 
   function loadScript(src) {
     return new Promise((resolve, reject) => {
@@ -30,22 +30,23 @@
     await loadScript(`user-media-data.js?v=${VERSION}`);
     await loadScript(`user-sans-gifs-v4.js?v=${VERSION}`);
 
-    // Prefer the clean user-supplied Sans GIF for the live character.  The
-    // longer supplied battle GIF remains embedded as a secondary reference,
-    // but it includes other battle elements and is therefore not drawn as the
-    // base character sprite.
-    const primarySansGif = window.USER_SANS_ACTION_V4 || window.USER_SANS_GIF_DATA;
+    // Normal/menu states must use the idle animation. Action artwork is only a
+    // last-resort fallback; using it as the default is what caused the raised
+    // arms / attack pose to remain visible in the command screen.
+    const primarySansGif = window.USER_SANS_IDLE_V4
+      || window.USER_SANS_GIF_DATA
+      || window.USER_SANS_ACTION_V4;
     if (primarySansGif) {
-      window.__userSansGifPreloaded = await preloadImage(primarySansGif, 'Sans animated GIF');
-      console.info('Sans animated GIF ready:',
+      window.__userSansGifPreloaded = await preloadImage(primarySansGif, 'Sans idle GIF');
+      console.info('Sans idle GIF ready:',
         window.__userSansGifPreloaded.naturalWidth,
         window.__userSansGifPreloaded.naturalHeight);
     }
-    if (window.USER_SANS_IDLE_V4) {
+    if (window.USER_SANS_ACTION_V4) {
       try {
-        window.__userSansLongGifV4 = await preloadImage(window.USER_SANS_IDLE_V4, 'Sans long GIF');
+        window.__userSansActionGifV4 = await preloadImage(window.USER_SANS_ACTION_V4, 'Sans action GIF');
       } catch (error) {
-        console.warn('Sans long GIF preload failed; clean Sans GIF remains active.', error);
+        console.warn('Sans action GIF preload failed; idle Sans remains active.', error);
       }
     }
     if (window.USER_GASTER_GIF_DATA) {
