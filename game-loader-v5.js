@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260810-sans-hardening5';
+  const VERSION = '20260810-sans-gif-gap6';
 
   function loadScript(src) {
     return new Promise((resolve, reject) => {
@@ -28,11 +28,25 @@
 
   async function prepareEmbeddedMedia() {
     await loadScript(`user-media-data.js?v=${VERSION}`);
-    if (window.USER_SANS_GIF_DATA) {
-      window.__userSansGifPreloaded = await preloadImage(window.USER_SANS_GIF_DATA, 'Sans GIF');
-      console.info('Sans embedded GIF ready:',
+    await loadScript(`user-sans-gifs-v4.js?v=${VERSION}`);
+
+    // Prefer the clean user-supplied Sans GIF for the live character.  The
+    // longer supplied battle GIF remains embedded as a secondary reference,
+    // but it includes other battle elements and is therefore not drawn as the
+    // base character sprite.
+    const primarySansGif = window.USER_SANS_ACTION_V4 || window.USER_SANS_GIF_DATA;
+    if (primarySansGif) {
+      window.__userSansGifPreloaded = await preloadImage(primarySansGif, 'Sans animated GIF');
+      console.info('Sans animated GIF ready:',
         window.__userSansGifPreloaded.naturalWidth,
         window.__userSansGifPreloaded.naturalHeight);
+    }
+    if (window.USER_SANS_IDLE_V4) {
+      try {
+        window.__userSansLongGifV4 = await preloadImage(window.USER_SANS_IDLE_V4, 'Sans long GIF');
+      } catch (error) {
+        console.warn('Sans long GIF preload failed; clean Sans GIF remains active.', error);
+      }
     }
     if (window.USER_GASTER_GIF_DATA) {
       try {
@@ -50,6 +64,7 @@
       await loadScript(`user-battle-sync-v2.js?v=${VERSION}`);
       await loadScript(`user-undertale-sfx-final.js?v=${VERSION}`);
       await loadScript(`sans-final-hardening.js?v=${VERSION}`);
+      await loadScript(`sans-gap-gif-balance-v6.js?v=${VERSION}`);
       // Freeze the transformer order before v4 loads user-polish-hotfix.js.
       await loadScript(`sans-final-orchestrator.js?v=${VERSION}`);
       await loadScript(`game-loader-v4.js?v=${VERSION}`);
