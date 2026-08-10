@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260810-sans-display-audio-v8';
+  const VERSION = '20260811-sans-fidelity-v10';
   const GAME_URL = `game.js?v=${VERSION}`;
   const MAIN_PATCH_URL = 'https://raw.githubusercontent.com/shuhasei/Urination-game/main/.github/scripts/apply_room11_omega.py';
   const RESCUE_PATCH_URL = 'https://raw.githubusercontent.com/shuhasei/Urination-game/main/.github/scripts/apply_room11_omega_rescue.py';
@@ -17,6 +17,8 @@
   const USER_MEDIA_URL = `user-media-data.js?v=${VERSION}`;
   const USER_POLISH_URL = `user-polish-hotfix.js?v=${VERSION}`;
   const SANS_FINAL_DISPLAY_AUDIO_URL = `sans-final-display-audio-v8.js?v=${VERSION}`;
+  const SANS_FIDELITY_URL = `sans-fidelity-v9.js?v=${VERSION}`;
+  const SANS_USER_GIF_PRIORITY_URL = `sans-user-gif-priority-v10.js?v=${VERSION}`;
   const OMEGA_PART_FILES = Object.freeze({
     tv: 'assets/omega-parts-gif/tv.b64',
     left_eye: 'assets/omega-parts-gif/left_eye.b64',
@@ -103,7 +105,7 @@
     });
     if (!image.naturalWidth || !image.naturalHeight) {
       URL.revokeObjectURL(blobUrl);
-      throw new Error('オメガフラウィ画像のサイズを取得できません');
+      throw new Error('検証済みオメガフラウィ画像のサイズを取得できません');
     }
 
     window.__omegaFloweyBlobUrl = blobUrl;
@@ -196,6 +198,8 @@ exec(compile(runner.read_text(encoding='utf-8'), str(runner), 'exec'), namespace
       await loadExternalScript(USER_MEDIA_URL);
       await loadExternalScript(USER_POLISH_URL);
       await loadExternalScript(SANS_FINAL_DISPLAY_AUDIO_URL);
+      await loadExternalScript(SANS_FIDELITY_URL);
+      await loadExternalScript(SANS_USER_GIF_PRIORITY_URL);
       // The video-reference rig crops the embedded source directly; legacy part GIFs are not a startup dependency.
 
       const required = [
@@ -208,7 +212,9 @@ exec(compile(runner.read_text(encoding='utf-8'), str(runner), 'exec'), namespace
         ['applyOmegaMotionHotfix', 'Omega motion hotfix'],
         ['applyOmegaPartsFinalHotfix', 'Omega video-reference rig'],
         ['applyUserPolishHotfix', 'Sans/ROOM11 visual polish'],
-        ['applySansFinalDisplayAudioFixV8', 'Sans final display/audio fix']
+        ['applySansFinalDisplayAudioFixV8', 'Sans final display/audio fix'],
+        ['applySansFidelityV9', 'Sans GIF/voice/blaster/death fidelity'],
+        ['applySansUserGifPriorityV10', 'supplied Sans GIF priority']
       ];
       for (const [name, label] of required) {
         if (typeof window[name] !== 'function') throw new Error(`${label} function is unavailable`);
@@ -241,6 +247,8 @@ exec(compile(runner.read_text(encoding='utf-8'), str(runner), 'exec'), namespace
       source = window.applyOmegaPartsFinalHotfix(source);
       source = window.applyUserPolishHotfix(source);
       source = window.applySansFinalDisplayAudioFixV8(source);
+      source = window.applySansFidelityV9(source);
+      source = window.applySansUserGifPriorityV10(source);
       await executeGame(source);
       hideHint();
     } catch (error) {
