@@ -2,15 +2,13 @@
   'use strict';
 
   const nativeRegExp = window.RegExp;
+  let assignedV9 = null;
 
   function SafeRegExp(pattern, flags) {
     try {
       return new nativeRegExp(pattern, flags);
     } catch (error) {
       const source = String(pattern ?? '');
-      // sans-fidelity-v9 builds a function-search pattern whose final literal
-      // opening parenthesis lost its escape while passing through a template
-      // literal. Repair only that known malformed tail, then retry.
       if (error instanceof SyntaxError && source.endsWith('(')) {
         return new nativeRegExp(source.slice(0, -1) + '\\(', flags);
       }
@@ -21,16 +19,32 @@
   SafeRegExp.prototype = nativeRegExp.prototype;
   Object.setPrototypeOf(SafeRegExp, nativeRegExp);
 
+  function wrapTransformer(transformer) {
+    return source => {
+      const previous = window.RegExp;
+      window.RegExp = SafeRegExp;
+      try {
+        return transformer(source);
+      } finally {
+        window.RegExp = previous;
+      }
+    };
+  }
+
+  Object.defineProperty(window, 'applySansFidelityV9', {
+    configurable: true,
+    get() {
+      return assignedV9;
+    },
+    set(value) {
+      assignedV9 = typeof value === 'function' ? wrapTransformer(value) : value;
+    }
+  });
+
   window.applySansFidelityV11 = source => {
-    if (typeof window.applySansFidelityV9 !== 'function') {
+    if (typeof assignedV9 !== 'function') {
       throw new Error('Sans fidelity v9 transformer is unavailable');
     }
-    const previous = window.RegExp;
-    window.RegExp = SafeRegExp;
-    try {
-      return window.applySansFidelityV9(source);
-    } finally {
-      window.RegExp = previous;
-    }
+    return assignedV9(source);
   };
 })();
