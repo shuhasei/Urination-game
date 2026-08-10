@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260811-sans-fidelity-v10';
+  const VERSION = '20260811-sans-fidelity-v11';
 
   function loadScript(src) {
     return new Promise((resolve, reject) => {
@@ -30,9 +30,6 @@
     await loadScript(`user-media-data.js?v=${VERSION}`);
     await loadScript(`user-sans-gifs-v4.js?v=${VERSION}`);
 
-    // Normal/menu states must use the idle animation. Action artwork is only a
-    // last-resort fallback; using it as the default is what caused the raised
-    // arms / attack pose to remain visible in the command screen.
     const primarySansGif = window.USER_SANS_IDLE_V4
       || window.USER_SANS_GIF_DATA
       || window.USER_SANS_ACTION_V4;
@@ -66,8 +63,9 @@
       await loadScript(`user-undertale-sfx-final.js?v=${VERSION}`);
       await loadScript(`sans-final-hardening.js?v=${VERSION}`);
       await loadScript(`sans-gap-gif-balance-v6.js?v=${VERSION}`);
-      // Freeze the transformer order before v4 loads user-polish-hotfix.js.
       await loadScript(`sans-final-orchestrator.js?v=${VERSION}`);
+      // Install the guard before game-loader-v4 dynamically loads sans-fidelity-v9.js.
+      await loadScript(`sans-fidelity-v11-regex-fix.js?v=${VERSION}`);
       await loadScript(`game-loader-v4.js?v=${VERSION}`);
     } catch (error) {
       console.error('Sans battle hardening loader failed:', error);
