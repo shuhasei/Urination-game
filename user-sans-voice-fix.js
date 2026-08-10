@@ -45,7 +45,7 @@
       if (ch === '{') depth++;
       else if (ch === '}') {
         depth--;
-        if (depth === 0) return { start, end: i + 1 };
+        if (depth === 0) return { start, brace, end: i + 1 };
       }
     }
     return null;
@@ -57,13 +57,25 @@
     return source.slice(0, bounds.start) + replacement + source.slice(bounds.end);
   }
 
-  function applySansVoiceFix(source) {
-    return replaceFunction(String(source || ''), 'speechBlip', `  function speechBlip() {
+  function patchFunctionBody(source, name, transform) {
+    const bounds = functionBounds(source, name);
+    if (!bounds) return source;
+    const body = source.slice(bounds.start, bounds.end);
+    const next = transform(body);
+    if (next === body) return source;
+    return source.slice(0, bounds.start) + next + source.slice(bounds.end);
+  }
+
+  function patchSansVoice(source) {
+    return replaceFunction(source, 'speechBlip', `  function speechBlip() {
     const isSans = speakingEnemy?.visual === 'sans' || speakingEnemy?.type === 'sans';
 
-    // Sans uses the small WAV already embedded in game.js as the guaranteed
-    // local voice. It is intentionally handled before the AudioContext state
-    // check, because HTMLAudio can play even when Web Audio is still resuming.
+    // Use the short Sans voice WAV already embedded in game.js.  The previous
+    // patch layered a long MyInstants "talking" clip on every few characters
+    // and shifted this sample close to normal speed; that produced a doubled,
+    // high/warbly voice.  The fight reference uses one short low blip per
+    // printable character, so keep one source, the original low playback band,
+    // and no network-dependent overlay.
     if (isSans) {
       startAudio();
       if (sansSpeechPool.length) {
@@ -71,32 +83,19 @@
         sample.pause();
         sample.currentTime = 0;
         sample.preservesPitch = false;
-        sample.volume = .52;
-        sample.playbackRate = .90 + (Math.floor(speechChars) % 5) * .022;
+        sample.volume = .34;
+        sample.playbackRate = .58 + (Math.floor(speechChars) % 4) * .025;
         const promise = sample.play();
         if (promise && typeof promise.catch === 'function') {
           promise.catch(() => {
-            // Last-resort audible feedback if media playback is rejected.
             startAudio();
-            if (audio && audio.state === 'running') beep(145, .045);
+            if (audio && audio.state === 'running') beep(152, .038);
           });
         }
         window.setTimeout(() => {
           sample.pause();
           sample.currentTime = 0;
-        }, 96);
-      }
-
-      // Also try the verified MyInstants Sans sample when available. Keep it
-      // quieter than the local voice so a slow network can never make dialogue
-      // disappear or suddenly become much louder.
-      if (typeof playUserUndertaleSfx === 'function' && Math.floor(speechChars) % 3 === 0) {
-        playUserUndertaleSfx('sansTalk', {
-          volume: .16,
-          rate: .96 + (Math.floor(speechChars) % 4) * .015,
-          stopAfter: .09,
-          preservesPitch: false
-        });
+        }, 74);
       }
       return;
     }
@@ -123,11 +122,84 @@
   }`);
   }
 
+  function patchSansSpeechCadence(source) {
+    return patchFunctionBody(source, 'updateEnemySpeech', body => body
+      .replace("speechChars + dt * (speakingEnemy?.visual === 'sans' ? 24 : 30)",
+        "speechChars + dt * (speakingEnemy?.visual === 'sans' ? 21 : 30)"));
+  }
+
+  function patchStageTenStats(source) {
+    let s = source.replace('  const TEST_PLAY_INVINCIBLE = true;', '  const TEST_PLAY_INVINCIBLE = false;');
+    s = patchFunctionBody(s, 'startStage', body => {
+      let next = body;
+      next = next.replace('    stage = number;',
+        "    stage = number;\n    if (stage === 10) playerLevel = 19;");
+      next = next.replace('    maxHp = levelMaxHp(playerLevel);\n    hp = maxHp;',
+        "    maxHp = stage === 10 ? 92 : levelMaxHp(playerLevel);\n    hp = maxHp;\n    if (stage === 10) {\n      karmaHp = 0;\n      practiceGuardTurns = 0;\n      practiceGuardActive = false;\n      reviveItems = 0;\n    }");
+      return next;
+    });
+    return s;
+  }
+
+  function patchSansTurnDialogue(source) {
+    return patchFunctionBody(source, 'beginEnemyTurn', body => {
+      const verbose = `    setState('enemySpeak', [\n      '＊ ' + attacker.name + '「' + battleLine + '」',\n      '＊ 黒い箱の空気が 低く震えた。'\n    ]);`;
+      const faithful = `    setState('enemySpeak', [battleLine]);`;
+      return body.includes(verbose) ? body.replace(verbose, faithful) : body;
+    });
+  }
+
+  function patchSansDamageCadence(source) {
+    return patchFunctionBody(source, 'applySansDamage', body => body
+      .replace('if (now - lastSansDamageAt < 100) return;',
+        'if (now - lastSansDamageAt < 34) return;')
+      .replace('約0.1秒ごとの判定', '約1フレーム(30fps)ごとの判定'));
+  }
+
+  function patchReferencePalette(source) {
+    let s = source;
+    // The recorded fight shows neutral grey moving platforms, not neon green.
+    s = s.replace(
+      "        rect(bullet.x - bullet.w / 2, bullet.y, bullet.w, 2, '#55e69a');\n        rect(bullet.x - bullet.w / 2 + 2, bullet.y + 2, bullet.w - 4, 2, '#176641');",
+      "        rect(bullet.x - bullet.w / 2, bullet.y, bullet.w, 2, '#b8b8b8');\n        rect(bullet.x - bullet.w / 2 + 2, bullet.y + 2, bullet.w - 4, 2, '#4a4a4a');"
+    );
+    return s;
+  }
+
+  function patchReferenceGeometry(source) {
+    let s = source;
+    // Earlier fairness patches almost doubled the visible opening in the
+    // recorded Bone Gap 2 pattern (111 -> 94).  Restore the reference shape
+    // while retaining a very small five-source-pixel allowance for keyboard
+    // hitbox differences.
+    s = s.split('const heightT = 94 - heightB;').join('const heightT = 106 - heightB;');
+    s = s.split('const heightT = 97 - heightB;').join('const heightT = 106 - heightB;');
+    // Likewise keep the sine corridor visually close to the recording.  The
+    // original minimum was 20; 23 leaves only a modest accessibility margin.
+    s = s.split('const opening = Math.max(34, options.opening || 34);')
+      .join('const opening = Math.max(23, options.opening || 20);');
+    s = s.split('const opening = Math.max(32, options.opening || 32);')
+      .join('const opening = Math.max(23, options.opening || 20);');
+    return s;
+  }
+
+  function applySansVoiceFix(source) {
+    let s = String(source || '');
+    s = patchSansVoice(s);
+    s = patchSansSpeechCadence(s);
+    s = patchStageTenStats(s);
+    s = patchSansTurnDialogue(s);
+    s = patchSansDamageCadence(s);
+    s = patchReferencePalette(s);
+    s = patchReferenceGeometry(s);
+    return s;
+  }
+
   window.applySansVoiceFix = applySansVoiceFix;
 
-  // Loaded before game-loader-v4. Once the normal polish function appears,
-  // compose this as the final source transform so no earlier patch can silence
-  // or replace the guaranteed local Sans voice.
+  // Loaded after the reference-video and fairness patches. Compose this as the
+  // final source transform so the last calibration wins without discarding the
+  // recorded attack scripts themselves.
   let wrappedTarget = null;
   const timer = window.setInterval(() => {
     const current = window.applyUserPolishHotfix;
