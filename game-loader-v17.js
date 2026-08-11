@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260811-user-sans-v21';
+  const VERSION = '20260811-user-sans-v22';
 
   function loadScript(src, optional = false) {
     return new Promise((resolve, reject) => {
@@ -11,6 +11,13 @@
       script.onload = () => resolve(script);
       script.onerror = () => optional ? resolve(null) : reject(new Error(src + ' could not be loaded'));
       document.head.appendChild(script);
+    });
+  }
+
+  function fetchText(src) {
+    return fetch(src, { cache: 'no-store' }).then(response => {
+      if (!response.ok) throw new Error(src + ': HTTP ' + response.status);
+      return response.text();
     });
   }
 
@@ -51,7 +58,6 @@
     try {
       window.__hqSansV17 = await preloadImage(media.idle, 'uploaded Sans idle GIF');
       window.__hqHandUpV17 = await preloadImage(media.gesture, 'uploaded Sans gesture GIF');
-      // Never feed a full rectangular external GIF into the Gaster head renderer.
       window.__hqGasterV17 = null;
       window.__userGasterGifPreloaded = null;
       console.info('User supplied Sans GIFs ready:', {
@@ -62,6 +68,31 @@
     } catch (error) {
       console.warn('User supplied Sans GIFs could not be prepared.', error);
       return false;
+    }
+  }
+
+  async function prepareUserSansV22Media() {
+    try {
+      const [eyeBase64, voiceBase64] = await Promise.all([
+        fetchText(`assets/user-sans-v22/sans-eye.b64?v=${VERSION}`),
+        fetchText(`assets/user-sans-v22/sans-voice.b64?v=${VERSION}`)
+      ]);
+      const eyeData = eyeBase64.trim();
+      const voiceData = voiceBase64.trim();
+      if (eyeData) {
+        window.__hqSansEyeV22 = await preloadImage(
+          `data:image/gif;base64,${eyeData}`,
+          'uploaded Sans special-eye GIF'
+        );
+      }
+      if (voiceData) window.__sansVoiceV22Data = `data:audio/mpeg;base64,${voiceData}`;
+      console.info('Sans v22 media ready:', {
+        eye: window.__hqSansEyeV22
+          ? [window.__hqSansEyeV22.naturalWidth, window.__hqSansEyeV22.naturalHeight] : null,
+        voice: Boolean(window.__sansVoiceV22Data)
+      });
+    } catch (error) {
+      console.warn('Sans v22 eye/voice media unavailable; older media remains active.', error);
     }
   }
 
@@ -78,7 +109,6 @@
         try { window.__hqHandUpV17 = await preloadImage(media.handUp.data, 'embedded HQ Sans gesture GIF'); }
         catch (error) { console.warn('Embedded HQ gesture GIF unavailable.', error); }
       }
-      // Gaster deliberately remains native/frame-based.
       window.__hqGasterV17 = null;
       window.__userGasterGifPreloaded = null;
       return true;
@@ -117,6 +147,10 @@
             result = window.applySansLoginGasterFixV21(result);
             console.info('Sans login/Gaster fix v21 applied.');
           }
+          if (typeof window.applySansRecursionMediaFixV22 === 'function') {
+            result = window.applySansRecursionMediaFixV22(result);
+            console.info('Sans recursion/media fix v22 applied.');
+          }
           return result;
         };
       }
@@ -129,11 +163,13 @@
       await prepareFallbackMedia();
       const uploadedReady = await prepareUploadedSansMedia();
       if (!uploadedReady) await prepareEmbeddedHQFallback();
+      await prepareUserSansV22Media();
 
       await loadScript(`embedded-hq-sans-render-v17.js?v=${VERSION}`);
       await loadScript(`sans-reference-polish-v18.js?v=${VERSION}`);
       await loadScript(`sans-video-faithful-v19.js?v=${VERSION}`);
       await loadScript(`sans-login-gaster-fix-v21.js?v=${VERSION}`);
+      await loadScript(`sans-recursion-media-fix-v22.js?v=${VERSION}`);
 
       await loadScript(`user-sans-video-addon.js?v=${VERSION}`);
       await loadScript(`user-battle-sync-v2.js?v=${VERSION}`);
