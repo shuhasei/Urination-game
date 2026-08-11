@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260811-sans-video-faithful-v19';
+  const VERSION = '20260811-user-sans-v21';
 
   function loadScript(src, optional = false) {
     return new Promise((resolve, reject) => {
@@ -42,65 +42,48 @@
       try { window.__userSansGifPreloaded = await preloadImage(fallbackSans, 'fallback Sans GIF'); }
       catch (error) { console.warn(error); }
     }
-    if (window.USER_GASTER_GIF_DATA) {
-      try { window.__userGasterGifPreloaded = await preloadImage(window.USER_GASTER_GIF_DATA, 'fallback Gaster GIF'); }
-      catch (error) { console.warn(error); }
-    }
   }
 
-  async function prepareTenorMedia() {
-    const manifestLoaded = await loadScript(`tenor-sans-media-v18.js?v=${VERSION}`, true);
-    const media = manifestLoaded ? window.TENOR_SANS_MEDIA_V18 : null;
-    if (!media) return false;
-
-    let sansReady = false;
+  async function prepareUploadedSansMedia() {
+    const loaded = await loadScript(`uploaded-sans-gifs-v21.js?v=${VERSION}`, true);
+    const media = loaded ? window.UPLOADED_SANS_GIFS_V21 : null;
+    if (!media?.idle || !media?.gesture) return false;
     try {
-      window.__hqSansV17 = await preloadImage(media.battle?.url, 'Tenor Sans battle GIF', 10000);
-      sansReady = true;
-    } catch (error) {
-      console.warn('Tenor Sans GIF unavailable; local fallback will be used.', error);
-    }
-
-    try {
-      window.__hqGasterV17 = await preloadImage(media.gaster?.url, 'Tenor Gaster Blaster GIF', 10000);
-    } catch (error) {
-      console.warn('Tenor Gaster GIF unavailable; local fallback will be used.', error);
-    }
-
-    if (media.handUp?.url) {
-      try { window.__hqHandUpV17 = await preloadImage(media.handUp.url, 'Tenor Sans gesture GIF', 10000); }
-      catch (error) { console.warn('Tenor Sans gesture GIF unavailable.', error); }
-    }
-
-    if (sansReady) {
-      console.info('Tenor Sans media ready:', {
-        sans: [window.__hqSansV17.naturalWidth, window.__hqSansV17.naturalHeight],
-        gaster: window.__hqGasterV17
-          ? [window.__hqGasterV17.naturalWidth, window.__hqGasterV17.naturalHeight] : null,
-        handUp: window.__hqHandUpV17
-          ? [window.__hqHandUpV17.naturalWidth, window.__hqHandUpV17.naturalHeight] : null
+      window.__hqSansV17 = await preloadImage(media.idle, 'uploaded Sans idle GIF');
+      window.__hqHandUpV17 = await preloadImage(media.gesture, 'uploaded Sans gesture GIF');
+      // Never feed a full rectangular external GIF into the Gaster head renderer.
+      window.__hqGasterV17 = null;
+      window.__userGasterGifPreloaded = null;
+      console.info('User supplied Sans GIFs ready:', {
+        idle: [window.__hqSansV17.naturalWidth, window.__hqSansV17.naturalHeight],
+        gesture: [window.__hqHandUpV17.naturalWidth, window.__hqHandUpV17.naturalHeight]
       });
+      return true;
+    } catch (error) {
+      console.warn('User supplied Sans GIFs could not be prepared.', error);
+      return false;
     }
-    return sansReady;
   }
 
   async function prepareEmbeddedHQFallback() {
     const generated = await loadScript(`generated-hq-media-v17.js?v=${VERSION}`, true);
     if (!generated || !window.GENERATED_HQ_MEDIA_V17) {
-      console.warn('Embedded HQ media is unavailable; built-in fallback media remains active.');
+      console.warn('Embedded HQ Sans fallback is unavailable; built-in Sans media remains active.');
       return false;
     }
     const media = window.GENERATED_HQ_MEDIA_V17;
     try {
       window.__hqSansV17 = await preloadImage(media.sans?.data, 'embedded HQ Sans GIF');
-      window.__hqGasterV17 = await preloadImage(media.gaster?.data, 'embedded HQ Gaster GIF');
       if (media.handUp?.data) {
         try { window.__hqHandUpV17 = await preloadImage(media.handUp.data, 'embedded HQ Sans gesture GIF'); }
         catch (error) { console.warn('Embedded HQ gesture GIF unavailable.', error); }
       }
+      // Gaster deliberately remains native/frame-based.
+      window.__hqGasterV17 = null;
+      window.__userGasterGifPreloaded = null;
       return true;
     } catch (error) {
-      console.warn('Embedded HQ media fallback failed.', error);
+      console.warn('Embedded HQ Sans fallback failed.', error);
       return false;
     }
   }
@@ -120,7 +103,7 @@
           let result = baseTransformer(source);
           if (typeof window.applyEmbeddedHQSansRenderV17 === 'function') {
             result = window.applyEmbeddedHQSansRenderV17(result);
-            console.info('HQ Sans/Gaster renderer applied.');
+            console.info('Uploaded Sans renderer applied.');
           }
           if (typeof window.applySansReferencePolishV18 === 'function') {
             result = window.applySansReferencePolishV18(result);
@@ -129,6 +112,10 @@
           if (typeof window.applySansVideoFaithfulV19 === 'function') {
             result = window.applySansVideoFaithfulV19(result);
             console.info('Sans video-faithful v19 applied.');
+          }
+          if (typeof window.applySansLoginGasterFixV21 === 'function') {
+            result = window.applySansLoginGasterFixV21(result);
+            console.info('Sans login/Gaster fix v21 applied.');
           }
           return result;
         };
@@ -140,11 +127,13 @@
     try {
       console.info('UNDERTALE loader starting:', VERSION);
       await prepareFallbackMedia();
-      const tenorReady = await prepareTenorMedia();
-      if (!tenorReady) await prepareEmbeddedHQFallback();
+      const uploadedReady = await prepareUploadedSansMedia();
+      if (!uploadedReady) await prepareEmbeddedHQFallback();
+
       await loadScript(`embedded-hq-sans-render-v17.js?v=${VERSION}`);
       await loadScript(`sans-reference-polish-v18.js?v=${VERSION}`);
       await loadScript(`sans-video-faithful-v19.js?v=${VERSION}`);
+      await loadScript(`sans-login-gaster-fix-v21.js?v=${VERSION}`);
 
       await loadScript(`user-sans-video-addon.js?v=${VERSION}`);
       await loadScript(`user-battle-sync-v2.js?v=${VERSION}`);
