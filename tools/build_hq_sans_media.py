@@ -92,16 +92,38 @@ def decode_frames(data: bytes) -> tuple[list[Image.Image], list[int]]:
 def union_bbox(frames: list[Image.Image]) -> tuple[int, int, int, int]:
     union = Image.new("L", frames[0].size, 0)
     for frame in frames:
-        alpha = frame.getchannel("A")
-        union = ImageChops.lighter(union, alpha)
+        union = ImageChops.lighter(union, frame.getchannel("A"))
     bbox = union.getbbox() or (0, 0, frames[0].width, frames[0].height)
-    # A few pixels of stable padding prevents animation edges from touching crop.
+    # Stable padding keeps the sprite from jittering as its silhouette changes.
     pad = max(2, round(max(frames[0].size) * 0.015))
-    left = max(0, bbox[0] - pad)
-    top = max(0, bbox[1] - pad)
-    right = min(frames[0].width, bbox[2] + pad)
-    bottom = min(frames[0].height, bbox[3] + pad)
-    return left, top, right, bottom
+    return (
+        max(0, bbox[0] - pad),
+        max(0, bbox[1] - pad),
+        min(frames[0].width, bbox[2] + pad),
+        min(frames[0].height, bbox[3] + pad),
+    )
+
+
+def to_gif_palette(frame: Image.Image) -> Image.Image:
+    """Quantize an RGBA frame while reserving palette index 255 for alpha."""
+    alpha = frame.getchannel("A")
+    # Composite against black before quantization.  Index 255 is then reserved
+    # exclusively for transparency so a legitimate dark color is never erased.
+    rgb = Image.new("RGB", frame.size, (0, 0, 0))
+    rgb.paste(frame.convert("RGB"), mask=alpha)
+    pal = rgb.convert("P", palette=Image.Palette.ADAPTIVE, colors=255)
+
+    palette_data = pal.getpalette() or []
+    palette_data = palette_data[: 255 * 3]
+    palette_data += [0] * (255 * 3 - len(palette_data))
+    palette_data += [0, 0, 0]  # palette index 255
+    pal.putpalette(palette_data)
+
+    transparent_mask = alpha.point(lambda value: 255 if value < 24 else 0)
+    pal.paste(255, mask=transparent_mask)
+    pal.info["transparency"] = 255
+    pal.info["disposal"] = 2
+    return pal
 
 
 def encode_enhanced_gif(data: bytes) -> tuple[bytes, dict]:
@@ -110,28 +132,16 @@ def encode_enhanced_gif(data: bytes) -> tuple[bytes, dict]:
     enhanced: list[Image.Image] = []
     for frame in frames:
         cropped = frame.crop(bbox)
-        # Nearest-neighbour is intentional for Undertale pixel art. The browser
-        # performs the final high-quality downsample at the game's display size.
-        cropped = cropped.resize(
-            (cropped.width * 2, cropped.height * 2), Image.Resampling.NEAREST
+        # Preserve Undertale's pixel geometry at 2x. The browser then performs
+        # the final high-quality downsample to the in-game 46px/43px targets.
+        enhanced.append(
+            cropped.resize(
+                (cropped.width * 2, cropped.height * 2),
+                Image.Resampling.NEAREST,
+            )
         )
-        enhanced.append(cropped)
 
-    # GIF supports one transparent palette entry. Quantize each frame but keep
-    # the source frame count/timing. Disposal=2 prevents trails between frames.
-    encoded_frames: list[Image.Image] = []
-    for frame in enhanced:
-        alpha = frame.getchannel("A")
-        palette = frame.convert("RGB").convert(
-            "P", palette=Image.Palette.ADAPTIVE, colors=255
-        )
-        transparent = Image.new("L", frame.size, 255)
-        transparent.paste(0, mask=alpha.point(lambda value: 255 if value < 24 else 0))
-        palette.paste(0, mask=transparent)
-        palette.info["transparency"] = 0
-        palette.info["disposal"] = 2
-        encoded_frames.append(palette)
-
+    encoded_frames = [to_gif_palette(frame) for frame in enhanced]
     output = io.BytesIO()
     encoded_frames[0].save(
         output,
@@ -140,7 +150,7 @@ def encode_enhanced_gif(data: bytes) -> tuple[bytes, dict]:
         append_images=encoded_frames[1:],
         loop=0,
         duration=durations,
-        transparency=0,
+        transparency=255,
         disposal=2,
         optimize=False,
     )
