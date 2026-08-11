@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260811-embedded-hq-v17';
+  const VERSION = '20260811-embedded-hq-v17b';
 
   function loadScript(src, optional = false) {
     return new Promise((resolve, reject) => {
@@ -48,11 +48,33 @@
     }
   }
 
+  async function prepareRemoteHDFallback() {
+    const manifestLoaded = await loadScript(`tenor-sans-media-v16.js?v=${VERSION}`, true);
+    const media = manifestLoaded ? window.TENOR_SANS_MEDIA_V16 : null;
+    if (!media) return false;
+    try {
+      window.__hqSansV17 = await preloadImage(media.battle?.url, 'temporary HD Sans GIF', 9000);
+      window.__hqGasterV17 = await preloadImage(media.gaster?.url, 'temporary HD Gaster GIF', 9000);
+      if (media.handUp?.url) {
+        try { window.__hqHandUpV17 = await preloadImage(media.handUp.url, 'temporary HD Sans gesture GIF', 9000); }
+        catch (error) { console.warn('Temporary HD gesture unavailable.', error); }
+      }
+      console.info('Temporary HD GIF fallback ready:', {
+        sans: [window.__hqSansV17.naturalWidth, window.__hqSansV17.naturalHeight],
+        gaster: [window.__hqGasterV17.naturalWidth, window.__hqGasterV17.naturalHeight]
+      });
+      return true;
+    } catch (error) {
+      console.warn('Temporary HD GIF fallback failed; embedded legacy media will be used.', error);
+      return false;
+    }
+  }
+
   async function prepareHQMedia() {
     const generated = await loadScript(`generated-hq-media-v17.js?v=${VERSION}`, true);
     if (!generated || !window.GENERATED_HQ_MEDIA_V17) {
-      console.warn('Embedded HQ media file is not generated yet; fallback media remains active.');
-      return false;
+      console.warn('Embedded HQ media is not generated yet; using temporary HD fallback.');
+      return prepareRemoteHDFallback();
     }
     const media = window.GENERATED_HQ_MEDIA_V17;
     window.__hqSansV17 = await preloadImage(media.sans?.data, 'embedded HQ Sans GIF');
@@ -84,7 +106,7 @@
           let result = baseTransformer(source);
           if (typeof window.applyEmbeddedHQSansRenderV17 === 'function') {
             result = window.applyEmbeddedHQSansRenderV17(result);
-            console.info('Embedded HQ Sans/Gaster renderer applied.');
+            console.info('HQ Sans/Gaster renderer applied.');
           }
           return result;
         };
