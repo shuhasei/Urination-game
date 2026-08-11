@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260811-embedded-hq-v17b';
+  const VERSION = '20260811-sans-reference-v18';
 
   function loadScript(src, optional = false) {
     return new Promise((resolve, reject) => {
@@ -48,47 +48,61 @@
     }
   }
 
-  async function prepareRemoteHDFallback() {
-    const manifestLoaded = await loadScript(`tenor-sans-media-v16.js?v=${VERSION}`, true);
-    const media = manifestLoaded ? window.TENOR_SANS_MEDIA_V16 : null;
+  async function prepareTenorMedia() {
+    const manifestLoaded = await loadScript(`tenor-sans-media-v18.js?v=${VERSION}`, true);
+    const media = manifestLoaded ? window.TENOR_SANS_MEDIA_V18 : null;
     if (!media) return false;
+
+    let sansReady = false;
     try {
-      window.__hqSansV17 = await preloadImage(media.battle?.url, 'temporary HD Sans GIF', 9000);
-      window.__hqGasterV17 = await preloadImage(media.gaster?.url, 'temporary HD Gaster GIF', 9000);
-      if (media.handUp?.url) {
-        try { window.__hqHandUpV17 = await preloadImage(media.handUp.url, 'temporary HD Sans gesture GIF', 9000); }
-        catch (error) { console.warn('Temporary HD gesture unavailable.', error); }
-      }
-      console.info('Temporary HD GIF fallback ready:', {
-        sans: [window.__hqSansV17.naturalWidth, window.__hqSansV17.naturalHeight],
-        gaster: [window.__hqGasterV17.naturalWidth, window.__hqGasterV17.naturalHeight]
-      });
-      return true;
+      window.__hqSansV17 = await preloadImage(media.battle?.url, 'Tenor Sans battle GIF', 10000);
+      sansReady = true;
     } catch (error) {
-      console.warn('Temporary HD GIF fallback failed; embedded legacy media will be used.', error);
-      return false;
+      console.warn('Tenor Sans GIF unavailable; local fallback will be used.', error);
     }
+
+    try {
+      window.__hqGasterV17 = await preloadImage(media.gaster?.url, 'Tenor Gaster Blaster GIF', 10000);
+    } catch (error) {
+      console.warn('Tenor Gaster GIF unavailable; local fallback will be used.', error);
+    }
+
+    if (media.handUp?.url) {
+      try { window.__hqHandUpV17 = await preloadImage(media.handUp.url, 'Tenor Sans gesture GIF', 10000); }
+      catch (error) { console.warn('Tenor Sans gesture GIF unavailable.', error); }
+    }
+
+    if (sansReady) {
+      console.info('Tenor Sans media ready:', {
+        sans: [window.__hqSansV17.naturalWidth, window.__hqSansV17.naturalHeight],
+        gaster: window.__hqGasterV17
+          ? [window.__hqGasterV17.naturalWidth, window.__hqGasterV17.naturalHeight] : null,
+        handUp: window.__hqHandUpV17
+          ? [window.__hqHandUpV17.naturalWidth, window.__hqHandUpV17.naturalHeight] : null
+      });
+    }
+    return sansReady;
   }
 
-  async function prepareHQMedia() {
+  async function prepareEmbeddedHQFallback() {
     const generated = await loadScript(`generated-hq-media-v17.js?v=${VERSION}`, true);
     if (!generated || !window.GENERATED_HQ_MEDIA_V17) {
-      console.warn('Embedded HQ media is not generated yet; using temporary HD fallback.');
-      return prepareRemoteHDFallback();
+      console.warn('Embedded HQ media is unavailable; built-in fallback media remains active.');
+      return false;
     }
     const media = window.GENERATED_HQ_MEDIA_V17;
-    window.__hqSansV17 = await preloadImage(media.sans?.data, 'embedded HQ Sans GIF');
-    window.__hqGasterV17 = await preloadImage(media.gaster?.data, 'embedded HQ Gaster GIF');
-    if (media.handUp?.data) {
-      try { window.__hqHandUpV17 = await preloadImage(media.handUp.data, 'embedded HQ Sans gesture GIF'); }
-      catch (error) { console.warn('HQ gesture GIF unavailable.', error); }
+    try {
+      window.__hqSansV17 = await preloadImage(media.sans?.data, 'embedded HQ Sans GIF');
+      window.__hqGasterV17 = await preloadImage(media.gaster?.data, 'embedded HQ Gaster GIF');
+      if (media.handUp?.data) {
+        try { window.__hqHandUpV17 = await preloadImage(media.handUp.data, 'embedded HQ Sans gesture GIF'); }
+        catch (error) { console.warn('Embedded HQ gesture GIF unavailable.', error); }
+      }
+      return true;
+    } catch (error) {
+      console.warn('Embedded HQ media fallback failed.', error);
+      return false;
     }
-    console.info('Embedded HQ GIFs ready:', {
-      sans: [window.__hqSansV17.naturalWidth, window.__hqSansV17.naturalHeight, media.sans?.frames],
-      gaster: [window.__hqGasterV17.naturalWidth, window.__hqGasterV17.naturalHeight, media.gaster?.frames],
-      handUp: window.__hqHandUpV17 ? [window.__hqHandUpV17.naturalWidth, window.__hqHandUpV17.naturalHeight] : null
-    });
-    return true;
   }
 
   function installFinalRendererWrapper() {
@@ -108,6 +122,10 @@
             result = window.applyEmbeddedHQSansRenderV17(result);
             console.info('HQ Sans/Gaster renderer applied.');
           }
+          if (typeof window.applySansReferencePolishV18 === 'function') {
+            result = window.applySansReferencePolishV18(result);
+            console.info('Sans reference polish v18 applied.');
+          }
           return result;
         };
       }
@@ -118,8 +136,10 @@
     try {
       console.info('UNDERTALE loader starting:', VERSION);
       await prepareFallbackMedia();
-      await prepareHQMedia();
+      const tenorReady = await prepareTenorMedia();
+      if (!tenorReady) await prepareEmbeddedHQFallback();
       await loadScript(`embedded-hq-sans-render-v17.js?v=${VERSION}`);
+      await loadScript(`sans-reference-polish-v18.js?v=${VERSION}`);
 
       await loadScript(`user-sans-video-addon.js?v=${VERSION}`);
       await loadScript(`user-battle-sync-v2.js?v=${VERSION}`);
