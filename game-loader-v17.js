@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260811-sans-reference-v18';
+  const VERSION = '20260811-sans-video-faithful-v19';
 
   function loadScript(src, optional = false) {
     return new Promise((resolve, reject) => {
@@ -126,6 +126,10 @@
             result = window.applySansReferencePolishV18(result);
             console.info('Sans reference polish v18 applied.');
           }
+          if (typeof window.applySansVideoFaithfulV19 === 'function') {
+            result = window.applySansVideoFaithfulV19(result);
+            console.info('Sans video-faithful v19 applied.');
+          }
           return result;
         };
       }
@@ -140,6 +144,7 @@
       if (!tenorReady) await prepareEmbeddedHQFallback();
       await loadScript(`embedded-hq-sans-render-v17.js?v=${VERSION}`);
       await loadScript(`sans-reference-polish-v18.js?v=${VERSION}`);
+      await loadScript(`sans-video-faithful-v19.js?v=${VERSION}`);
 
       await loadScript(`user-sans-video-addon.js?v=${VERSION}`);
       await loadScript(`user-battle-sync-v2.js?v=${VERSION}`);
