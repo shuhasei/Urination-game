@@ -20,6 +20,10 @@
           result = window.applySansVideoFidelityV23(result);
           console.info('Sans video-fidelity v23 applied.');
         }
+        if (typeof window.applySansBirdReferenceV23 === 'function') {
+          result = window.applySansBirdReferenceV23(result);
+          console.info('Sans bird-reference v23 applied.');
+        }
         return result;
       };
       chained.__sansV23Chained = true;
