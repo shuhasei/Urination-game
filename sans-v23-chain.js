@@ -24,9 +24,13 @@
           result = window.applySansBirdReferenceV23(result);
           console.info('Sans bird-reference v23 applied.');
         }
+        if (typeof window.applySansReferenceVideoV24 === 'function') {
+          result = window.applySansReferenceVideoV24(result);
+          console.info('Sans reference-video v24 applied.');
+        }
         return result;
       };
-      chained.__sansV23Chained = true;
+      chained.__sansV24Chained = true;
     }
   });
 })();
