@@ -24,13 +24,16 @@
           result = window.applySansBirdReferenceV23(result);
           console.info('Sans bird-reference v23 applied.');
         }
-        if (typeof window.applySansReferenceVideoV24 === 'function') {
-          result = window.applySansReferenceVideoV24(result);
-          console.info('Sans reference-video v24 applied.');
+        // v24's transformer is intentionally skipped: it produced a duplicate
+        // identifier declaration at runtime. Its embedded voice sample remains
+        // available as window.__sansVoiceBlipV24Data for the corrected v25 patch.
+        if (typeof window.applySansStartupSizeFixV25 === 'function') {
+          result = window.applySansStartupSizeFixV25(result);
+          console.info('Sans startup/size fix v25 applied.');
         }
         return result;
       };
-      chained.__sansV24Chained = true;
+      chained.__sansV25Chained = true;
     }
   });
 })();
