@@ -47,10 +47,13 @@
           result = window.applySansBlockEngineV29(result);
           console.info('Scratch-style Sans block engine v29 applied.');
         }
+        if (typeof window.applySansGifCostumesV30 === 'function') {
+          result = window.applySansGifCostumesV30(result);
+          console.info('Scratch GIF costumes v30 applied.');
+        }
         return result;
       };
-      chained.__sansV29Chained = true;
+      chained.__sansV30Chained = true;
     }
   });
 })();
-
