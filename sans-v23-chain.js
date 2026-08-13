@@ -4,6 +4,27 @@
   let rawV22 = null;
   let chained = null;
 
+  function applyChecked(source, transformer, label) {
+    if (typeof transformer !== 'function') return source;
+    const candidate = transformer(source);
+    try {
+      // The generated game is executed as a classic Blob script. Compile the
+      // exact candidate first so a bad function-boundary patch cannot blank it.
+      new Function(candidate);
+      console.info(label + ' applied and syntax checked.');
+      return candidate;
+    } catch (error) {
+      const match = String(error?.stack || error).match(/<anonymous>:(\d+):(\d+)/);
+      const line = match ? Number(match[1]) : 0;
+      const lines = String(candidate).split('\n');
+      const context = line ? lines.slice(Math.max(0, line - 3), line + 2).join('\n') : '';
+      console.error(label + ' was rolled back because it generated invalid JavaScript.', {
+        error, line, context
+      });
+      return source;
+    }
+  }
+
   Object.defineProperty(window, 'applySansRecursionMediaFixV22', {
     configurable: true,
     enumerable: true,
@@ -44,16 +65,17 @@
           console.info('Scratch-style Sans pose/eye fidelity v28 applied.');
         }
         if (typeof window.applySansBlockEngineV29 === 'function') {
-          result = window.applySansBlockEngineV29(result);
-          console.info('Scratch-style Sans block engine v29 applied.');
+          result = applyChecked(result, window.applySansBlockEngineV29,
+            'Scratch-style Sans block engine v29');
         }
         if (typeof window.applySansGifCostumesV30 === 'function') {
-          result = window.applySansGifCostumesV30(result);
-          console.info('Scratch GIF costumes v30 applied.');
+          result = applyChecked(result, window.applySansGifCostumesV30,
+            'Scratch GIF costumes v30');
         }
         return result;
       };
-      chained.__sansV30Chained = true;
+      chained.__sansV31Chained = true;
     }
   });
 })();
+
