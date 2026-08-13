@@ -6,23 +6,23 @@
 
   const costumeData = Object.freeze({
     idleWide: Object.freeze({
-      id: 'idle-wide', sheet: 'idle-wide.png', source: 'source/idle-wide.gif',
-      frameWidth: 216, frameHeight: 106, columns: 5, frames: 19,
+      id: 'idle-wide', frameBase: 'frames/idle-wide/', source: 'source/idle-wide.gif',
+      frameWidth: 216, frameHeight: 106, frames: 19,
       delays: Object.freeze(Array(19).fill(100))
     }),
     battleReference: Object.freeze({
-      id: 'battle-reference', sheet: 'battle-reference.png',
+      id: 'battle-reference', frameBase: 'frames/battle-reference/',
       source: 'source/battle-reference.gif', frameWidth: 220, frameHeight: 164,
-      columns: 10, frames: 73, delays: Object.freeze(Array(73).fill(100))
+      frames: 73, delays: Object.freeze(Array(73).fill(100))
     }),
     shrug: Object.freeze({
-      id: 'shrug', sheet: 'shrug.png', source: 'source/shrug.gif',
-      frameWidth: 216, frameHeight: 215, columns: 5, frames: 25,
+      id: 'shrug', frameBase: 'frames/shrug/', source: 'source/shrug.gif',
+      frameWidth: 216, frameHeight: 215, frames: 25,
       delays: Object.freeze(Array(25).fill(100))
     }),
     idleLarge: Object.freeze({
-      id: 'idle-large', sheet: 'idle-large.png', source: 'source/idle-large.gif',
-      frameWidth: 204, frameHeight: 271, columns: 5, frames: 10,
+      id: 'idle-large', frameBase: 'frames/idle-large/', source: 'source/idle-large.gif',
+      frameWidth: 204, frameHeight: 271, frames: 10,
       delays: Object.freeze([100,100,100,200,100,100,100,100,200,100])
     }),
     eyeGlow: Object.freeze({
@@ -40,9 +40,14 @@
 
   const costumes = {};
   for (const [name, data] of Object.entries(costumeData)) {
+    const images = data.frameBase
+      ? Object.freeze(Array.from({ length: data.frames }, (_, frame) =>
+          loadImage(data.frameBase + String(frame).padStart(3, '0') + '.gif')))
+      : null;
     costumes[name] = Object.freeze({
       ...data,
-      image: loadImage(data.sheet || data.source),
+      image: data.sheet || !images ? loadImage(data.sheet || data.source) : null,
+      images,
       sourceGif: data.source.endsWith('.gif') ? loadImage(data.source) : null
     });
   }
@@ -128,6 +133,10 @@
     }
 
     function switchCostume(item, frame, height = targetH, flip = false) {
+      if (item?.images) {
+        const safeFrame = Math.max(0, Math.min(item.frames - 1, frame | 0));
+        return drawImageCostume(item.images[safeFrame], height, flip);
+      }
       if (!item?.image?.complete || !item.image.naturalWidth) return false;
       if (!item.sheet) return drawImageCostume(item.image, height, flip);
       const safeFrame = Math.max(0, Math.min(item.frames - 1, frame | 0));
