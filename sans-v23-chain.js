@@ -39,9 +39,13 @@
           result = window.applySansCompleteFidelityV27(result);
           console.info('Sans complete fidelity v27 applied.');
         }
+        if (typeof window.applySansPoseEyeFidelityV28 === 'function') {
+          result = window.applySansPoseEyeFidelityV28(result);
+          console.info('Scratch-style Sans pose/eye fidelity v28 applied.');
+        }
         return result;
       };
-      chained.__sansV27Chained = true;
+      chained.__sansV28Chained = true;
     }
   });
 })();
