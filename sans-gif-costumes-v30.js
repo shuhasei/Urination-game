@@ -118,7 +118,9 @@
     const scratchTime = scratchFrame * (1000 / 30);
     const footX = Math.round(x);
     const footY = Math.round(y + 40);
-    const targetH = 23;
+    // The reference recording shows a roughly 40 px wide / 55 px tall Sans.
+    // The imported idle costume is 204:271, so 56 px high gives 42 px wide.
+    const targetH = 56;
 
     function drawImageCostume(image, height = targetH, flip = false) {
       if (!image?.complete || !image.naturalWidth || !image.naturalHeight) return false;
@@ -157,10 +159,10 @@
     const woundedHit = stage === 10 && sansEndingPhase === 'wounded' && state === 'sansDefeatHit';
     const woundedDialogue = stage === 10 && sansEndingPhase === 'wounded' && state === 'sansFinalDialogue';
     const walking = stage === 10 && sansEndingPhase === 'walking';
-    if (woundedHit && drawImageCostume(sansWoundedSitImage, 22)) return;
-    if (woundedDialogue && drawImageCostume(sansWoundedStandImage, 22)) return;
-    if (walking && drawImageCostume(sansWoundedWalkGifImage, 22)) return;
-    if (resting && drawImageCostume(sansSleepImage, 21)) {
+    if (woundedHit && drawImageCostume(sansWoundedSitImage, 54)) return;
+    if (woundedDialogue && drawImageCostume(sansWoundedStandImage, 56)) return;
+    if (walking && drawImageCostume(sansWoundedWalkGifImage, 56)) return;
+    if (resting && drawImageCostume(sansSleepImage, 52)) {
       const cycle = Math.floor(scratchFrame / 14) % 3;
       for (let i = 0; i < 3; i++) {
         g.globalAlpha = i <= cycle ? 1 : .28;
@@ -178,12 +180,12 @@
     // The supplied 19-frame MISS GIF becomes the non-looping dodge costume.
     if (dodgeElapsed >= 0 && dodgeElapsed < 2300) {
       const frame = library.frameAt(costume.idleWide, dodgeElapsed, false);
-      if (switchCostume(costume.idleWide, frame, 22)) return;
+      if (switchCostume(costume.idleWide, frame, 54)) return;
     }
 
     // The supplied cyan-eye WebP is selected only during the last rapid slams.
     if (finalAttack && finalElapsed >= 29.05) {
-      if (drawImageCostume(costume.eyeGlow.image, 23)) return;
+      if (drawImageCostume(costume.eyeGlow.image, 56)) return;
     }
 
     const gestureActive = (state === 'enemyTurn' || state === 'enemySpeak')
@@ -191,21 +193,21 @@
     const direction = sansGestureDirection;
     if (gestureActive && direction === GravityDirection.UP) {
       const frame = library.frameAt(costume.shrug, scratchTime - sansGestureStartedAt, true);
-      if (switchCostume(costume.shrug, frame, 24)) return;
+      if (switchCostume(costume.shrug, frame, 58)) return;
     }
 
     // Left/right/down still use their directional Scratch costumes from v28.
     if (gestureActive) {
       const horizontal = direction === GravityDirection.LEFT || direction === GravityDirection.RIGHT;
       const image = horizontal ? sansPointRightImage : sansHandDownImage;
-      if (drawImageCostume(image, 23, direction === GravityDirection.LEFT)) return;
+      if (drawImageCostume(image, 56, direction === GravityDirection.LEFT)) return;
     }
 
     // The 10-frame GIF is the normal looping pocket-pose costume.
     const idleFrame = library.frameAt(costume.idleLarge, scratchTime - stateAt, true);
-    if (switchCostume(costume.idleLarge, idleFrame, 23)) return;
+    if (switchCostume(costume.idleLarge, idleFrame, 56)) return;
 
-    drawImageCostume(sansReferenceImage, 22);
+    drawImageCostume(sansReferenceImage, 54);
   }`;
 
   window.applySansGifCostumesV30 = source =>
@@ -213,3 +215,4 @@
 
   console.info('Scratch GIF costumes v30 ready:', VERSION);
 })();
+
