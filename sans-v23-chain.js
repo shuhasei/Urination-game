@@ -72,9 +72,13 @@
           result = applyChecked(result, window.applySansGifCostumesV30,
             'Scratch GIF costumes v30');
         }
+        if (typeof window.applySansReferenceScaleGapV33 === 'function') {
+          result = applyChecked(result, window.applySansReferenceScaleGapV33,
+            'Sans reference scale/gap v33');
+        }
         return result;
       };
-      chained.__sansV31Chained = true;
+      chained.__sansV33Chained = true;
     }
   });
 })();
