@@ -55,9 +55,14 @@
     })
   });
 
-  window.USER_UNDERTALE_SFX = UNDERTALE_SFX;
-  window.USER_SANS_VOICE_URL = UNDERTALE_SFX.sansTalk.mp3;
-  window.USER_GASTER_SOUND_URL = UNDERTALE_SFX.gaster.mp3;
+  // Prefer the verified local v27 registry when it is ready; retain the
+  // traceable Myinstants URLs only as a network fallback.
+  window.USER_UNDERTALE_SFX = Object.freeze({
+    ...UNDERTALE_SFX,
+    ...(window.USER_UNDERTALE_SFX || {})
+  });
+  window.USER_SANS_VOICE_URL = window.USER_UNDERTALE_SFX.sansTalk.mp3;
+  window.USER_GASTER_SOUND_URL = window.USER_UNDERTALE_SFX.gaster.mp3;
 
   function functionBounds(source, name) {
     const marker = 'function ' + name;
