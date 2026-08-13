@@ -43,9 +43,14 @@
           result = window.applySansPoseEyeFidelityV28(result);
           console.info('Scratch-style Sans pose/eye fidelity v28 applied.');
         }
+        if (typeof window.applySansBlockEngineV29 === 'function') {
+          result = window.applySansBlockEngineV29(result);
+          console.info('Scratch-style Sans block engine v29 applied.');
+        }
         return result;
       };
-      chained.__sansV28Chained = true;
+      chained.__sansV29Chained = true;
     }
   });
 })();
+
