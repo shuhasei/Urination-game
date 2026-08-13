@@ -31,9 +31,13 @@
           result = window.applySansStartupSizeFixV25(result);
           console.info('Sans startup/size fix v25 applied.');
         }
+        if (typeof window.applySansVideoRebuildV26 === 'function') {
+          result = window.applySansVideoRebuildV26(result);
+          console.info('Sans video rebuild v26 applied.');
+        }
         return result;
       };
-      chained.__sansV25Chained = true;
+      chained.__sansV26Chained = true;
     }
   });
 })();
