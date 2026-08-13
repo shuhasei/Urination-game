@@ -75,6 +75,44 @@
       "chunks": [
         "battleStart-00.b64"
       ]
+    },
+    "impact": {
+      "page": "https://www.myinstants.com/en/instant/undertale-impact-slam-48844/",
+      "mime": "audio/mpeg",
+      "sha256": "35ded371b938724b44d8ba634342cc996c8b1fecef9bfcafcccbfce8c26eceb0",
+      "bytes": 14709,
+      "chunks": [
+        "impact-00.b64"
+      ]
+    },
+    "heal": {
+      "page": "https://www.myinstants.com/en/instant/undertale-heal-76518/",
+      "mime": "audio/mpeg",
+      "sha256": "5692e6f90734e81e757148692ac355e170ba47c40d647f9435e055121e13c62f",
+      "bytes": 17116,
+      "chunks": [
+        "heal-00.b64"
+      ]
+    },
+    "soulShatter": {
+      "page": "https://www.myinstants.com/en/instant/undertale-soul-shatter/",
+      "mime": "audio/mpeg",
+      "sha256": "07a89317b0e6a346af3ba1c22fd13411e8baf31d6d33c2c3d4fa291efb699032",
+      "bytes": 47652,
+      "chunks": [
+        "soulShatter-00.b64",
+        "soulShatter-01.b64",
+        "soulShatter-02.b64"
+      ]
+    },
+    "encounter": {
+      "page": "https://www.myinstants.com/en/instant/enemy-encounter-undertale-27206/",
+      "mime": "audio/mpeg",
+      "sha256": "bc11ea453cf64fbe3129f69cc6a8d2ecd8ddecaac45f7de8e85e4a285ceb4457",
+      "bytes": 14061,
+      "chunks": [
+        "encounter-00.b64"
+      ]
     }
   }
 }
