@@ -35,9 +35,13 @@
           result = window.applySansVideoRebuildV26(result);
           console.info('Sans video rebuild v26 applied.');
         }
+        if (typeof window.applySansCompleteFidelityV27 === 'function') {
+          result = window.applySansCompleteFidelityV27(result);
+          console.info('Sans complete fidelity v27 applied.');
+        }
         return result;
       };
-      chained.__sansV26Chained = true;
+      chained.__sansV27Chained = true;
     }
   });
 })();
