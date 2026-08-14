@@ -251,7 +251,8 @@
     )
   ]);
 
-  // Scratch縺ｮ縲後ヶ繝ｭ繝・け繝代Ξ繝・ヨ縲阪→縲後せ繝励Λ繧､繝医・繧ｹ繧ｯ繝ｪ繝励ヨ縲阪ｒ縲・  // 繝悶Λ繧ｦ繧ｶ繝ｼ縺ｮ髢狗匱閠・ヤ繝ｼ繝ｫ縺九ｉ繧ら｢ｺ隱阪〒縺阪ｋ隱ｭ縺ｿ蜿悶ｊ蟆ら畑繝槭ル繝輔ぉ繧ｹ繝医・  window.__SANS_BLOCK_ENGINE_V29 = Object.freeze({
+  // Read-only Scratch block palette and script manifest for developer tools.
+  window.__SANS_BLOCK_ENGINE_V29 = Object.freeze({
     fps: SANS_BLOCK_FPS_V29,
     blockTypes: Object.freeze(Object.keys(SansBlockV29)),
     programs: SANS_BLOCK_PROGRAMS_V29
@@ -377,4 +378,3 @@
   window.applySansBlockEngineV29 = applyBlockEngine;
   console.info('Sans block engine v29 ready:', VERSION);
 })();
-
