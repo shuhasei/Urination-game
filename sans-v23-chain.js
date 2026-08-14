@@ -76,10 +76,13 @@
           result = applyChecked(result, window.applySansReferenceScaleGapV33,
             'Sans reference scale/gap v33');
         }
+        if (typeof window.applySansHqItemsFairnessV34 === 'function') {
+          result = applyChecked(result, window.applySansHqItemsFairnessV34,
+            'Sans HQ portraits/items/fairness v34');
+        }
         return result;
       };
-      chained.__sansV33Chained = true;
+      chained.__sansV34Chained = true;
     }
   });
 })();
-
