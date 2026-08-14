@@ -80,9 +80,13 @@
           result = applyChecked(result, window.applySansHqItemsFairnessV34,
             'Sans HQ portraits/items/fairness v34');
         }
+        if (typeof window.applySansOriginalIdleItemsV35 === 'function') {
+          result = applyChecked(result, window.applySansOriginalIdleItemsV35,
+            'Original Sans idle/item input v35');
+        }
         return result;
       };
-      chained.__sansV34Chained = true;
+      chained.__sansV35Chained = true;
     }
   });
 })();
