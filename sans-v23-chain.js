@@ -84,9 +84,13 @@
           result = applyChecked(result, window.applySansOriginalIdleItemsV35,
             'Original Sans idle/item input v35');
         }
+        if (typeof window.applySansVideoScratchRebuildV36 === 'function') {
+          result = applyChecked(result, window.applySansVideoScratchRebuildV36,
+            'Video-timed Scratch battle rebuild v36');
+        }
         return result;
       };
-      chained.__sansV35Chained = true;
+      chained.__sansV36Chained = true;
     }
   });
 })();
