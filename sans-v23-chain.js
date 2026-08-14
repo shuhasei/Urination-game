@@ -88,9 +88,13 @@
           result = applyChecked(result, window.applySansVideoScratchRebuildV36,
             'Video-timed Scratch battle rebuild v36');
         }
+        if (typeof window.applySansDialogueMotionV37 === 'function') {
+          result = applyChecked(result, window.applySansDialogueMotionV37,
+            'Sans dialogue/motion v37');
+        }
         return result;
       };
-      chained.__sansV36Chained = true;
+      chained.__sansV37Chained = true;
     }
   });
 })();
