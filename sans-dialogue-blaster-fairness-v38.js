@@ -37,8 +37,45 @@
     return source.slice(0, bounds.start) + replacement + source.slice(bounds.end);
   }
 
+  const visibleSpeechRowsV38 = String.raw`  function visibleSpeechRows() {
+    const sansIntro = stage === 10 && state === 'intro';
+    if (state !== 'enemySpeak' && !sansIntro) return message.slice(0, 3);
+    let remaining = Math.floor(speechChars);
+    return message.slice(0, 3).map(row => {
+      if (remaining <= 0) return '';
+      const visible = row.slice(0, remaining);
+      remaining -= row.length;
+      return visible;
+    });
+  }`;
+
+  const updateEnemySpeechV38 = String.raw`  function updateEnemySpeech(dt) {
+    const sansIntro = stage === 10 && state === 'intro';
+    if (state !== 'enemySpeak' && !sansIntro) return;
+    const fullText = message.join('');
+    const key = fullText + '|' + stateAt;
+    if (sansSpeechKeyV37 !== key) {
+      sansSpeechKeyV37 = key;
+      sansSpeechPauseUntilV37 = 0;
+    }
+    const now = performance.now();
+    if (now < sansSpeechPauseUntilV37) return;
+    const previous = Math.floor(speechChars);
+    const isSans = sansIntro || speakingEnemy?.visual === 'sans' || speakingEnemy?.type === 'sans';
+    speechChars = Math.min(fullText.length, speechChars + dt * (isSans ? 21 : 30));
+    const current = Math.floor(speechChars);
+    for (let index = previous; index < current; index++) {
+      const character = fullText[index];
+      if (!character) continue;
+      if (/[^\s\u3000-\u303f,.!?]/.test(character)) speechBlip();
+      if (isSans && /[\u3001\u3002,.]/.test(character)) sansSpeechPauseUntilV37 = now + 115;
+      if (isSans && /[\u2026\uff01\uff1f!?]/.test(character)) sansSpeechPauseUntilV37 = now + 190;
+    }
+  }`;
+
   const drawMessageBoxV38 = String.raw`  function drawMessageBox() {
-    const sansSpeech = stage === 10 && state === 'enemySpeak' && speakingEnemy?.type === 'sans';
+    const sansSpeech = stage === 10 && (state === 'intro'
+      || (state === 'enemySpeak' && speakingEnemy?.type === 'sans'));
     if (sansSpeech) {
       const x = 184, y = 18, w = 122, h = 55;
       rect(x + 3, y, w - 6, h, '#fff');
@@ -173,6 +210,8 @@
   window.applySansDialogueBlasterFairnessV38 = source => {
     let result = String(source || '');
     result = replaceFunction(result, 'text', textV38);
+    result = replaceFunction(result, 'visibleSpeechRows', visibleSpeechRowsV38);
+    result = replaceFunction(result, 'updateEnemySpeech', updateEnemySpeechV38);
     result = replaceFunction(result, 'drawMessageBox', drawMessageBoxV38);
     result = replaceFunction(result, 'drawBlasterHead', drawBlasterHeadV38);
     result = replaceFunction(result, 'rebuildSansBlockV36', rebuildBlockV38);
@@ -187,6 +226,15 @@
       // transformer runs. Missing the optional rewrite must never blank the game.
       console.info('v38: Sans speech was already rewritten; continuing safely.');
     }
+    result = result.replace(
+      /if \(state === 'intro'\) \{\s*if \(stage === 10 && sansTurn === 0\) beginEnemyTurn\(\);/,
+      `if (state === 'intro') {
+      if (stage === 10 && speechChars < message.join('').length) {
+        speechChars = message.join('').length;
+        return;
+      }
+      if (stage === 10 && sansTurn === 0) beginEnemyTurn();`
+    );
     return result;
   };
 
