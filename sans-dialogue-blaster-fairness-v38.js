@@ -53,8 +53,11 @@
       g.fill();
       g.restore();
       visibleSpeechRows().forEach((row, index) =>
-        text(row.replace(/^・浬s*/, ''), x + 8, y + 7 + index * 13, 8, '#000', 'left'));
-      if (speechChars >= message.join('').length) text('笆ｼ', x + w - 11, y + h - 13, 7, '#000', 'center');
+        text(row.replace(/^[^A-Za-z0-9\u3040-\u30ff\u3400-\u9fff]*/, ''),
+          x + 8, y + 7 + index * 13, 8, '#000', 'left'));
+      if (speechChars >= message.join('').length) {
+        text(String.fromCharCode(0x25bc), x + w - 11, y + h - 13, 7, '#000', 'center');
+      }
       return;
     }
     // Narration, warnings, MISS and the opening "bad time" premonition belong
@@ -170,7 +173,9 @@
     result = replaceFunction(result, 'drawBlasterHead', drawBlasterHeadV38);
     result = replaceFunction(result, 'rebuildSansBlockV36', rebuildBlockV38);
 
-    const mixedSpeech = /setState\('enemySpeak',\s*\[\s*'・・'\s*\+\s*attacker\.name\s*\+\s*'縲・\s*\+\s*battleLine\s*\+\s*'縲・,\s*'・・鮟偵＞邂ｱ縺ｮ遨ｺ豌励′ 菴弱￥髴・∴縺溘・\s*\]\s*\);/;
+    // Match the two-row construction structurally. Avoid localized literals so
+    // repository or terminal encoding can never disable this separation.
+    const mixedSpeech = /setState\('enemySpeak',\s*\[\s*'[^']*'\s*\+\s*attacker\.name\s*\+\s*'[^']*'\s*\+\s*battleLine\s*\+\s*'[^']*',\s*'[^']*'\s*\]\s*\);/;
     if (!mixedSpeech.test(result)) throw new Error('v38 could not separate Sans speech from narration');
     result = result.replace(mixedSpeech, "setState('enemySpeak', [battleLine]);");
     return result;
