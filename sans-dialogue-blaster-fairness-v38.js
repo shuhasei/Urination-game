@@ -235,6 +235,14 @@
       }
       if (stage === 10 && sansTurn === 0) beginEnemyTurn();`
     );
+    result = result.replace(
+      "const routeWidth = Math.max(2.4, 6.4 - (stage - 1) * .44);",
+      "const routeWidth = stage === 10 ? 4.25 : Math.max(2.4, 6.4 - (stage - 1) * .44);"
+    );
+    result = result.replace(
+      "if (stage !== 10 && inGuaranteedLane) hit = false;",
+      "if (inGuaranteedLane) hit = false;"
+    );
     return result;
   };
 
