@@ -92,9 +92,14 @@
           result = applyChecked(result, window.applySansDialogueMotionV37,
             'Sans dialogue/motion v37');
         }
+        if (typeof window.applySansDialogueBlasterFairnessV38 === 'function') {
+          result = applyChecked(result, window.applySansDialogueBlasterFairnessV38,
+            'Sans dialogue/blaster/fairness v38');
+        }
         return result;
       };
       chained.__sansV37Chained = true;
     }
   });
 })();
+
