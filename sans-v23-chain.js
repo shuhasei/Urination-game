@@ -96,6 +96,10 @@
           result = applyChecked(result, window.applySansDialogueBlasterFairnessV38,
             'Sans dialogue/blaster/fairness v38');
         }
+        if (typeof window.applySansScratchOpeningV39 === 'function') {
+          result = applyChecked(result, window.applySansScratchOpeningV39,
+            'Sans Scratch opening v39');
+        }
         return result;
       };
       chained.__sansV37Chained = true;
