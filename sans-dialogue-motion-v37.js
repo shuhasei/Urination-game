@@ -4,6 +4,13 @@
   const VERSION = '20260815-sans-dialogue-motion-v37';
   const idle = new Image();
   idle.src = 'sans-idle-v37.gif?v=20260815';
+  fetch('sans-idle-animated-v42.b64?v=20260815-sans-idle-v42', { cache: 'no-store' })
+    .then(response => response.ok ? response.text() : Promise.reject(new Error('idle GIF HTTP ' + response.status)))
+    .then(base64 => {
+      idle.src = 'data:image/gif;base64,' + base64.trim();
+      document.documentElement.dataset.sansV42 = 'ready';
+    })
+    .catch(error => console.warn('v42 animated Sans fallback:', error));
   const dodge = new Image();
   dodge.src = 'sans-dodge-generated-v37.gif?v=20260815';
   window.__SANS_MOTION_ASSETS_V37 = Object.freeze({ idle, dodge, version: VERSION });
@@ -173,3 +180,4 @@
   document.documentElement.dataset.sansV37 = 'ready';
   console.info('Sans dialogue/motion v37 ready:', VERSION);
 })();
+
