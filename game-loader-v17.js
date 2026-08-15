@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '20260811-user-sans-v22';
+  const VERSION = '20260813-sans-complete-v27';
 
   function loadScript(src, optional = false) {
     return new Promise((resolve, reject) => {
@@ -160,6 +160,7 @@
   async function start() {
     try {
       console.info('UNDERTALE loader starting:', VERSION);
+      if (window.__myinstantsV27Ready) await window.__myinstantsV27Ready;
       await prepareFallbackMedia();
       const uploadedReady = await prepareUploadedSansMedia();
       if (!uploadedReady) await prepareEmbeddedHQFallback();

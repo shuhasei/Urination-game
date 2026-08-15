@@ -1,0 +1,14 @@
+{
+  "version": "20260814-sans-gif-costumes-v30",
+  "method": "Each original GIF frame is an explicit Scratch costume file",
+  "fps": 30,
+  "costumes": [
+    { "id": "idle-wide", "role": "dodge-miss", "path": "frames/idle-wide", "frames": 19, "frameWidth": 216, "frameHeight": 106, "delaysMs": [100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100] },
+    { "id": "battle-reference", "role": "reference-backdrop", "path": "frames/battle-reference", "frames": 73, "frameWidth": 220, "frameHeight": 164, "defaultDelayMs": 100 },
+    { "id": "shrug", "role": "gesture-up", "path": "frames/shrug", "frames": 25, "frameWidth": 216, "frameHeight": 215, "defaultDelayMs": 100 },
+    { "id": "idle-large", "role": "idle", "path": "frames/idle-large", "frames": 10, "frameWidth": 204, "frameHeight": 271, "delaysMs": [100,100,100,200,100,100,100,100,200,100] }
+  ],
+  "staticCostumes": [
+    { "id": "eye-glow", "role": "final-eye-glow", "source": "source/eye-glow.webp" }
+  ]
+}

@@ -1,0 +1,118 @@
+{
+  "version": "20260813-myinstants-v27",
+  "source": "https://www.myinstants.com/",
+  "sounds": {
+    "sansTalk": {
+      "page": "https://www.myinstants.com/en/instant/sans-voice/",
+      "mime": "audio/mpeg",
+      "sha256": "40c4ace7354a498c89dcff2cb03e8fdb1025aa380cb3b05e7f58fd039c511dff",
+      "bytes": 3178,
+      "chunks": [
+        "sansTalk-00.b64"
+      ]
+    },
+    "gaster": {
+      "page": "https://www.myinstants.com/en/instant/undertale-gaster-blaster/",
+      "mime": "audio/mpeg",
+      "sha256": "579a3d7c06de49fcb7ea3f6c77bf177c8315f611066f85f87d864e411c3f17d2",
+      "bytes": 47234,
+      "chunks": [
+        "gaster-00.b64",
+        "gaster-01.b64",
+        "gaster-02.b64"
+      ]
+    },
+    "bone": {
+      "page": "https://www.myinstants.com/en/instant/bone-undertale-sound-effect-48282/",
+      "mime": "audio/mpeg",
+      "sha256": "c4c2091b9da6c3974bb1eb7da33ad917ce50003e11ab2912be86931cafb085b6",
+      "bytes": 9194,
+      "chunks": [
+        "bone-00.b64"
+      ]
+    },
+    "damage": {
+      "page": "https://www.myinstants.com/en/instant/undertale-damage-taken/",
+      "mime": "audio/mpeg",
+      "sha256": "3250054432d8af4eea05cf28fd5eb39595e5f65f439968108b5d07d208d0316e",
+      "bytes": 8612,
+      "chunks": [
+        "damage-00.b64"
+      ]
+    },
+    "move": {
+      "page": "https://www.myinstants.com/en/instant/undertale-move-selection-sound-effect-42223/",
+      "mime": "audio/mpeg",
+      "sha256": "9f56168d8a3e5f2b0a471553c30612197523df62f073cffe46616add72b4d1ba",
+      "bytes": 2551,
+      "chunks": [
+        "move-00.b64"
+      ]
+    },
+    "select": {
+      "page": "https://www.myinstants.com/en/instant/undertale-select-sound-42576/",
+      "mime": "audio/mpeg",
+      "sha256": "64e691989d0ca20eb412f21dcd7f764cd9eab62e0824481da54c0909a740faf0",
+      "bytes": 18527,
+      "chunks": [
+        "select-00.b64"
+      ]
+    },
+    "strike": {
+      "page": "https://www.myinstants.com/en/instant/undertale-slash-attack-30042/",
+      "mime": "audio/mpeg",
+      "sha256": "0c6f246d7723e02d7a548029fc68e93461b3ca3f8473e65ea27b44108f3e4792",
+      "bytes": 13557,
+      "chunks": [
+        "strike-00.b64"
+      ]
+    },
+    "battleStart": {
+      "page": "https://www.myinstants.com/en/instant/undertale-battle-start-97295/",
+      "mime": "audio/mpeg",
+      "sha256": "e8261b72781d1a3104bf34bbc6a10988aafd756d2333f072a9ad0d7632c76486",
+      "bytes": 15744,
+      "chunks": [
+        "battleStart-00.b64"
+      ]
+    },
+    "impact": {
+      "page": "https://www.myinstants.com/en/instant/undertale-impact-slam-48844/",
+      "mime": "audio/mpeg",
+      "sha256": "35ded371b938724b44d8ba634342cc996c8b1fecef9bfcafcccbfce8c26eceb0",
+      "bytes": 14709,
+      "chunks": [
+        "impact-00.b64"
+      ]
+    },
+    "heal": {
+      "page": "https://www.myinstants.com/en/instant/undertale-heal-76518/",
+      "mime": "audio/mpeg",
+      "sha256": "5692e6f90734e81e757148692ac355e170ba47c40d647f9435e055121e13c62f",
+      "bytes": 17116,
+      "chunks": [
+        "heal-00.b64"
+      ]
+    },
+    "soulShatter": {
+      "page": "https://www.myinstants.com/en/instant/undertale-soul-shatter/",
+      "mime": "audio/mpeg",
+      "sha256": "07a89317b0e6a346af3ba1c22fd13411e8baf31d6d33c2c3d4fa291efb699032",
+      "bytes": 47652,
+      "chunks": [
+        "soulShatter-00.b64",
+        "soulShatter-01.b64",
+        "soulShatter-02.b64"
+      ]
+    },
+    "encounter": {
+      "page": "https://www.myinstants.com/en/instant/enemy-encounter-undertale-27206/",
+      "mime": "audio/mpeg",
+      "sha256": "bc11ea453cf64fbe3129f69cc6a8d2ecd8ddecaac45f7de8e85e4a285ceb4457",
+      "bytes": 14061,
+      "chunks": [
+        "encounter-00.b64"
+      ]
+    }
+  }
+}
