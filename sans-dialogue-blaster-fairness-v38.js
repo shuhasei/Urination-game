@@ -52,7 +52,11 @@
       g.closePath();
       g.fill();
       g.restore();
-      visibleSpeechRows().forEach((row, index) =>
+      const sansRows = visibleSpeechRows().filter((row, index) => {
+        if (index === 0) return true;
+        return !/^[*\uFF0A]\s*/.test(row);
+      });
+      sansRows.forEach((row, index) =>
         text(row.replace(/^[^A-Za-z0-9\u3040-\u30ff\u3400-\u9fff]*/, ''),
           x + 8, y + 7 + index * 13, 8, '#000', 'left'));
       if (speechChars >= message.join('').length) {
@@ -176,8 +180,13 @@
     // Match the two-row construction structurally. Avoid localized literals so
     // repository or terminal encoding can never disable this separation.
     const mixedSpeech = /setState\('enemySpeak',\s*\[\s*'[^']*'\s*\+\s*attacker\.name\s*\+\s*'[^']*'\s*\+\s*battleLine\s*\+\s*'[^']*',\s*'[^']*'\s*\]\s*\);/;
-    if (!mixedSpeech.test(result)) throw new Error('v38 could not separate Sans speech from narration');
-    result = result.replace(mixedSpeech, "setState('enemySpeak', [battleLine]);");
+    if (mixedSpeech.test(result)) {
+      result = result.replace(mixedSpeech, "setState('enemySpeak', [battleLine]);");
+    } else {
+      // ROOM11's live patch can already rewrite this block before the Sans
+      // transformer runs. Missing the optional rewrite must never blank the game.
+      console.info('v38: Sans speech was already rewritten; continuing safely.');
+    }
     return result;
   };
 
